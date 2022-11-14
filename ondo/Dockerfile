@@ -6,10 +6,13 @@ COPY . .
 FROM builder as checker
 RUN cargo check
 
-FROM checker as dev-builder
+FROM checker as test
+RUN cargo test
+
+FROM test as dev-builder
 RUN cargo build --profile dev
 
-FROM checker as release-builder
+FROM test as release-builder
 RUN cargo build --release
 
 FROM debian:buster-slim as dev
@@ -25,10 +28,16 @@ RUN apt-get update && rm -rf /var/lib/apt/lists/*
 COPY --from=release-builder /usr/src/myapp/target/release/ondo /usr/local/bin/ondo
 CMD ["ondo"]
 
-# RUN release
+# CHECK
+# docker build --target checker -t check-ondo .
+
+# TEST
+# docker build --target test -t test-ondo .
+
+# RUN release 
 # docker build --target release -t ondo .
 # docker run -t --rm ondo 
 
-# REN dev   
+# RUN dev   
 # docker build --target dev -t dev-ondo .
 # docker run -t --rm dev-ondo 
