@@ -55,4 +55,5 @@ CMD ["ondo"]
 # docker run -t --rm dev-ondo 
 
 # DETAILED COVERAGE
-#$RUSTUPBIN/llvm-cov show -Xdemangler=$RUSTFILT target/debug/ondo -instr-profile=local-coverage/ondo.profdata -show-line-counts-or-regions -show-instantiations #-name=add_quoted_string
+# $RUSTUPBIN/llvm-cov show -Xdemangler=$RUSTFILT target/debug/ondo -instr-profile=local-coverage/ondo.profdata -show-line-counts-or-regions -show-instantiations #-name=add_quoted_string
+# https://doc.rust-lang.org/rustc/instrument-coverage.html
