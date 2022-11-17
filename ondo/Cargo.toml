@@ -7,5 +7,9 @@ rust-version = "1.65.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-web = "4" # https://actix.rs/docs/getting-started
-rocksdb = "0.19.0" # https://docs.rs/rocksdb/latest/rocksdb/ # https://github.com/rust-rocksdb/rust-rocksdb # http://rocksdb.org/docs/getting-started.html
+# https://actix.rs/docs/getting-started
+actix-web = "4" 
+# https://docs.rs/rocksdb/latest/rocksdb/ # https://github.com/rust-rocksdb/rust-rocksdb # http://rocksdb.org/docs/getting-started.html
+rocksdb = "0.19.0"
+# https://docs.rs/couchdb/0.0.1/couchdb/ 
+couchdb = "0.6.0" 
