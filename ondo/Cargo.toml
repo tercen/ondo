@@ -13,3 +13,5 @@ actix-web = "4"
 rocksdb = "0.19.0"
 # https://docs.rs/couchdb/0.0.1/couchdb/ 
 couchdb = "0.6.0" 
+# https://crates.io/crates/serde
+serde = "1.0.147"
