@@ -41,7 +41,7 @@ CMD ["ondo"]
 
 # RUST Development Environment
 # docker build --target builder -t builder-ondo .
-# docker run -it --rm -v $(pwd):/usr/src/myapp builder-ondo
+# docker run -it --rm -v $(pwd):/usr/src/myapp -v$HOME/.cargo/registry/:/usr/local/cargo/registry   builder-ondo
 
 # CHECK
 # docker build --target checker -t checker-ondo .
