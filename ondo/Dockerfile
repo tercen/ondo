@@ -5,13 +5,15 @@ RUN rustup component add llvm-tools-preview
 ENV RUSTUPBIN=/usr/local/rustup/toolchains/1.65.0-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin
 RUN cargo install rustfilt
 ENV RUSTFILT=/usr/local/cargo/bin/rustfilt
+ENV RUSTFLAGS="-C instrument-coverage"
+ENV LLVM_PROFILE_FILE="local-coverage/ondo.profraw"
 COPY . .
 
 FROM builder as checker
 RUN cargo check
 
 FROM checker as test
-RUN RUSTFLAGS="-C instrument-coverage" LLVM_PROFILE_FILE="local-coverage/ondo.profraw" cargo test
+RUN cargo test
 
 FROM test as coverage
 RUN $RUSTUPBIN/llvm-profdata merge -sparse local-coverage/ondo.profraw -o local-coverage/ondo.profdata
@@ -28,6 +30,7 @@ COPY --from=dev-builder /usr/src/myapp/target/debug/ondo /usr/local/bin/ondo
 CMD ["ondo"]
 
 FROM test as release-builder
+ENV RUSTFLAGS=""
 RUN cargo build --release
 
 FROM debian:buster-slim as release
@@ -36,8 +39,12 @@ RUN apt-get update && rm -rf /var/lib/apt/lists/*
 COPY --from=release-builder /usr/src/myapp/target/release/ondo /usr/local/bin/ondo
 CMD ["ondo"]
 
+# RUST Development Environment
+# docker build --target builder -t builder-ondo .
+# docker run -it --rm -v $(pwd):/usr/src/myapp builder-ondo
+
 # CHECK
-# docker build --target checker -t check-ondo .
+# docker build --target checker -t checker-ondo .
 
 # TEST
 # docker build --target test -t test-ondo .
