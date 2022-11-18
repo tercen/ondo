@@ -1,12 +1,18 @@
-FROM rust:1.65.0 as builder
+FROM rust:1.65.0 as builder-dependencies
  
-WORKDIR /usr/src/myapp
 RUN rustup component add llvm-tools-preview
 ENV RUSTUPBIN=/usr/local/rustup/toolchains/1.65.0-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin
 RUN cargo install rustfilt
 ENV RUSTFILT=/usr/local/cargo/bin/rustfilt
 RUN apt update && apt-get install -y clang
 
+WORKDIR /usr/src
+RUN cargo new myapp
+COPY Cargo.toml Cargo.lock /usr/src/myapp/
+WORKDIR /usr/src/myapp
+RUN cargo fetch
+
+FROM builder-dependencies as builder
 ENV MYAPPNAME=ondo
 ENV RUSTFLAGS="-C instrument-coverage"
 ENV LLVM_PROFILE_FILE="local-coverage/${MYAPPNAME}.profraw"
