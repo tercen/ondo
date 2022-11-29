@@ -70,7 +70,7 @@ mod tests {
     #[test]
     fn test_get_cf_name() {
         let index = sample_index();
-        assert_eq!(index.get_cf_name(), "sample_table::sample_index");
+        assert_eq!(index.get_cf_name(), "sample_table/indexes/sample_index");
     }
 
     #[test]
