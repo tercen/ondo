@@ -9,8 +9,9 @@ struct IndexDefinition {
 
 impl IndexDefinition {
 
-    pub fn cf_name(&self) -> String {
-        format!("{}::{}", self.table_name, self.name)
+    /// Returns the get cf name of this [`IndexDefinition`].
+    pub fn get_cf_name(&self) -> String {
+        format!("{}/indexes/{}", self.table_name, self.name)
     }
 
     pub fn get_fields(&self) -> Vec<String> {
@@ -19,6 +20,7 @@ impl IndexDefinition {
         my_fields
     }
 
+    /// Get the index key for a given document
     pub fn key_of(&self, doc: &serde_json::Value) -> Vec<serde_json::Value>  {
         let fields: &Vec<String>  = &self.fields;
         fields.iter().map(|f: &String| {
@@ -26,6 +28,8 @@ impl IndexDefinition {
             item
         }).collect() 
     }
+    // TODO: add a method to delete an index of a document
+    // TODO: add a method to update an index of a document
 }
 
 #[cfg(test)]
@@ -64,14 +68,21 @@ mod tests {
     }
 
     #[test]
-    fn test_cf_name() {
+    fn test_get_cf_name() {
         let index = sample_index();
-        assert_eq!(index.cf_name(), "sample_table::sample_index");
+        assert_eq!(index.get_cf_name(), "sample_table::sample_index");
     }
 
     #[test]
     fn test_get_fields() {
         let index = sample_index();
         assert_eq!(index.get_fields(), vec!["city".to_string(), "age".to_string(), DEFAULT_ID_FIELD.to_string()]);
+    }
+
+    #[test]
+    fn test_key_of() {
+        let index = sample_index();
+        let doc = sample_document_json();
+        assert_eq!(index.key_of(&doc), vec![serde_json::json!("New York"), serde_json::json!(30)]);
     }
 }
