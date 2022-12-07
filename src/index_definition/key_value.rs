@@ -1,7 +1,4 @@
-#![allow(dead_code)]
-use serde_json::Value;
-
-pub type Key = Vec<Value>;
+use crate::types::*;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct KeyValue {

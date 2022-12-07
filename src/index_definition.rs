@@ -1,14 +1,20 @@
 #![allow(dead_code)]
-mod key_value;
-use key_value::*;
+pub mod key_value;
 
-use serde_json::Value;
+use crate::types::*;
+use key_value::*;
 
 const DEFAULT_ID_FIELD: &str = "_id";
 
 struct IndexDefinition {
-    name: String,
+    domain: String,
     table_name: String,
+    name: String,
+    fields: Vec<String>,
+}
+
+struct PartialIndexDefinition {
+    name: String,
     fields: Vec<String>,
 }
 
@@ -78,6 +84,7 @@ mod tests {
 
     fn sample_index() -> IndexDefinition {
         IndexDefinition {
+            domain: "sample_domain".to_string(),
             name: "sample_index".to_string(),
             table_name: "sample_table".to_string(),
             fields: vec!["city".to_string(), "age".to_string()],
