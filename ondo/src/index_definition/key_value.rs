@@ -1,0 +1,24 @@
+#![allow(dead_code)]
+use serde_json::Value;
+
+pub type Key = Vec<Value>;
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct KeyValue {
+    key: Key,
+    value: Value,
+}
+
+impl KeyValue{
+    pub fn new(key: Key, value: Value) -> Self {
+        Self { key: key, value: value }
+    }
+
+    fn get_key(&self) -> &Key {
+        &self.key
+    }
+
+    fn get_value(&self) -> &Value {
+        &self.value
+    }
+}

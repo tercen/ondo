@@ -1,4 +1,6 @@
 mod index_definition;
+mod cmd;
+mod request;
 
 pub fn hello() -> String {
     "Hello, world!".to_string()

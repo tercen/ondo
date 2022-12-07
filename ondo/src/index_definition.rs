@@ -1,4 +1,9 @@
 #![allow(dead_code)]
+mod key_value;
+use key_value::*;
+
+use serde_json::Value;
+
 const DEFAULT_ID_FIELD: &str = "_id";
 
 struct IndexDefinition {
@@ -13,25 +18,32 @@ impl IndexDefinition {
         format!("{}/indexes/{}", self.table_name, self.name)
     }
 
-    pub fn get_fields(&self) -> Box<Vec<String>> {
+    pub fn get_fields(&self) -> Vec<String> {
         let mut my_fields = self.fields.clone();
         my_fields.push(DEFAULT_ID_FIELD.to_string());
-        Box::new(my_fields)
+        my_fields
     }
 
     /// Get the index key for a given document
-    pub fn key_of(&self, doc: &serde_json::Value) -> Box<Vec<serde_json::Value>> {
-        let fields: &Vec<String> = &self.fields;
-        Box::new(
+    pub fn key_of(&self, doc: &Value) -> Key {
+        let fields  = self.get_fields();
+        
             fields
                 .iter()
                 .map(|f: &String| {
                     let item = doc[f].clone();
                     item
                 })
-                .collect(),
-        )
+                .collect()
+        
     }
+
+    pub fn key_value_of(&self, doc: &Value) -> KeyValue {
+        let key = self.key_of(doc);
+        let value = doc[DEFAULT_ID_FIELD].clone();
+        KeyValue::new(key, value)
+    }
+
     // TODO: add a method to delete an index of a document
     // TODO: add a method to update an index of a document
 }
@@ -41,10 +53,11 @@ mod tests {
     use super::*;
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use serde::{Deserialize, Serialize};
+    use serde_json::json;
 
     #[derive(Serialize, Deserialize)]
     struct SampleDocument {
-        _id: String,
+        _id: u64,
         name: String,
         age: u32,
         city: String,
@@ -52,23 +65,23 @@ mod tests {
 
     fn sample_document() -> SampleDocument {
         return SampleDocument {
-            _id: "1".to_string(),
+            _id: 1,
             name: "John".to_string(),
             age: 30,
             city: "New York".to_string(),
         };
     }
 
-    fn sample_document_json() -> Box<serde_json::Value> {
-        return Box::new(serde_json::json!(&sample_document()));
+    fn sample_document_json() -> Value {
+        return json!(&sample_document());
     }
 
-    fn sample_index() -> Box<IndexDefinition> {
-        return Box::new(IndexDefinition {
+    fn sample_index() -> IndexDefinition {
+        IndexDefinition {
             name: "sample_index".to_string(),
             table_name: "sample_table".to_string(),
             fields: vec!["city".to_string(), "age".to_string()],
-        });
+        }
     }
 
     #[test]
@@ -94,11 +107,6 @@ mod tests {
     fn test_key_of() {
         let index = sample_index();
         let doc = sample_document_json();
-        assert_eq!(
-            *index.key_of(&doc),
-            vec![serde_json::json!("New York"), serde_json::json!(30)]
-        );
+        assert_eq!(*index.key_of(&doc), vec![json!("New York"), json!(30), json!(1)]);
     }
-
-    
 }
