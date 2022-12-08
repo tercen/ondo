@@ -19,7 +19,6 @@ impl fmt::Display for CfName {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
