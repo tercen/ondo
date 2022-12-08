@@ -1,10 +1,9 @@
-#![allow(dead_code)]
-use crate::names::*;
+use crate::db::names::*;
 use key_value::*;
 
 pub mod key_value;
 
-pub(crate) const DEFAULT_ID_FIELD: &str = "_id";
+pub const DEFAULT_ID_FIELD: &str = "_id";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IndexDefinition {

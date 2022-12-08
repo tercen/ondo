@@ -1,4 +1,4 @@
-use crate::names::*;
+use super::*;
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

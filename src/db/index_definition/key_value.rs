@@ -1,4 +1,4 @@
-use crate::names::*;
+use crate::db::names::*;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct KeyValue {
@@ -9,13 +9,5 @@ pub struct KeyValue {
 impl KeyValue{
     pub fn new(key: Key, value: Value) -> Self {
         Self { key: key, value: value }
-    }
-
-    fn get_key(&self) -> &Key {
-        &self.key
-    }
-
-    fn get_value(&self) -> &Value {
-        &self.value
     }
 }

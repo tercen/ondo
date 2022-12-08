@@ -1,7 +1,3 @@
-mod names;
-mod index_definition;
-mod effect;
-mod request;
 mod db;
 
 pub fn hello() -> String {

@@ -1,4 +1,4 @@
-use crate::names::*;
+use super::names::*;
 
 pub enum Request {
     Get(DomainName, TableName, Key),

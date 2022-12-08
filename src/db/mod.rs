@@ -1,8 +1,12 @@
-use crate::{
-    index_definition::IndexDefinition, 
-    request::RequestHandlers, 
-    names::*,
-};
+#![allow(dead_code)]
+mod effect;
+mod index_definition;
+mod names;
+mod request;
+
+use request::RequestHandlers;
+use index_definition::IndexDefinition;
+use names::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// A command to be executed on a database server
@@ -32,5 +36,5 @@ pub enum DbCommand {
 }
     
 pub struct DbServer {
-    pub request_handlers: RequestHandlers,
+    request_handlers: RequestHandlers,
 }
