@@ -1,15 +1,17 @@
 #![allow(dead_code)]
-pub mod key_value;
-
-use crate::types::*;
+use crate::names::*;
+use crate::cf_name::*;
 use key_value::*;
 
-const DEFAULT_ID_FIELD: &str = "_id";
+pub mod key_value;
 
-struct IndexDefinition {
-    domain: String,
-    table_name: String,
-    name: String,
+pub(crate) const DEFAULT_ID_FIELD: &str = "_id";
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IndexDefinition {
+    domain_name: DomainName,
+    table_name: TableName,
+    name: IndexName,
     fields: Vec<String>,
 }
 
@@ -20,8 +22,12 @@ struct PartialIndexDefinition {
 
 impl IndexDefinition {
     /// Returns the get cf name of this [`IndexDefinition`].
-    pub fn get_cf_name(&self) -> String {
-        format!("{}/indexes/{}", self.table_name, self.name)
+    pub fn get_cf_name(&self) -> CfName {
+        CfName::for_index(
+            &self.domain_name,
+            &self.table_name,
+            &self.name,
+        )
     }
 
     pub fn get_fields(&self) -> Vec<String> {
@@ -84,9 +90,9 @@ mod tests {
 
     fn sample_index() -> IndexDefinition {
         IndexDefinition {
-            domain: "sample_domain".to_string(),
-            name: "sample_index".to_string(),
-            table_name: "sample_table".to_string(),
+            domain_name: DomainName::new("sample_domain"),
+            table_name: TableName::new("sample_table"),
+            name: IndexName::new("sample_index"),
             fields: vec!["city".to_string(), "age".to_string()],
         }
     }
@@ -94,7 +100,7 @@ mod tests {
     #[test]
     fn test_get_cf_name() {
         let index = sample_index();
-        assert_eq!(index.get_cf_name(), "sample_table/indexes/sample_index");
+        assert_eq!(index.get_cf_name().to_string(), "sample_domain::/sample_table/indexes/sample_index");
     }
 
     #[test]
