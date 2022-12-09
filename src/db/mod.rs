@@ -1,11 +1,11 @@
 #![allow(dead_code)]
 mod effect;
-mod index_definition;
+mod definition;
 mod names;
 mod request;
 
 use request::RequestHandlers;
-use index_definition::IndexDefinition;
+use definition::*;
 use names::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -34,7 +34,9 @@ pub enum DbCommand {
 
     FindValues(DomainName, TableName, IndexName, Key),  //TODO: Replace Key with a key range for mango queries
 }
-    
+ 
 pub struct DbServer {
     request_handlers: RequestHandlers,
 }
+
+
