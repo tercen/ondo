@@ -98,7 +98,7 @@ mod tests {
     #[test]
     fn test_get_cf_name() {
         let index = sample_index();
-        assert_eq!(index.get_cf_name().to_string(), "sample_domain::/sample_table/indexes/sample_index");
+        assert_eq!(index.get_cf_name().to_string(), "sample_domain::/sample_table/indexes/sample_index/_");
     }
 
     #[test]
