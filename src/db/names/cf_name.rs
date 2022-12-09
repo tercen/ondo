@@ -5,7 +5,15 @@ use std::fmt;
 pub struct CfName(pub String);
 
 impl CfName {
-    pub fn for_table(d: &DomainName, t: &TableName) -> CfName {
+    pub fn for_db() -> CfName {  //domain rows
+        CfName("db".to_string())
+    }
+
+    pub fn for_domain(d: &DomainName) -> CfName { //table rows
+        CfName(format!("{}::", d.0))
+    }
+
+    pub fn for_table(d: &DomainName, t: &TableName) -> CfName { //value rows
         CfName(format!("{}::/{}", d.0, t.0))
     }
 
@@ -22,6 +30,19 @@ impl fmt::Display for CfName {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_cf_name_for_db() {
+        let cf_name = CfName::for_db();
+        assert_eq!(cf_name, CfName("db".to_string()));
+    }
+
+    #[test]
+    fn test_cf_name_for_domain() {
+        let d = DomainName("domain".to_string());
+        let cf_name = CfName::for_domain(&d);
+        assert_eq!(cf_name, CfName("domain::".to_string()));
+    }
 
     #[test]
     fn test_cf_name_for_table() {
