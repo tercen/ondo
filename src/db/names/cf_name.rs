@@ -5,7 +5,7 @@ use std::fmt;
 pub struct CfName(pub String);
 
 impl CfName {
-    pub fn for_db_meta() -> CfName {
+    pub fn for_server_meta() -> CfName {
         //table names etc
         CfName("/db_meta".to_string())
     }
@@ -39,6 +39,12 @@ impl fmt::Display for CfName {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_cf_name_for_server_meta() {
+        let cf_name = CfName::for_server_meta();
+        assert_eq!(cf_name, CfName("/db_meta".to_string()));
+    }
 
     #[test]
     fn test_cf_name_for_domain_meta() {
