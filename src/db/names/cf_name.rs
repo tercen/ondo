@@ -7,7 +7,7 @@ pub struct CfName(pub String);
 impl CfName {
     pub fn for_db_meta() -> CfName {
         //table names etc
-        CfName("/db_meta/_".to_string())
+        CfName("/db_meta".to_string())
     }
 
     pub fn for_domain_meta() -> CfName {
