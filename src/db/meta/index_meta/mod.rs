@@ -6,20 +6,15 @@ pub mod key_value;
 pub const DEFAULT_ID_FIELD: &str = "_id";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IndexDefinition {
+pub struct IndexMeta {
     domain_name: DomainName,
     table_name: TableName,
     name: IndexName,
     fields: Vec<String>,
 }
 
-struct PartialIndexDefinition {
-    name: String,
-    fields: Vec<String>,
-}
-
-impl IndexDefinition {
-    /// Returns the get cf name of this [`IndexDefinition`].
+impl IndexMeta {
+    /// Returns the get cf name of this [`IndexMeta`].
     pub fn get_cf_name(&self) -> CfName {
         CfName::for_index(
             &self.domain_name,
@@ -86,8 +81,8 @@ mod tests {
         return json!(&sample_document());
     }
 
-    fn sample_index() -> IndexDefinition {
-        IndexDefinition {
+    fn sample_index() -> IndexMeta {
+        IndexMeta {
             domain_name: DomainName::new("sample_domain"),
             table_name: TableName::new("sample_table"),
             name: IndexName::new("sample_index"),

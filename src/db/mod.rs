@@ -22,7 +22,7 @@ pub enum DbCommand {
     GetTable(DomainName, TableName), //Metadata
 
     ListIndexes(DomainName, TableName),
-    CreateIndex(DomainName, IndexDefinition),
+    CreateIndex(DomainName, IndexMeta),
     GetIndex(DomainName, TableName, IndexName), //Metadata
     DeleteIndex(DomainName, TableName, IndexName),
 

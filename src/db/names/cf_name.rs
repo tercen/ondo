@@ -7,7 +7,7 @@ pub struct CfName(pub String);
 impl CfName {
     pub fn for_server_meta() -> CfName {
         //table names etc
-        CfName("/db_meta".to_string())
+        CfName("/server_meta/_".to_string())
     }
 
     pub fn for_domain_meta() -> CfName {
@@ -43,7 +43,7 @@ mod tests {
     #[test]
     fn test_cf_name_for_server_meta() {
         let cf_name = CfName::for_server_meta();
-        assert_eq!(cf_name, CfName("/db_meta".to_string()));
+        assert_eq!(cf_name, CfName("/server_meta/_".to_string()));
     }
 
     #[test]
