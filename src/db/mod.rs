@@ -1,11 +1,11 @@
 #![allow(dead_code)]
 mod effect;
-mod meta;
+mod entity;
 mod names;
 mod request;
 
 use request::RequestHandlers;
-use meta::*;
+use entity::*;
 use names::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
