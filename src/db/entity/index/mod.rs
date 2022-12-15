@@ -1,28 +1,33 @@
-use crate::db::names::*;
-use key_value::*;
+mod key_value;
 
-pub mod key_value;
+use super::DbError;
+pub use key_value::*;
 
-pub const DEFAULT_ID_FIELD: &str = "_id";
+pub const DEFAULT_ID_FIELD: &str = "id";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IndexMeta {
-    domain_name: DomainName,
-    table_name: TableName,
-    name: IndexName,
-    fields: Vec<String>,
+pub struct IndexReference {
+    pub index_name: String,
+    pub table_name: String,
+    pub domain_name: String,
 }
 
-impl IndexMeta {
-    /// Returns the get cf name of this [`IndexMeta`].
-    pub fn get_cf_name(&self) -> CfName {
-        CfName::for_index(
-            &self.domain_name,
-            &self.table_name,
-            &self.name,
-        )
-    }
+trait IndexReferenceTrait {
+    type Effect; 
+    type Request;
 
+    fn get_index(&self, request: &Self::Request) -> Result<&Index, DbError>;
+    fn put_index(index: Index) -> Self::Effect;
+    fn remove_index(&self) -> Self::Effect;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Index {
+    pub id: IndexReference,
+    pub fields: Vec<String>,
+}
+
+impl Index {
     pub fn get_fields(&self) -> Vec<String> {
         let mut my_fields = self.fields.clone();
         my_fields.push(DEFAULT_ID_FIELD.to_string());
@@ -49,8 +54,6 @@ impl IndexMeta {
         KeyValue::new(key, value)
     }
 
-    // TODO: add a method to delete an index of a document
-    // TODO: add a method to update an index of a document
 }
 
 #[cfg(test)]
@@ -62,7 +65,7 @@ mod tests {
 
     #[derive(Serialize, Deserialize)]
     struct SampleDocument {
-        _id: u64,
+        id: u64,
         name: String,
         age: u32,
         city: String,
@@ -70,7 +73,7 @@ mod tests {
 
     fn sample_document() -> SampleDocument {
         return SampleDocument {
-            _id: 1,
+            id: 1,
             name: "John".to_string(),
             age: 30,
             city: "New York".to_string(),
@@ -81,19 +84,15 @@ mod tests {
         return json!(&sample_document());
     }
 
-    fn sample_index() -> IndexMeta {
-        IndexMeta {
-            domain_name: DomainName::new("sample_domain"),
-            table_name: TableName::new("sample_table"),
-            name: IndexName::new("sample_index"),
+    fn sample_index() -> Index {
+        Index {
+            id: IndexReference {
+                index_name: "sample_index".to_string(),
+                table_name: "sample_table".to_string(),
+                domain_name: "sample_domain".to_string(),
+            },
             fields: vec!["city".to_string(), "age".to_string()],
         }
-    }
-
-    #[test]
-    fn test_get_cf_name() {
-        let index = sample_index();
-        assert_eq!(index.get_cf_name().to_string(), "sample_domain::/sample_table/indexes/sample_index/_");
     }
 
     #[test]

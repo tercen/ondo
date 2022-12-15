@@ -1,4 +1,6 @@
-use crate::db::names::*;
+
+pub type Value = serde_json::Value;
+pub type Key = Vec<Value>;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct KeyValue {

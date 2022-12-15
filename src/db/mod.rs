@@ -1,42 +1,37 @@
 #![allow(dead_code)]
 mod effect;
-mod entity;
-mod names;
 mod request;
+mod entity;
+mod cf_name;
+mod db_error;
+pub use db_error::DbError;
 
-use request::RequestHandlers;
-use entity::*;
-use names::*;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-/// A command to be executed on a database server
-pub enum DbCommand {
-    ListDomains,
-    CreateDomain(DomainName),
-    DeleteDomain(DomainName),
-    GetDomain(DomainName), //Metadata
+// #[derive(Debug, Clone, PartialEq, Eq)]
+// A command to be executed on a database server
+// pub enum DbCommand {
+//     ListDomains,
+//     CreateDomain(&str),
+//     DeleteDomain(&str),
+//     GetDomain(&str), //Metadata
 
-    ListTables(DomainName),
-    CreateTable(DomainName, TableName),
-    DeleteTable(DomainName, TableName),
-    GetTable(DomainName, TableName), //Metadata
+//     ListTables(&str),
+//     CreateTable(DomainName, TableName),
+//     DeleteTable(DomainName, TableName),
+//     GetTable(DomainName, TableName), //Metadata
 
-    ListIndexes(DomainName, TableName),
-    CreateIndex(DomainName, IndexMeta),
-    GetIndex(DomainName, TableName, IndexName), //Metadata
-    DeleteIndex(DomainName, TableName, IndexName),
+//     ListIndexes(DomainName, TableName),
+//     GetIndex(DomainName, TableName, IndexName), //Metadata
+//     PutIndex(DomainName, Index),
+//     DeleteIndex(DomainName, TableName, IndexName),
 
-    ListValues(DomainName, TableName),
-    CreateValue(DomainName, TableName, Key, Value),
-    DeleteValue(DomainName, TableName, Key),
-    GetValue(DomainName, TableName, Key),
-    PutValue(DomainName, TableName, Key, Value),
+//     ListValues(DomainName, TableName),
+//     CreateValue(DomainName, TableName, Key, Value),
+//     DeleteValue(DomainName, TableName, Key),
+//     GetValue(DomainName, TableName, Key),
+//     PutValue(DomainName, TableName, Key, Value),
 
-    FindValues(DomainName, TableName, IndexName, Key),  //TODO: Replace Key with a key range for mango queries
-}
+//     FindValues(DomainName, TableName, IndexName, Key),  //TODO: Replace Key with a key range for mango queries
+// }
  
-pub struct DbServer {
-    request_handlers: RequestHandlers,
-}
-
 
