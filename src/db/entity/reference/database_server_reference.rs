@@ -14,3 +14,4 @@ trait DatabaseServerReferenceTrait {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct DatabaseServerReference;
+

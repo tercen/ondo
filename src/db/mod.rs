@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-mod cf_name;
 mod db_error;
 mod effect;
 mod entity;

@@ -1,6 +1,6 @@
-use super::entity::reference::DomainReference;
-use super::entity::reference::TableReference;
-use super::entity::reference::IndexReference;
+use super::DomainReference;
+use super::TableReference;
+use super::IndexReference;
 
 pub struct CfName;
 
