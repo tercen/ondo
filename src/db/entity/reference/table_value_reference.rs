@@ -1,11 +1,5 @@
-use super::DbError;
-pub type Value = serde_json::Value;
-
-struct ValueReference {
-    pub id: Value,
-    pub table_name: String,
-    pub domain_name: String,
-}
+use super::super::DbError;
+use super::super::Value;
 trait ValueReferenceTrait {
     type Effect;
     type Request;
@@ -15,4 +9,8 @@ trait ValueReferenceTrait {
     fn delete_value(&self) -> Self::Effect;
     fn cf_name(&self) -> String;
 }
-
+pub struct ValueReference {
+    pub id: Value,
+    pub table_name: String,
+    pub domain_name: String,
+}

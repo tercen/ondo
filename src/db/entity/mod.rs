@@ -1,4 +1,4 @@
-use super::db_error::DbError;
+pub use super::db_error::DbError;
 
 mod database_server;
 pub use database_server::*;
@@ -12,8 +12,10 @@ pub use table::*;
 mod index;
 pub use index::*;
 
-mod id;
-pub use id::*;
+mod index_value;
+pub use index_value::*;
 
-mod value;
-pub use value::*;
+mod table_value;
+pub use table_value::*;
+
+pub mod reference;
