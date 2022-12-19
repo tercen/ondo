@@ -17,3 +17,11 @@ trait DomainReferenceTrait {
 pub struct DomainReference {
     pub domain_name: String
 }
+
+impl DomainReference {
+    pub fn new(domain_name: &str) -> Self {
+        DomainReference {
+            domain_name: domain_name.to_string()
+        }
+    }
+}

@@ -33,7 +33,33 @@ impl CfName {
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
+    use super::*;
 
+    #[test]
+    fn test_for_server_meta() {
+        assert_eq!(CfName::for_server_meta(), "/server");
+    }
    
+    #[test]
+    fn test_for_domain_meta() {
+        assert_eq!(CfName::for_domain_meta(), "/domains");
+    }
+
+    #[test]
+    fn test_for_table_meta() {
+        let r = DomainReference::new("domain1");
+        assert_eq!(CfName::for_table_meta(&r), "/domains/domain1/tables");
+    }
+
+    #[test]
+    fn test_for_table_values() {
+        let r = TableReference::new("domain1", "table1");
+        assert_eq!(CfName::for_table_values(&r), "domain1::/table1");
+    }
+
+    #[test]
+    fn test_for_index_values() {
+        let r = IndexReference::new("domain1", "table1", "index1");
+        assert_eq!(CfName::for_index_values(&r), "domain1::/table1/indexes/index1");
+    }
 }

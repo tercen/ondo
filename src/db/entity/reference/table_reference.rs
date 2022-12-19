@@ -18,3 +18,12 @@ pub struct TableReference {
     pub table_name: String,
     pub domain_name: String,
 }
+
+impl TableReference {
+    pub fn new(domain_name: &str, table_name: &str) -> Self {
+        TableReference {
+            domain_name: domain_name.to_string(),
+            table_name: table_name.to_string(),
+        }
+    }
+}

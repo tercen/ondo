@@ -20,3 +20,13 @@ struct IndexValueReference {
     pub domain_name: String,
 }
 
+impl IndexValueReference {
+    pub fn new(domain_name: &str, table_name: &str, index_name: &str, key: Key) -> Self {
+        IndexValueReference {
+            domain_name: domain_name.to_string(),
+            table_name: table_name.to_string(),
+            index_name: index_name.to_string(),
+            key,
+        }
+    }
+}   

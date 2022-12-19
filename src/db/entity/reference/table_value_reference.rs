@@ -1,6 +1,6 @@
 use super::super::DbError;
 use super::super::Value;
-trait ValueReferenceTrait {
+trait TableValueReferenceTrait {
     type Effect;
     type Request;
     fn get_value(&self, request: &Self::Request) -> Result<Value, DbError>;
@@ -11,8 +11,18 @@ trait ValueReferenceTrait {
     fn cf_name(&self) -> String;
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ValueReference {
+pub struct TableValueReference {
     pub id: Value,
     pub table_name: String,
     pub domain_name: String,
+}
+
+impl TableValueReference {
+    pub fn new(domain_name: &str, table_name: &str, id: Value) -> Self {
+        TableValueReference {
+            domain_name: domain_name.to_string(),
+            table_name: table_name.to_string(),
+            id,
+        }
+    }
 }
