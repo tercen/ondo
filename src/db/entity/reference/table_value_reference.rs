@@ -1,6 +1,8 @@
 use super::super::DbError;
 use super::super::Value;
-trait TableValueReferenceTrait {
+use super::TableReference;
+
+pub trait TableValueReferenceTrait {
     type Effect;
     type Request;
     fn get_value(&self, request: &Self::Request) -> Result<Value, DbError>;
@@ -24,5 +26,9 @@ impl TableValueReference {
             table_name: table_name.to_string(),
             id,
         }
+    }
+
+    pub fn to_table_reference(&self) -> TableReference {
+        TableReference::new(&self.domain_name, &self.table_name)
     }
 }

@@ -1,5 +1,6 @@
 use super::super::DbError;
 use super::super::Index;
+use super::TableReference;
 
 trait IndexReferenceTrait {
     type Effect; 
@@ -25,5 +26,9 @@ impl IndexReference {
             table_name: table_name.to_string(),
             index_name: index_name.to_string(),
         }
+    }
+
+    pub fn to_table_reference(&self) -> TableReference {
+        TableReference::new(&self.domain_name, &self.table_name)
     }
 }

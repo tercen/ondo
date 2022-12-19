@@ -1,7 +1,7 @@
 use super::super::DbError;
 use super::super::DatabaseServer;
 
-trait DatabaseServerReferenceTrait {
+pub trait DatabaseServerReferenceTrait {
     type Effect;
     type Requests;
 
@@ -13,5 +13,11 @@ trait DatabaseServerReferenceTrait {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct DatabaseServerReference;
+pub struct DatabaseServerReference;
+
+impl DatabaseServerReference {
+    pub fn new() -> Self {
+        DatabaseServerReference
+    }
+}
 

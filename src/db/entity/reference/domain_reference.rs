@@ -1,5 +1,6 @@
 use super::super::DbError;
 use super::super::Domain;
+use super::DatabaseServerReference;
 
 trait DomainReferenceTrait {
     type Effect;
@@ -24,4 +25,8 @@ impl DomainReference {
             domain_name: domain_name.to_string()
         }
     }
-}
+
+    pub fn to_database_server_reference(&self) -> DatabaseServerReference {
+        DatabaseServerReference::new()
+    }
+} 

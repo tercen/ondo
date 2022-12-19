@@ -1,8 +1,9 @@
 use super::super::DbError;
 use super::super::Key;
 use super::super::IndexValue;
+use super::IndexReference;
 
-trait IdReferenceTrait {
+pub trait IdReferenceTrait {
     type Effect;
     type Requests;
     fn get_index_value(&self, requests: &Self::Requests) -> Result<IndexValue, DbError>;
@@ -28,5 +29,9 @@ impl IndexValueReference {
             index_name: index_name.to_string(),
             key,
         }
+    }
+
+    pub fn to_index_reference(&self) -> IndexReference {
+        IndexReference::new(&self.domain_name, &self.table_name, &self.index_name)
     }
 }   

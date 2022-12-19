@@ -1,7 +1,8 @@
 use super::super::DbError;
 use super::super::Table;
+use super::DomainReference;
 
-trait TableReferenceTrait {
+pub trait TableReferenceTrait {
     type Effect;
     type Requests;
 
@@ -25,5 +26,9 @@ impl TableReference {
             domain_name: domain_name.to_string(),
             table_name: table_name.to_string(),
         }
+    }
+
+    pub fn to_domain_reference(&self) -> DomainReference {
+        DomainReference::new(&self.domain_name)
     }
 }
