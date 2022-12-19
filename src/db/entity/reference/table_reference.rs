@@ -6,12 +6,12 @@ pub trait TableReferenceTrait {
     type Effect;
     type Requests;
 
+    fn cf_name(&self) -> String;
     fn get_table(&self, requests: &Self::Requests) -> Result<Table, DbError>;
     fn put_table(table: Table) -> Self::Effect;
     fn post_table(table: Table) -> Self::Effect;
     fn delete_table(&self) -> Self::Effect;
     fn list_tables(&self, requests: &Self::Requests) -> Result<Vec<Table>, DbError>;
-    fn cf_name(&self) -> String;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
