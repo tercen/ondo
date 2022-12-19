@@ -9,6 +9,7 @@ trait TableReferenceTrait {
     fn put_table(table: Table) -> Self::Effect;
     fn post_table(table: Table) -> Self::Effect;
     fn delete_table(&self) -> Self::Effect;
+    fn list_tables(&self, requests: &Self::Requests) -> Result<Vec<Table>, DbError>;
     fn cf_name(&self) -> String;
 }
 

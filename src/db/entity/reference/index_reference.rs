@@ -15,4 +15,5 @@ trait IndexReferenceTrait {
     fn get_index(&self, request: &Self::Request) -> Result<&Index, DbError>;
     fn put_index(index: Index) -> Self::Effect;
     fn remove_index(&self) -> Self::Effect;
+    fn list_indexes(&self, request: &Self::Request) -> Result<Vec<Index>, DbError>;
 }

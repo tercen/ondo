@@ -7,6 +7,7 @@ trait ValueReferenceTrait {
     fn put_value(&self, value: Value) -> Self::Effect;
     fn post_value(&self, value: Value) -> Self::Effect;
     fn delete_value(&self) -> Self::Effect;
+    fn list_values(&self, request: &Self::Request) -> Result<Vec<Value>, DbError>;
     fn cf_name(&self) -> String;
 }
 pub struct ValueReference {

@@ -8,6 +8,7 @@ trait IdReferenceTrait {
     fn get_index_value(&self, requests: &Self::Requests) -> Result<IndexValue, DbError>;
     fn put_index_value(&self, id: IndexValue) -> Self::Effect;
     fn delete_index_value(&self) -> Self::Effect;
+    fn list_index_values(&self, requests: &Self::Requests) -> Result<Vec<IndexValue>, DbError>;
     fn cf_name(&self) -> String;
 }
 
