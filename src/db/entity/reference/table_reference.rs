@@ -13,6 +13,7 @@ trait TableReferenceTrait {
     fn cf_name(&self) -> String;
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TableReference {
     pub table_name: String,
     pub domain_name: String,

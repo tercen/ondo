@@ -12,6 +12,7 @@ trait IdReferenceTrait {
     fn cf_name(&self) -> String;
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct IndexValueReference {
     pub key: Key,
     pub index_name: String,

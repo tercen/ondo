@@ -13,6 +13,7 @@ trait DomainReferenceTrait {
     fn cf_name(&self) -> String;
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DomainReference {
     pub domain_name: String
 }

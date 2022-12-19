@@ -10,6 +10,7 @@ trait ValueReferenceTrait {
     fn list_values(&self, request: &Self::Request) -> Result<Vec<Value>, DbError>;
     fn cf_name(&self) -> String;
 }
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ValueReference {
     pub id: Value,
     pub table_name: String,

@@ -12,4 +12,5 @@ trait DatabaseServerReferenceTrait {
     fn cf_name(&self) -> String;
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct DatabaseServerReference;
