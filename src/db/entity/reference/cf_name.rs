@@ -6,22 +6,18 @@ pub struct CfName;
 
 impl CfName {
     pub fn for_server_meta() -> String {
-        //table names etc
         "/server".to_string()
     }
 
     pub fn for_domain_meta() -> String {
-        //table names etc
         "/domains".to_string()
     }
 
     pub fn for_table_meta(r: &DomainReference) -> String {
-        //indexes etc
         format!("/domains/{}/tables", r.domain_name)
     }
 
     pub fn for_table_values(r: &TableReference) -> String {
-        //value rows
         format!("{}::/{}", r.domain_name, r.table_name)
     }
 

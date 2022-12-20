@@ -15,6 +15,7 @@ pub trait TableReferenceTrait {
 
     fn get_table_u(&self, requests: &Self::Requests) -> Result<TableU, DbError>;
     fn put_table_u(table_u: TableU, requests: &Self::Requests) -> Result<Self::Effect, DbError>;
+    fn post_table_u(table_u: TableU, requests: &Self::Requests) -> Result<Self::Effect, DbError>;
 
     fn list_indexes(&self, requests: &Self::Requests) -> Result<Vec<String>, DbError>;
 }

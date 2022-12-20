@@ -17,6 +17,10 @@ pub trait DatabaseServerReferenceTrait {
         db_server_u: DatabaseServerU,
         requests: &Self::Requests,
     ) -> Result<Self::Effect, DbError>;
+    fn post_database_server_u(
+        db_server_u: DatabaseServerU,
+        requests: &Self::Requests,
+    ) -> Result<Self::Effect, DbError>;
 
     fn list_domains(&self, requests: &Self::Requests) -> Result<Vec<String>, DbError>;
 }
