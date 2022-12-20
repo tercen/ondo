@@ -1,5 +1,6 @@
 use super::super::DbError;
 use super::super::Table;
+use super::super::TableU;
 use super::DomainReference;
 
 pub trait TableReferenceTrait {
@@ -12,6 +13,9 @@ pub trait TableReferenceTrait {
     fn post_table(table: Table) -> Self::Effect;
     fn delete_table(&self) -> Self::Effect;
     fn list_tables(&self, requests: &Self::Requests) -> Result<Vec<Table>, DbError>;
+
+    fn get_table_u(&self, requests: &Self::Requests) -> Result<TableU, DbError>;
+    fn put_table_u(table_u: TableU, requests: &Self::Requests) -> Result<Self::Effect, DbError>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

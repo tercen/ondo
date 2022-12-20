@@ -1,15 +1,23 @@
-use super::super::DbError;
 use super::super::DatabaseServer;
+use super::super::DatabaseServerU;
+use super::super::DbError;
 
 pub trait DatabaseServerReferenceTrait {
     type Effect;
     type Requests;
 
     fn cf_name(&self) -> String;
-    fn get_db_server(&self, requests: &Self::Requests) -> Result<DatabaseServer, DbError>;
-    fn put_db_server(db_server: DatabaseServer) -> Self::Effect;
-    fn post_db_server(db_server: DatabaseServer) -> Self::Effect;
+    fn get_database_server(&self, requests: &Self::Requests) -> Result<DatabaseServer, DbError>;
+    fn put_database_server(db_server: DatabaseServer) -> Self::Effect;
+    fn post_database_server(db_server: DatabaseServer) -> Self::Effect;
     fn delete_db_server(&self) -> Self::Effect;
+
+    fn get_database_server_u(&self, requests: &Self::Requests) -> Result<DatabaseServerU, DbError>;
+    fn put_database_server_u(
+        db_server_u: DatabaseServerU,
+        requests: &Self::Requests,
+    ) -> Result<Self::Effect, DbError>;
+
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -20,4 +28,3 @@ impl DatabaseServerReference {
         DatabaseServerReference
     }
 }
-

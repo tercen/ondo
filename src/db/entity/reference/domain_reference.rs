@@ -1,5 +1,6 @@
 use super::super::DbError;
 use super::super::Domain;
+use super::super::DomainU;
 use super::DatabaseServerReference;
 
 trait DomainReferenceTrait {
@@ -12,6 +13,9 @@ trait DomainReferenceTrait {
     fn post_domain(domain: Domain) -> Self::Effect;
     fn delete_domain(&self) -> Self::Effect;
     fn list_domains(&self, requests: &Self::Requests) -> Result<Vec<Domain>, DbError>;
+
+    fn get_domain_u(&self, requests: &Self::Requests) -> Result<DomainU, DbError>;
+    fn put_domain_u(domain_u: DomainU, requests: &Self::Requests) -> Result<Self::Effect, DbError>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
