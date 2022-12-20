@@ -12,10 +12,11 @@ pub trait TableReferenceTrait {
     fn put_table(table: Table) -> Self::Effect;
     fn post_table(table: Table) -> Self::Effect;
     fn delete_table(&self) -> Self::Effect;
-    fn list_tables(&self, requests: &Self::Requests) -> Result<Vec<Table>, DbError>;
 
     fn get_table_u(&self, requests: &Self::Requests) -> Result<TableU, DbError>;
     fn put_table_u(table_u: TableU, requests: &Self::Requests) -> Result<Self::Effect, DbError>;
+
+    fn list_indexes(&self, requests: &Self::Requests) -> Result<Vec<String>, DbError>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

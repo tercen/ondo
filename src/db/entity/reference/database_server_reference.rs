@@ -18,6 +18,7 @@ pub trait DatabaseServerReferenceTrait {
         requests: &Self::Requests,
     ) -> Result<Self::Effect, DbError>;
 
+    fn list_domains(&self, requests: &Self::Requests) -> Result<Vec<String>, DbError>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
