@@ -1,15 +1,16 @@
 use super::super::DbError;
+use super::super::DbResult;
 use super::super::Index;
 use super::TableReference;
 
 trait IndexReferenceTrait {
-    type Effect; 
+    type Effects; 
     type Request;
 
-    fn get_index(&self, request: &Self::Request) -> Result<&Index, DbError>;
-    fn put_index(index: Index) -> Self::Effect;
-    fn remove_index(&self) -> Self::Effect;
-    fn list_indexes(&self, request: &Self::Request) -> Result<Vec<Index>, DbError>;
+    fn cf_name(&self) -> String;
+    fn get_index(&self, request: &Self::Request) -> DbResult<Index>;
+    fn put_index(index: Index) -> DbResult<Self::Effects>;
+    fn remove_index(&self) -> DbResult<Self::Effects>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -1,16 +1,16 @@
 use super::super::DbError;
+use super::super::DbResult;
 use super::super::Key;
 use super::super::IndexValue;
 use super::IndexReference;
 
 pub trait IdReferenceTrait {
-    type Effect;
+    type Effects;
     type Requests;
     fn cf_name(&self) -> String;
-    fn get_index_value(&self, requests: &Self::Requests) -> Result<IndexValue, DbError>;
-    fn put_index_value(&self, id: IndexValue) -> Self::Effect;
-    fn delete_index_value(&self) -> Self::Effect;
-    fn list_index_values(&self, requests: &Self::Requests) -> Result<Vec<IndexValue>, DbError>;
+    fn get_index_value(&self, requests: &Self::Requests) -> DbResult<IndexValue>;
+    fn put_index_value(&self, id: IndexValue) -> DbResult<Self::Effects>;
+    fn delete_index_value(&self) -> DbResult<Self::Effects>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

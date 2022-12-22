@@ -1,4 +1,5 @@
 pub use super::db_error::DbError;
+pub use super::db_error::DbResult;
 
 mod database_server;
 pub use database_server::*;

@@ -1,24 +1,32 @@
 use super::super::DbError;
+use super::super::DbResult;
+use super::super::DomainStored;
 use super::super::Domain;
-use super::super::DomainU;
 use super::DatabaseServerReference;
 
-trait DomainReferenceTrait {
-    type Effect;
+trait DomainStoredReferenceTrait {
+    type Effects;
     type Requests;
 
     fn cf_name(&self) -> String;
-    fn get_domain(&self, requests: &Self::Requests) -> Result<Domain, DbError>;
-    fn put_domain(domain: Domain) -> Self::Effect;
-    fn post_domain(domain: Domain) -> Self::Effect;
-    fn delete_domain(&self) -> Self::Effect;
+    fn get_domain_stored(&self, requests: &Self::Requests) -> DbResult<DomainStored>;
+    fn put_domain_stored(domain: DomainStored) -> DbResult<Self::Effects>;
+    fn post_domain_stored(domain: DomainStored) -> DbResult<Self::Effects>;
+    fn delete_domain_stored(&self) -> DbResult<Self::Effects>;
+    fn list_table_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>>;
+}
 
-    fn get_domain_u(&self, requests: &Self::Requests) -> Result<DomainU, DbError>;
-    fn put_domain_u(domain_u: DomainU, requests: &Self::Requests) -> Result<Self::Effect, DbError>;
-    fn post_domain_u(domain_u: DomainU, requests: &Self::Requests)
-        -> Result<Self::Effect, DbError>;
+trait DomainReferenceTrait {
+    type Effects;
+    type Requests;
 
-    fn list_tables(&self, requests: &Self::Requests) -> Result<Vec<String>, DbError>;
+    fn cf_name(&self) -> String;
+    fn get_domain(&self, requests: &Self::Requests) -> DbResult<Domain>;
+    fn put_domain(domain_u: Domain, requests: &Self::Requests) ->DbResult<Self::Effects>;
+    fn post_domain(domain_u: Domain, requests: &Self::Requests)
+        -> DbResult<Self::Effects>;
+    fn delete_domain(&self) -> DbResult<Self::Effects>;
+    fn list_table_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

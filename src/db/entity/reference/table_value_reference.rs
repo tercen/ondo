@@ -1,17 +1,18 @@
 use super::super::DbError;
+use super::super::DbResult;
 use super::super::Value;
 use super::TableReference;
 
 pub trait TableValueReferenceTrait {
-    type Effect;
+    type Effects;
     type Request;
     fn cf_name(&self) -> String;
-    fn get_value(&self, request: &Self::Request) -> Result<Value, DbError>;
-    fn put_value(&self, value: Value) -> Self::Effect;
-    fn post_value(&self, value: Value) -> Self::Effect;
-    fn delete_value(&self) -> Self::Effect;
-    fn list_values(&self, request: &Self::Request) -> Result<Vec<Value>, DbError>;
+    fn get_value(&self, request: &Self::Request) -> DbResult<Value>;
+    fn put_value(&self, value: Value) -> DbResult<Self::Effects>;
+    fn post_value(&self, value: Value) -> DbResult<Self::Effects>;
+    fn delete_value(&self) -> DbResult<Self::Effects>;
 }
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TableValueReference {
     pub id: Value,

@@ -4,6 +4,7 @@ mod effect;
 mod entity;
 mod request;
 pub use db_error::DbError;
+pub use db_error::DbResult;
 
 // #[derive(Debug, Clone, PartialEq, Eq)]
 // A command to be executed on a database server

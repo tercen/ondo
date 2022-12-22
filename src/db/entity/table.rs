@@ -5,7 +5,7 @@ use std::collections::HashMap;
 pub struct TableU {
     pub id: TableReference,
 }
-pub struct Table {
+pub struct TableStored {
     pub table_u: TableU,
     pub indexes: HashMap<String, Index>,
 }

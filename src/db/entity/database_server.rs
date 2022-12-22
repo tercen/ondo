@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-pub struct DatabaseServerU;
+pub struct DataBaseServer;
 
-pub struct DatabaseServer {
-    pub databse_server_u: DatabaseServerU,
+pub struct DataBaseServerStored {
+    pub databse_server_u: DataBaseServer,
     pub domains: HashMap<String, ()>
 }
