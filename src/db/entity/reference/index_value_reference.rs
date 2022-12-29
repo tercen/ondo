@@ -4,7 +4,7 @@ use super::super::Key;
 use super::super::IndexValue;
 use super::IndexReference;
 
-pub trait IdReferenceTrait {
+pub trait IndexValueReferenceTrait {
     type Effects;
     type Requests;
     fn cf_name(&self) -> String;
@@ -14,7 +14,7 @@ pub trait IdReferenceTrait {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct IndexValueReference {
+pub struct IndexValueReference {
     pub key: Key,
     pub index_name: String,
     pub table_name: String,

@@ -5,6 +5,6 @@ pub struct Domain {
     pub id: DomainReference
 }
 pub struct DomainStored {
-    pub domain_u: Domain,
+    pub domain: Domain,
     pub tables: HashMap<String, ()>
 }

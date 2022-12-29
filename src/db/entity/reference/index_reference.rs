@@ -3,7 +3,7 @@ use super::super::DbResult;
 use super::super::Index;
 use super::TableReference;
 
-trait IndexReferenceTrait {
+pub trait IndexReferenceTrait {
     type Effects; 
     type Request;
 

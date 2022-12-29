@@ -1,17 +1,17 @@
 use super::super::DbError;
 use super::super::DbResult;
 use super::super::TableStored;
-use super::super::TableU;
+use super::super::Table;
 use super::DomainReference;
 
-pub trait TableStoredReferenceTrait {
+pub(super) trait TableStoredReferenceTrait {
     type Effects;
     type Requests;
 
     fn cf_name(&self) -> String;
     fn get_table_stored(&self, requests: &Self::Requests) -> DbResult<TableStored>;
-    fn put_table_stored(table: TableStored) -> DbResult<Self::Effects>;
-    fn post_table_stored(table: TableStored) -> DbResult<Self::Effects>;
+    fn put_table_stored(table_stored: TableStored) -> DbResult<Self::Effects>;
+    fn post_table_stored(table_stored: TableStored) -> DbResult<Self::Effects>;
     fn delete_table_stored(&self) -> DbResult<Self::Effects>;
     fn list_index_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>>;
 }
@@ -21,9 +21,9 @@ pub trait TableReferenceTrait {
     type Requests;
 
     fn cf_name(&self) -> String;
-    fn get_table(&self, requests: &Self::Requests) -> DbResult<TableU>;
-    fn put_table(table_u: TableU, requests: &Self::Requests) -> DbResult<Self::Effects>;
-    fn post_table(table_u: TableU, requests: &Self::Requests) -> DbResult<Self::Effects>;
+    fn get_table(&self, requests: &Self::Requests) -> DbResult<Table>;
+    fn put_table(table: Table, requests: &Self::Requests) -> DbResult<Self::Effects>;
+    fn post_table(table: Table, requests: &Self::Requests) -> DbResult<Self::Effects>;
     fn delete_table(&self) -> DbResult<Self::Effects>;
     fn list_index_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>>;
 }

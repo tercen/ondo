@@ -2,10 +2,10 @@ use super::index::Index;
 use super::reference::TableReference;
 use std::collections::HashMap;
 
-pub struct TableU {
+pub struct Table {
     pub id: TableReference,
 }
 pub struct TableStored {
-    pub table_u: TableU,
+    pub table: Table,
     pub indexes: HashMap<String, Index>,
 }

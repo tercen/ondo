@@ -4,26 +4,26 @@ use super::super::DomainStored;
 use super::super::Domain;
 use super::DatabaseServerReference;
 
-trait DomainStoredReferenceTrait {
+pub(super) trait DomainStoredReferenceTrait {
     type Effects;
     type Requests;
 
     fn cf_name(&self) -> String;
     fn get_domain_stored(&self, requests: &Self::Requests) -> DbResult<DomainStored>;
-    fn put_domain_stored(domain: DomainStored) -> DbResult<Self::Effects>;
-    fn post_domain_stored(domain: DomainStored) -> DbResult<Self::Effects>;
+    fn put_domain_stored(domain_stored: DomainStored) -> DbResult<Self::Effects>;
+    fn post_domain_stored(domain_stored: DomainStored) -> DbResult<Self::Effects>;
     fn delete_domain_stored(&self) -> DbResult<Self::Effects>;
     fn list_table_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>>;
 }
 
-trait DomainReferenceTrait {
+pub trait DomainReferenceTrait {
     type Effects;
     type Requests;
 
     fn cf_name(&self) -> String;
     fn get_domain(&self, requests: &Self::Requests) -> DbResult<Domain>;
-    fn put_domain(domain_u: Domain, requests: &Self::Requests) ->DbResult<Self::Effects>;
-    fn post_domain(domain_u: Domain, requests: &Self::Requests)
+    fn put_domain(domain: Domain, requests: &Self::Requests) ->DbResult<Self::Effects>;
+    fn post_domain(domain: Domain, requests: &Self::Requests)
         -> DbResult<Self::Effects>;
     fn delete_domain(&self) -> DbResult<Self::Effects>;
     fn list_table_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>>;
