@@ -1,10 +1,12 @@
 #![allow(dead_code)]
 mod db_error;
-mod effect;
+mod effects;
 mod entity;
-mod request;
+mod requests;
 pub use db_error::DbError;
 pub use db_error::DbResult;
+pub use effects::*;
+pub use requests::*;
 
 // #[derive(Debug, Clone, PartialEq, Eq)]
 // A command to be executed on a database server

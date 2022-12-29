@@ -1,9 +1,18 @@
-use super::super::DataBaseServerStored;
+use super::CfName;
 use super::super::DataBaseServer;
+use super::super::DataBaseServerStored;
 use super::super::DbError;
 use super::super::DbResult;
-use super::CfName;
 
+pub trait DatabaseServerStoredRequests {
+    fn get_database_server_stored(&self, cf_name: &str, key: &DatabaseServerReference) -> DbResult<Option<DataBaseServerStored>>;    
+}
+
+pub enum DatabaseServerStoredEffect {
+    Put(DataBaseServerStored),
+    Post(DataBaseServerStored),
+    Delete,
+}
 pub(super) trait DatabaseServerStoredReferenceTrait {
     type Effects;
     type Requests;
@@ -23,7 +32,7 @@ pub trait DatabaseServerReferenceTrait {
     fn cf_name(&self) -> String;
     fn get_database_server(&self, requests: &Self::Requests) -> DbResult<DataBaseServer>;
     fn put_database_server(
-        db_server_u: DataBaseServer,
+        data_base_server: DataBaseServer,
         requests: &Self::Requests,
     ) -> DbResult<Self::Effects>;
     fn post_database_server(
@@ -87,7 +96,7 @@ impl DatabaseServerReferenceTrait for DatabaseServerReference {
     }
 
     fn put_database_server(
-        db_server_u: DataBaseServer,
+        data_base_server: DataBaseServer,
         requests: &Self::Requests,
     ) -> DbResult<Self::Effects> {
         todo!()

@@ -1,6 +1,6 @@
 use super::DomainReference;
-use super::TableReference;
 use super::IndexReference;
+use super::TableReference;
 
 pub struct CfName;
 

@@ -1,8 +1,8 @@
+use super::IndexReference;
 use super::super::DbError;
 use super::super::DbResult;
-use super::super::Key;
 use super::super::IndexValue;
-use super::IndexReference;
+use super::super::Key;
 
 pub trait IndexValueReferenceTrait {
     type Effects;

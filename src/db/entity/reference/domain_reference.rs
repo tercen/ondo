@@ -1,8 +1,8 @@
+use super::DatabaseServerReference;
 use super::super::DbError;
 use super::super::DbResult;
-use super::super::DomainStored;
 use super::super::Domain;
-use super::DatabaseServerReference;
+use super::super::DomainStored;
 
 pub(super) trait DomainStoredReferenceTrait {
     type Effects;

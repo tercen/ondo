@@ -1,8 +1,8 @@
+use super::DomainReference;
 use super::super::DbError;
 use super::super::DbResult;
-use super::super::TableStored;
 use super::super::Table;
-use super::DomainReference;
+use super::super::TableStored;
 
 pub(super) trait TableStoredReferenceTrait {
     type Effects;
