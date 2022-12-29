@@ -1,26 +1,25 @@
 use super::CfName;
-use super::super::DataBaseServer;
-use super::super::DataBaseServerStored;
+use super::super::DatabaseServer;
+use super::super::DatabaseServerStored;
 use super::super::DbError;
 use super::super::DbResult;
 
 pub trait DatabaseServerStoredRequests {
-    fn get_database_server_stored(&self, cf_name: &str, key: &DatabaseServerReference) -> DbResult<Option<DataBaseServerStored>>;    
+    fn get_database_server_stored(&self, cf_name: &str, key: &DatabaseServerReference) -> DbResult<Option<DatabaseServerStored>>;    
 }
 
 pub enum DatabaseServerStoredEffect {
-    Put(DataBaseServerStored),
-    Post(DataBaseServerStored),
-    Delete,
+    Put(String, DatabaseServerReference, DatabaseServerStored),
+    Delete(String, DatabaseServerReference),
 }
 pub(super) trait DatabaseServerStoredReferenceTrait {
     type Effects;
     type Requests;
 
     fn cf_name(&self) -> String;
-    fn get_database_server_stored(&self, requests: &Self::Requests) -> DbResult<DataBaseServerStored>;
-    fn put_database_server_stored(data_base_server: DataBaseServerStored) -> DbResult<Self::Effects>;
-    fn post_database_server_stored(data_base_server: DataBaseServerStored) -> DbResult<Self::Effects>;
+    fn get_database_server_stored(&self, requests: &Self::Requests) -> DbResult<DatabaseServerStored>;
+    fn put_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Self::Effects>;
+    fn post_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Self::Effects>;
     fn delete_database_server_stored(&self) -> DbResult<Self::Effects>;
     fn list_domain_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>>;
 }
@@ -30,13 +29,13 @@ pub trait DatabaseServerReferenceTrait {
     type Requests;
 
     fn cf_name(&self) -> String;
-    fn get_database_server(&self, requests: &Self::Requests) -> DbResult<DataBaseServer>;
+    fn get_database_server(&self, requests: &Self::Requests) -> DbResult<DatabaseServer>;
     fn put_database_server(
-        data_base_server: DataBaseServer,
+        data_base_server: DatabaseServer,
         requests: &Self::Requests,
     ) -> DbResult<Self::Effects>;
     fn post_database_server(
-        db_server_u: DataBaseServer,
+        db_server_u: DatabaseServer,
         requests: &Self::Requests,
     ) -> DbResult<Self::Effects>;
     fn delete_database_server(&self) -> DbResult<Self::Effects>;
@@ -61,15 +60,15 @@ impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
         todo!()
     }
 
-    fn get_database_server_stored(&self, requests: &Self::Requests) -> DbResult<DataBaseServerStored> {
+    fn get_database_server_stored(&self, requests: &Self::Requests) -> DbResult<DatabaseServerStored> {
         todo!()
     }
 
-    fn put_database_server_stored(data_base_server: DataBaseServerStored) -> DbResult<Self::Effects> {
+    fn put_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Self::Effects> {
         todo!()
     }
 
-    fn post_database_server_stored(data_base_server: DataBaseServerStored) -> DbResult<Self::Effects> {
+    fn post_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Self::Effects> {
         todo!()
     }
 
@@ -91,19 +90,19 @@ impl DatabaseServerReferenceTrait for DatabaseServerReference {
         todo!()
     }
 
-    fn get_database_server(&self, requests: &Self::Requests) -> DbResult<DataBaseServer> {
+    fn get_database_server(&self, requests: &Self::Requests) -> DbResult<DatabaseServer> {
         todo!()
     }
 
     fn put_database_server(
-        data_base_server: DataBaseServer,
+        data_base_server: DatabaseServer,
         requests: &Self::Requests,
     ) -> DbResult<Self::Effects> {
         todo!()
     }
 
     fn post_database_server(
-        db_server_u: DataBaseServer,
+        db_server_u: DatabaseServer,
         requests: &Self::Requests,
     ) -> DbResult<Self::Effects> {
         todo!()
