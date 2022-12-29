@@ -7,7 +7,6 @@ pub trait IndexReferenceTrait {
     type Effects; 
     type Request;
 
-    fn cf_name(&self) -> String;
     fn get_index(&self, request: &Self::Request) -> DbResult<Index>;
     fn put_index(index: Index) -> DbResult<Self::Effects>;
     fn remove_index(&self) -> DbResult<Self::Effects>;

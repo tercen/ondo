@@ -4,6 +4,15 @@ use super::super::DbResult;
 use super::super::IndexValue;
 use super::super::Key;
 
+pub trait IndexValueRequests {
+    fn get_index_value_stored(&self, cf_name: &str, key: &IndexValueReference) -> DbResult<Option<IndexValue>>;    
+}
+
+pub enum IndexValueEffect {
+    Put(String, IndexValueReference, IndexValue),
+    Delete(String, IndexValueReference),
+}
+
 pub trait IndexValueReferenceTrait {
     type Effects;
     type Requests;

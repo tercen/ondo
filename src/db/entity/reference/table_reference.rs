@@ -4,6 +4,15 @@ use super::super::DbResult;
 use super::super::Table;
 use super::super::TableStored;
 
+pub trait TableStoredRequests {
+    fn get_table_stored(&self, cf_name: &str, key: &TableReference) -> DbResult<Option<TableStored>>;    
+}
+
+pub enum TableStoredEffect {
+    Put(String, TableReference, TableStored),
+    Delete(String, TableReference),
+}
+
 pub(super) trait TableStoredReferenceTrait {
     type Effects;
     type Requests;

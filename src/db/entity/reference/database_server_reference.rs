@@ -12,6 +12,7 @@ pub enum DatabaseServerStoredEffect {
     Put(String, DatabaseServerReference, DatabaseServerStored),
     Delete(String, DatabaseServerReference),
 }
+
 pub(super) trait DatabaseServerStoredReferenceTrait {
     type Effects;
     type Requests;
@@ -102,7 +103,7 @@ impl DatabaseServerReferenceTrait for DatabaseServerReference {
     }
 
     fn post_database_server(
-        db_server_u: DatabaseServer,
+        data_base_server: DatabaseServer,
         requests: &Self::Requests,
     ) -> DbResult<Self::Effects> {
         todo!()

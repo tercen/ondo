@@ -4,6 +4,15 @@ use super::super::DbResult;
 use super::super::Domain;
 use super::super::DomainStored;
 
+pub trait DomainStoredRequests {
+    fn get_domain_stored(&self, cf_name: &str, key: &DomainReference) -> DbResult<Option<DomainStored>>;    
+}
+
+pub enum DomainStoredEffect {
+    Put(String, DomainReference, DomainStored),
+    Delete(String, DomainReference),
+}
+
 pub(super) trait DomainStoredReferenceTrait {
     type Effects;
     type Requests;

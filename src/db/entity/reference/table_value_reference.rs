@@ -1,16 +1,25 @@
 use super::super::DbError;
 use super::super::DbResult;
+use super::super::TableValue;
 use super::super::Value;
 use super::TableReference;
 
+pub trait TableValueRequests {
+    fn get_table_value(&self, cf_name: &str, key: &TableValueReference) -> DbResult<Option<TableValue>>;    
+}
+
+pub enum TableValueEffect {
+    Put(String, TableValueReference, TableValue),
+    Delete(String, TableValueReference),
+}
 pub trait TableValueReferenceTrait {
     type Effects;
     type Request;
     fn cf_name(&self) -> String;
-    fn get_value(&self, request: &Self::Request) -> DbResult<Value>;
-    fn put_value(&self, value: Value) -> DbResult<Self::Effects>;
-    fn post_value(&self, value: Value) -> DbResult<Self::Effects>;
-    fn delete_value(&self) -> DbResult<Self::Effects>;
+    fn get_table_value(&self, request: &Self::Request) -> DbResult<Value>;
+    fn put_table_value(&self, value: TableValue) -> DbResult<Self::Effects>;
+    fn post_table_value(&self, value: TableValue) -> DbResult<Self::Effects>;
+    fn delete_table_value(&self) -> DbResult<Self::Effects>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
