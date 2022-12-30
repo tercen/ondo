@@ -29,7 +29,6 @@ pub trait TableReferenceTrait {
     type Effects;
     type Requests;
 
-    fn cf_name(&self) -> String;
     fn get_table(&self, requests: &Self::Requests) -> DbResult<Table>;
     fn put_table(table: Table, requests: &Self::Requests) -> DbResult<Self::Effects>;
     fn post_table(table: Table, requests: &Self::Requests) -> DbResult<Self::Effects>;

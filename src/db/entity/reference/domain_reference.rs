@@ -29,7 +29,6 @@ pub trait DomainReferenceTrait {
     type Effects;
     type Requests;
 
-    fn cf_name(&self) -> String;
     fn get_domain(&self, requests: &Self::Requests) -> DbResult<Domain>;
     fn put_domain(domain: Domain, requests: &Self::Requests) ->DbResult<Self::Effects>;
     fn post_domain(domain: Domain, requests: &Self::Requests)

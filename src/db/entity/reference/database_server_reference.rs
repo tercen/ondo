@@ -29,7 +29,6 @@ pub trait DatabaseServerReferenceTrait {
     type Effects;
     type Requests;
 
-    fn cf_name(&self) -> String;
     fn get_database_server(&self, requests: &Self::Requests) -> DbResult<DatabaseServer>;
     fn put_database_server(
         data_base_server: DatabaseServer,
@@ -86,10 +85,6 @@ impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
 impl DatabaseServerReferenceTrait for DatabaseServerReference {
     type Effects = ();
     type Requests = ();
-
-    fn cf_name(&self) -> String {
-        todo!()
-    }
 
     fn get_database_server(&self, requests: &Self::Requests) -> DbResult<DatabaseServer> {
         todo!()
