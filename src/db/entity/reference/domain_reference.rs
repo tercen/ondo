@@ -18,7 +18,7 @@ pub(super) trait DomainStoredReferenceTrait {
     type Requests;
 
     fn cf_name(&self) -> String;
-    fn get_domain_stored(&self, requests: &Self::Requests) -> DbResult<DomainStored>;
+    fn get_domain_stored(&self, requests: &Self::Requests) -> DbResult<Option<DomainStored>>;
     fn put_domain_stored(domain_stored: DomainStored) -> DbResult<Self::Effects>;
     fn post_domain_stored(domain_stored: DomainStored) -> DbResult<Self::Effects>;
     fn delete_domain_stored(&self) -> DbResult<Self::Effects>;
@@ -29,7 +29,7 @@ pub trait DomainReferenceTrait {
     type Effects;
     type Requests;
 
-    fn get_domain(&self, requests: &Self::Requests) -> DbResult<Domain>;
+    fn get_domain(&self, requests: &Self::Requests) -> DbResult<Option<Domain>>;
     fn put_domain(domain: Domain, requests: &Self::Requests) ->DbResult<Self::Effects>;
     fn post_domain(domain: Domain, requests: &Self::Requests)
         -> DbResult<Self::Effects>;

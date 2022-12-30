@@ -18,7 +18,7 @@ pub(super) trait TableStoredReferenceTrait {
     type Requests;
 
     fn cf_name(&self) -> String;
-    fn get_table_stored(&self, requests: &Self::Requests) -> DbResult<TableStored>;
+    fn get_table_stored(&self, requests: &Self::Requests) -> DbResult<Option<TableStored>>;
     fn put_table_stored(table_stored: TableStored) -> DbResult<Self::Effects>;
     fn post_table_stored(table_stored: TableStored) -> DbResult<Self::Effects>;
     fn delete_table_stored(&self) -> DbResult<Self::Effects>;
@@ -29,8 +29,8 @@ pub trait TableReferenceTrait {
     type Effects;
     type Requests;
 
-    fn get_table(&self, requests: &Self::Requests) -> DbResult<Table>;
-    fn put_table(table: Table, requests: &Self::Requests) -> DbResult<Self::Effects>;
+    fn get_table(&self, requests: &Self::Requests) -> DbResult<Option<Table>>;
+    fn put_table(table: Table, requests: &Self::Requests) -> DbResult<Option<Self::Effects>>;
     fn post_table(table: Table, requests: &Self::Requests) -> DbResult<Self::Effects>;
     fn delete_table(&self) -> DbResult<Self::Effects>;
     fn list_index_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>>;

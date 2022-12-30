@@ -17,7 +17,7 @@ pub trait IndexValueReferenceTrait {
     type Effects;
     type Requests;
     fn cf_name(&self) -> String;
-    fn get_index_value(&self, requests: &Self::Requests) -> DbResult<IndexValue>;
+    fn get_index_value(&self, requests: &Self::Requests) -> DbResult<Option<IndexValue>>;
     fn put_index_value(&self, id: IndexValue) -> DbResult<Self::Effects>;
     fn delete_index_value(&self) -> DbResult<Self::Effects>;
 }

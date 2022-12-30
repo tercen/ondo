@@ -18,7 +18,7 @@ pub trait Requests: DatabaseServerStoredRequests {}
 
 pub(super) trait DatabaseServerStoredReferenceTrait {
     fn cf_name(&self) -> String;
-    fn get_database_server_stored(&self, requests: &dyn Requests) -> DbResult<DatabaseServerStored>;
+    fn get_database_server_stored(&self, requests: &dyn Requests) -> DbResult<Option<DatabaseServerStored>>;
     fn put_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Effects>;
     fn post_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Effects>;
     fn delete_database_server_stored(&self) -> DbResult<Effects>;
@@ -29,7 +29,7 @@ pub trait DatabaseServerReferenceTrait {
     type Effects;
     type Requests;
 
-    fn get_database_server(&self, requests: &dyn Requests) -> DbResult<DatabaseServer>;
+    fn get_database_server(&self, requests: &dyn Requests) -> DbResult<Option<DatabaseServer>>;
     fn put_database_server(
         data_base_server: DatabaseServer,
         requests: &dyn Requests,
@@ -58,7 +58,7 @@ impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
         CfName::for_server_meta()
     }
 
-    fn get_database_server_stored(&self, requests: &dyn Requests) -> DbResult<DatabaseServerStored> {
+    fn get_database_server_stored(&self, requests: &dyn Requests) -> DbResult<Option<DatabaseServerStored>> {
         todo!()
     }
 
@@ -84,7 +84,7 @@ impl DatabaseServerReferenceTrait for DatabaseServerReference {
     type Effects = ();
     type Requests = ();
 
-    fn get_database_server(&self, requests: &dyn Requests) -> DbResult<DatabaseServer> {
+    fn get_database_server(&self, requests: &dyn Requests) -> DbResult<Option<DatabaseServer>> {
         todo!()
     }
 

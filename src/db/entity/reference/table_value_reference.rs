@@ -16,7 +16,7 @@ pub trait TableValueReferenceTrait {
     type Effects;
     type Request;
     fn cf_name(&self) -> String;
-    fn get_table_value(&self, request: &Self::Request) -> DbResult<Value>;
+    fn get_table_value(&self, request: &Self::Request) -> DbResult<Option<Value>>;
     fn put_table_value(&self, value: TableValue) -> DbResult<Self::Effects>;
     fn post_table_value(&self, value: TableValue) -> DbResult<Self::Effects>;
     fn delete_table_value(&self) -> DbResult<Self::Effects>;
