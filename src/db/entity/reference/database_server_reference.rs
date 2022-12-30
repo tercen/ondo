@@ -143,3 +143,9 @@ impl DatabaseServerReferenceTrait for DatabaseServerReference {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mockall::automock;
+
+}
