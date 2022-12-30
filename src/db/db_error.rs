@@ -1,5 +1,6 @@
 pub enum DbError {
     NotFound,
+    DatabaseNotInitialized,
     Other,
 }
 
