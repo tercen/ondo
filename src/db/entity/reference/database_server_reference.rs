@@ -146,6 +146,20 @@ impl DatabaseServerReferenceTrait for DatabaseServerReference {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mockall::automock;
+    use mockall::*;
 
+    mock! {
+        MockDatabaseServerStoredRequests {}
+        impl DatabaseServerStoredRequests for MockDatabaseServerStoredRequests {
+            fn get_database_server_stored(
+                &self,
+                cf_name: &str,
+                key: &DatabaseServerReference,
+            ) -> DbResult<Option<DatabaseServerStored>>;
+        }
+    }
+
+    mod database_server_stored_reference_trait {
+        use super::*;
+    }
 }
