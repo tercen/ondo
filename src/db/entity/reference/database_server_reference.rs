@@ -13,33 +13,33 @@ pub enum DatabaseServerStoredEffect {
     Delete(String, DatabaseServerReference),
 }
 
-pub(super) trait DatabaseServerStoredReferenceTrait {
-    type Effects;
-    type Requests;
+pub type Effects = Vec<DatabaseServerStoredEffect>;
+pub trait Requests: DatabaseServerStoredRequests {}
 
+pub(super) trait DatabaseServerStoredReferenceTrait {
     fn cf_name(&self) -> String;
-    fn get_database_server_stored(&self, requests: &Self::Requests) -> DbResult<DatabaseServerStored>;
-    fn put_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Self::Effects>;
-    fn post_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Self::Effects>;
-    fn delete_database_server_stored(&self) -> DbResult<Self::Effects>;
-    fn list_domain_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>>;
+    fn get_database_server_stored(&self, requests: &dyn Requests) -> DbResult<DatabaseServerStored>;
+    fn put_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Effects>;
+    fn post_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Effects>;
+    fn delete_database_server_stored(&self) -> DbResult<Effects>;
+    fn list_domain_names(&self, requests: &dyn Requests) -> DbResult<Vec<String>>;
 }
 
 pub trait DatabaseServerReferenceTrait {
     type Effects;
     type Requests;
 
-    fn get_database_server(&self, requests: &Self::Requests) -> DbResult<DatabaseServer>;
+    fn get_database_server(&self, requests: &dyn Requests) -> DbResult<DatabaseServer>;
     fn put_database_server(
         data_base_server: DatabaseServer,
-        requests: &Self::Requests,
-    ) -> DbResult<Self::Effects>;
+        requests: &dyn Requests,
+    ) -> DbResult<Effects>;
     fn post_database_server(
         db_server_u: DatabaseServer,
-        requests: &Self::Requests,
-    ) -> DbResult<Self::Effects>;
-    fn delete_database_server(&self) -> DbResult<Self::Effects>;
-    fn list_domain_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>>;
+        requests: &dyn Requests,
+    ) -> DbResult<Effects>;
+    fn delete_database_server(&self) -> DbResult<Effects>;
+    fn list_domain_names(&self, requests: &dyn Requests) -> DbResult<Vec<String>>;
 }
 
 
@@ -53,30 +53,28 @@ impl DatabaseServerReference {
 }
 
 impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
-    type Effects = ();
-    type Requests = ();
 
     fn cf_name(&self) -> String {
         todo!()
     }
 
-    fn get_database_server_stored(&self, requests: &Self::Requests) -> DbResult<DatabaseServerStored> {
+    fn get_database_server_stored(&self, requests: &dyn Requests) -> DbResult<DatabaseServerStored> {
         todo!()
     }
 
-    fn put_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Self::Effects> {
+    fn put_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Effects> {
         todo!()
     }
 
-    fn post_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Self::Effects> {
+    fn post_database_server_stored(data_base_server: DatabaseServerStored) -> DbResult<Effects> {
         todo!()
     }
 
-    fn delete_database_server_stored(&self) -> DbResult<Self::Effects> {
+    fn delete_database_server_stored(&self) -> DbResult<Effects> {
         todo!()
     }
 
-    fn list_domain_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>> {
+    fn list_domain_names(&self, requests: &dyn Requests) -> DbResult<Vec<String>> {
         todo!()
     }
 }
@@ -86,29 +84,29 @@ impl DatabaseServerReferenceTrait for DatabaseServerReference {
     type Effects = ();
     type Requests = ();
 
-    fn get_database_server(&self, requests: &Self::Requests) -> DbResult<DatabaseServer> {
+    fn get_database_server(&self, requests: &dyn Requests) -> DbResult<DatabaseServer> {
         todo!()
     }
 
     fn put_database_server(
         data_base_server: DatabaseServer,
-        requests: &Self::Requests,
-    ) -> DbResult<Self::Effects> {
+        requests: &dyn Requests,
+    ) -> DbResult<Effects> {
         todo!()
     }
 
     fn post_database_server(
         data_base_server: DatabaseServer,
-        requests: &Self::Requests,
-    ) -> DbResult<Self::Effects> {
+        requests: &dyn Requests,
+    ) -> DbResult<Effects> {
         todo!()
     }
 
-    fn delete_database_server(&self) -> DbResult<Self::Effects> {
+    fn delete_database_server(&self) -> DbResult<Effects> {
         todo!()
     }
 
-    fn list_domain_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>> {
+    fn list_domain_names(&self, requests: &dyn Requests) -> DbResult<Vec<String>> {
         todo!()
     }
 }
