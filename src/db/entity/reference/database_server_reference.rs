@@ -55,7 +55,7 @@ impl DatabaseServerReference {
 impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
 
     fn cf_name(&self) -> String {
-        todo!()
+        CfName::for_server_meta()
     }
 
     fn get_database_server_stored(&self, requests: &dyn Requests) -> DbResult<DatabaseServerStored> {
