@@ -188,10 +188,11 @@ mod tests {
             );
 
             let boxed_stored = Box::new(stored.clone());
-            mock.expect_get_database_server_stored()
+            let mut mock2 = MockTestRequests::new();
+            mock2.expect_get_database_server_stored()
                 .returning(   move |_, _| Ok(Some((*boxed_stored).clone())));
             assert_eq!(
-                ref_.get_database_server_stored(&mock).unwrap(),
+                ref_.get_database_server_stored(&mock2).unwrap(),
                 Some(stored.clone()),
                 "get_database_server_stored should return the stored value if the key exists"
             );
