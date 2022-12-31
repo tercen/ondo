@@ -149,19 +149,8 @@ mod tests {
     use mockall::*;
     use std::collections::HashMap;
 
-    pub trait Trait1 {
-        fn func1(&self);
-    }
-
-    pub trait Trait2: Trait1 {
-        fn func2(&self);
-    }
-
     mock! {
         TestRequests {}
-        impl Trait1 for TestRequests {
-            fn func1(&self);
-        }
         impl DatabaseServerStoredRequests for TestRequests {
             fn get_database_server_stored(
                 &self,
@@ -172,16 +161,6 @@ mod tests {
 
     mod database_server_stored_reference_trait {
         use super::*;
-
-        #[test]
-        fn test_mock() {
-            let mut mock = MockTestRequests::new();
-            mock.expect_func1().returning(|| ());
-            mock.expect_get_database_server_stored()
-                .returning(|_, _| Err(DbError::NotFound));
-            mock.func1();
-            // mock.get_database_server_stored(&"", &DatabaseServerReference::new()).unwrap_err();
-        }
 
         #[test]
         fn test_get_database_server_stored() {
