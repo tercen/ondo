@@ -187,9 +187,8 @@ mod tests {
                 "get_database_server_stored should return DbError::DatabaseNotInitialized if the key does not exist"
             );
 
-            let stored_clone = stored.clone();
             mock.expect_get_database_server_stored()
-                .returning(  |_, _| Ok(Some(stored_clone)));
+                .returning(   |_, _| Ok(Some(stored.clone())));
             assert_eq!(
                 ref_.get_database_server_stored(&mock).unwrap(),
                 Some(stored.clone()),
