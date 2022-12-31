@@ -1,6 +1,6 @@
 #[derive(Debug, PartialEq)]
 pub enum DbError {
-    NotFound,
+    // NotFound,
     DatabaseNotInitialized,
     Other,
 }

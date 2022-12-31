@@ -72,7 +72,11 @@ impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
         requests: &dyn Requests,
     ) -> DbResult<Option<DatabaseServerStored>> {
         let key = self;
-        requests.get_database_server_stored(&self.cf_name(), key)
+        match requests.get_database_server_stored(&self.cf_name(), key) {
+            Ok(Some(database_server_stored)) => Ok(Some(database_server_stored)),
+            Ok(None) => Err(DbError::DatabaseNotInitialized),
+            Err(e) => Err(e),
+        }
     }
 
     fn put_database_server_stored(
@@ -151,6 +155,7 @@ mod tests {
 
     mock! {
         TestRequests {}
+        impl Requests for TestRequests {}
         impl DatabaseServerStoredRequests for TestRequests {
             fn get_database_server_stored(
                 &self,
@@ -173,17 +178,18 @@ mod tests {
             };
 
             mock.expect_get_database_server_stored()
-                .returning(|_, _| Err(DbError::NotFound));
+                .returning( |_, _| Err(DbError::DatabaseNotInitialized));
 
             // Test get_database_server_stored
             assert_eq!(
                 ref_.get_database_server_stored(&mock).unwrap_err(),
-                DbError::NotFound,
-                "get_database_server_stored should return DbError::NotFound if the key does not exist"
+                DbError::DatabaseNotInitialized,
+                "get_database_server_stored should return DbError::DatabaseNotInitialized if the key does not exist"
             );
 
+            let stored_clone = stored.clone();
             mock.expect_get_database_server_stored()
-                .returning(|_, _| Ok(Some(stored.clone())));
+                .returning(  |_, _| Ok(Some(stored_clone)));
             assert_eq!(
                 ref_.get_database_server_stored(&mock).unwrap(),
                 Some(stored.clone()),
