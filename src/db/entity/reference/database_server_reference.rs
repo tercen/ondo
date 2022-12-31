@@ -147,7 +147,9 @@ impl DatabaseServerReferenceTrait for DatabaseServerReference {
 mod tests {
     use super::*;
     use mockall::*;
+    use std::collections::HashMap;
 
+    struct MockDatabaseServerStoredRequests;
     mock! {
         MockDatabaseServerStoredRequests {}
         impl DatabaseServerStoredRequests for MockDatabaseServerStoredRequests {
@@ -161,5 +163,34 @@ mod tests {
 
     mod database_server_stored_reference_trait {
         use super::*;
+        
+        #[test]
+        fn test_get_database_server_stored() {
+            let mut mock = MockDatabaseServerStoredRequests;
+            let ref_ = DatabaseServerReference::new();
+
+            let stored = DatabaseServerStored {
+                database_server: DatabaseServer,
+                domains: HashMap::new(),
+            };
+
+            mock.expect_get_database_server_stored()
+                .returning(|_, _| Err(DbError::NotFound));
+
+            // Test get_database_server_stored
+            assert_eq!(
+                ref_.get_database_server_stored(&mock).unwrap_err(),
+                DbError::NotFound,
+                "get_database_server_stored should return DbError::NotFound if the key does not exist"
+            );
+
+            mock.expect_get_database_server_stored()
+                .returning(|_, _| Ok(Some(stored.clone())));
+            assert_eq!(
+                ref_.get_database_server_stored(&mock).unwrap(),
+                Some(stored.clone()),
+                "get_database_server_stored should return the stored value if the key exists"
+            );
+        }
     }
 }
