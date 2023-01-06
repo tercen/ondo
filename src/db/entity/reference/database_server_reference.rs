@@ -12,6 +12,7 @@ pub trait DatabaseServerStoredRequests {
     ) -> DbResult<Option<DatabaseServerStored>>;
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DatabaseServerStoredEffect {
     CreateCf(String),
     Put(String, DatabaseServerReference, DatabaseServerStored),
@@ -29,11 +30,11 @@ pub(super) trait DatabaseServerStoredReferenceTrait {
     ) -> DbResult<Option<DatabaseServerStored>>;
     fn put_database_server_stored(
         &self,
-        data_base_server: DatabaseServerStored,
+        data_base_server: &DatabaseServerStored,
     ) -> DbResult<Effects>;
     fn post_database_server_stored(
         &self,
-        data_base_server: DatabaseServerStored,
+        data_base_server: &DatabaseServerStored,
     ) -> DbResult<Effects>;
     fn delete_database_server_stored(&self) -> DbResult<Effects>;
     fn list_domain_names(&self, requests: &dyn Requests) -> DbResult<Vec<String>>;
@@ -42,11 +43,11 @@ pub(super) trait DatabaseServerStoredReferenceTrait {
 pub trait DatabaseServerReferenceTrait {
     fn get_database_server(&self, requests: &dyn Requests) -> DbResult<Option<DatabaseServer>>;
     fn put_database_server(
-        data_base_server: DatabaseServer,
+        data_base_server: &DatabaseServer,
         requests: &dyn Requests,
     ) -> DbResult<Effects>;
     fn post_database_server(
-        db_server_u: DatabaseServer,
+        data_base_server: &DatabaseServer,
         requests: &dyn Requests,
     ) -> DbResult<Effects>;
     fn delete_database_server(&self) -> DbResult<Effects>;
@@ -81,19 +82,19 @@ impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
 
     fn put_database_server_stored(
         &self,
-        data_base_server: DatabaseServerStored,
+        data_base_server: &DatabaseServerStored,
     ) -> DbResult<Effects> {
         let effects = vec![DatabaseServerStoredEffect::Put(
             self.cf_name(),
             self.clone(),
-            data_base_server,
+            (*data_base_server).clone(),
         )];
         Ok(effects)
     }
 
     fn post_database_server_stored(
         &self,
-        data_base_server: DatabaseServerStored,
+        data_base_server: &DatabaseServerStored,
     ) -> DbResult<Effects> {
         let cf_name = self.cf_name();
         let mut effects = vec![DatabaseServerStoredEffect::CreateCf(cf_name)];
@@ -125,14 +126,14 @@ impl DatabaseServerReferenceTrait for DatabaseServerReference {
     }
 
     fn put_database_server(
-        data_base_server: DatabaseServer,
+        data_base_server: &DatabaseServer,
         requests: &dyn Requests,
     ) -> DbResult<Effects> {
         todo!()
     }
 
     fn post_database_server(
-        data_base_server: DatabaseServer,
+        data_base_server: &DatabaseServer,
         requests: &dyn Requests,
     ) -> DbResult<Effects> {
         todo!()
@@ -178,7 +179,7 @@ mod tests {
             };
 
             mock.expect_get_database_server_stored()
-                .returning( |_, _| Err(DbError::DatabaseNotInitialized));
+                .returning(|_, _| Err(DbError::DatabaseNotInitialized));
 
             // Test get_database_server_stored
             assert_eq!(
@@ -189,13 +190,33 @@ mod tests {
 
             let boxed_stored = stored.clone();
             let mut mock2 = MockTestRequests::new();
-            mock2.expect_get_database_server_stored()
-            .returning(move |_, _| Ok(Some(boxed_stored.clone())));
+            mock2
+                .expect_get_database_server_stored()
+                .returning(move |_, _| Ok(Some(boxed_stored.clone())));
             assert_eq!(
                 ref_.get_database_server_stored(&mock2).unwrap(),
                 Some(stored.clone()),
                 "get_database_server_stored should return the stored value if the key exists"
             );
+        }
+
+        #[test]
+        fn test_put_database_server_stored() {
+            let ref_trait = DatabaseServerReference;
+            let data_base_server_stored = DatabaseServerStored {
+                database_server: DatabaseServer,
+                domains: HashMap::new(),
+            };
+            let expected_effects = vec![DatabaseServerStoredEffect::Put(
+                ref_trait.cf_name(),
+                ref_trait.clone(),
+                data_base_server_stored.clone(),
+            )];
+
+            match ref_trait.put_database_server_stored(&data_base_server_stored) {
+                Ok(effects) => assert_eq!(effects, expected_effects),
+                Err(e) => panic!("Unexpected error: {}", e),
+            }
         }
     }
 }
