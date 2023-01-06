@@ -180,6 +180,14 @@ mod tests {
         }
 
         #[test]
+        fn test_cf_name() {
+            let ref_trait = DatabaseServerReference;
+            let expected_name = CfName::for_server_meta();
+
+            assert_eq!(ref_trait.cf_name(), expected_name);
+        }
+
+        #[test]
         fn test_get_database_server_stored() {
             let mut mock = MockTestRequests::new();
             let ref_trait = create_ref();
