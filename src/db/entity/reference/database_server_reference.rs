@@ -171,14 +171,14 @@ mod tests {
         fn create_ref() -> DatabaseServerReference {
             DatabaseServerReference::new()
         }
-    
+
         fn create_stored() -> DatabaseServerStored {
             DatabaseServerStored {
                 database_server: DatabaseServer,
                 domains: HashMap::new(),
             }
         }
-    
+
         #[test]
         fn test_get_database_server_stored() {
             let mut mock = MockTestRequests::new();
@@ -210,14 +210,16 @@ mod tests {
         fn test_put_database_server_stored() {
             let ref_trait = create_ref();
             let data_base_server_stored = create_stored();
-            
+
             let expected_effects = vec![DatabaseServerStoredEffect::Put(
                 ref_trait.cf_name(),
                 ref_trait.clone(),
                 data_base_server_stored.clone(),
             )];
 
-            let effects = ref_trait.put_database_server_stored(&data_base_server_stored).unwrap();
+            let effects = ref_trait
+                .put_database_server_stored(&data_base_server_stored)
+                .unwrap();
             assert_eq!(effects, expected_effects);
         }
 
@@ -225,7 +227,7 @@ mod tests {
         fn test_post_database_server_stored() {
             let ref_trait = create_ref();
             let data_base_server_stored = create_stored();
-            
+
             let expected_effects = vec![
                 DatabaseServerStoredEffect::CreateCf(ref_trait.cf_name()),
                 DatabaseServerStoredEffect::Put(
@@ -234,11 +236,23 @@ mod tests {
                     data_base_server_stored.clone(),
                 ),
             ];
-        
-            let effects = ref_trait.post_database_server_stored(&data_base_server_stored).unwrap();
+
+            let effects = ref_trait
+                .post_database_server_stored(&data_base_server_stored)
+                .unwrap();
             assert_eq!(effects, expected_effects);
         }
-        
 
+        #[test]
+        fn test_delete_database_server_stored() {
+            let ref_trait = DatabaseServerReference;
+            let expected_effects = vec![DatabaseServerStoredEffect::Delete(
+                ref_trait.cf_name(),
+                ref_trait.clone(),
+            )];
+
+            let effects = ref_trait.delete_database_server_stored().unwrap();
+            assert_eq!(effects, expected_effects);
+        }
     }
 }
