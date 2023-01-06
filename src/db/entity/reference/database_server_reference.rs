@@ -188,27 +188,30 @@ mod tests {
         }
 
         #[test]
-        fn test_get_database_server_stored() {
+        #[test]
+        fn test_get_database_server_stored_failure() {
             let mut mock = MockTestRequests::new();
             let ref_trait = create_ref();
-            let database_server_stored = create_stored();
             mock.expect_get_database_server_stored()
                 .returning(|_, _| Err(DbError::DatabaseNotInitialized));
 
-            // Test get_database_server_stored
             assert_eq!(
                 ref_trait.get_database_server_stored(&mock).unwrap_err(),
                 DbError::DatabaseNotInitialized,
                 "get_database_server_stored should return DbError::DatabaseNotInitialized if the key does not exist"
             );
+        }
 
+        #[test]
+        fn test_get_database_server_stored_success() {
+            let mut mock = MockTestRequests::new();
+            let ref_trait = create_ref();
+            let database_server_stored = create_stored();
             let boxed_stored = database_server_stored.clone();
-            let mut mock2 = MockTestRequests::new();
-            mock2
-                .expect_get_database_server_stored()
+            mock.expect_get_database_server_stored()
                 .returning(move |_, _| Ok(Some(boxed_stored.clone())));
             assert_eq!(
-                ref_trait.get_database_server_stored(&mock2).unwrap(),
+                ref_trait.get_database_server_stored(&mock).unwrap(),
                 Some(database_server_stored.clone()),
                 "get_database_server_stored should return the stored value if the key exists"
             );
