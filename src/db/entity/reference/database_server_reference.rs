@@ -216,5 +216,27 @@ mod tests {
             let effects = ref_trait.put_database_server_stored(&data_base_server_stored).unwrap();
             assert_eq!(effects, expected_effects);
         }
+        
+        #[test]
+        fn test_post_database_server_stored() {
+            let ref_trait = DatabaseServerReference;
+            let data_base_server_stored = DatabaseServerStored {
+                database_server: DatabaseServer,
+                domains: HashMap::new(),
+            };
+            let expected_effects = vec![
+                DatabaseServerStoredEffect::CreateCf(ref_trait.cf_name()),
+                DatabaseServerStoredEffect::Put(
+                    ref_trait.cf_name(),
+                    ref_trait.clone(),
+                    data_base_server_stored.clone(),
+                ),
+            ];
+        
+            let effects = ref_trait.post_database_server_stored(&data_base_server_stored).unwrap();
+            assert_eq!(effects, expected_effects);
+        }
+        
+
     }
 }
