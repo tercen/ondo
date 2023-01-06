@@ -8,7 +8,7 @@ pub trait IndexReferenceTrait {
     type Request;
 
     fn get_index(&self, request: &Self::Request) -> DbResult<Option<Index>>;
-    fn put_index(index: Index) -> DbResult<Self::Effects>;
+    fn put_index(index: &Index) -> DbResult<Self::Effects>;
     fn remove_index(&self) -> DbResult<Self::Effects>;
 }
 

@@ -8,6 +8,7 @@ pub trait DomainStoredRequests {
     fn get_domain_stored(&self, cf_name: &str, key: &DomainReference) -> DbResult<Option<DomainStored>>;    
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DomainStoredEffect {
     Put(String, DomainReference, DomainStored),
     Delete(String, DomainReference),
@@ -19,8 +20,8 @@ pub(super) trait DomainStoredReferenceTrait {
 
     fn cf_name(&self) -> String;
     fn get_domain_stored(&self, requests: &Self::Requests) -> DbResult<Option<DomainStored>>;
-    fn put_domain_stored(domain_stored: DomainStored) -> DbResult<Self::Effects>;
-    fn post_domain_stored(domain_stored: DomainStored) -> DbResult<Self::Effects>;
+    fn put_domain_stored(domain_stored: &DomainStored) -> DbResult<Self::Effects>;
+    fn post_domain_stored(domain_stored: &DomainStored) -> DbResult<Self::Effects>;
     fn delete_domain_stored(&self) -> DbResult<Self::Effects>;
     fn list_table_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>>;
 }
@@ -30,8 +31,8 @@ pub trait DomainReferenceTrait {
     type Requests;
 
     fn get_domain(&self, requests: &Self::Requests) -> DbResult<Option<Domain>>;
-    fn put_domain(domain: Domain, requests: &Self::Requests) ->DbResult<Self::Effects>;
-    fn post_domain(domain: Domain, requests: &Self::Requests)
+    fn put_domain(domain: &Domain, requests: &Self::Requests) ->DbResult<Self::Effects>;
+    fn post_domain(domain: &Domain, requests: &Self::Requests)
         -> DbResult<Self::Effects>;
     fn delete_domain(&self) -> DbResult<Self::Effects>;
     fn list_table_names(&self, requests: &Self::Requests) -> DbResult<Vec<String>>;
