@@ -187,10 +187,10 @@ mod tests {
                 "get_database_server_stored should return DbError::DatabaseNotInitialized if the key does not exist"
             );
 
-            let boxed_stored = Box::new(stored.clone());
+            let boxed_stored = stored.clone();
             let mut mock2 = MockTestRequests::new();
             mock2.expect_get_database_server_stored()
-                .returning(   move |_, _| Ok(Some((*boxed_stored).clone())));
+            .returning(move |_, _| Ok(Some(boxed_stored.clone())));
             assert_eq!(
                 ref_.get_database_server_stored(&mock2).unwrap(),
                 Some(stored.clone()),
