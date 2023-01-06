@@ -168,45 +168,49 @@ mod tests {
     mod database_server_stored_reference_trait {
         use super::*;
 
+        fn create_ref() -> DatabaseServerReference {
+            DatabaseServerReference::new()
+        }
+    
+        fn create_stored() -> DatabaseServerStored {
+            DatabaseServerStored {
+                database_server: DatabaseServer,
+                domains: HashMap::new(),
+            }
+        }
+    
         #[test]
         fn test_get_database_server_stored() {
             let mut mock = MockTestRequests::new();
-            let ref_ = DatabaseServerReference::new();
-
-            let stored = DatabaseServerStored {
-                database_server: DatabaseServer,
-                domains: HashMap::new(),
-            };
-
+            let ref_trait = create_ref();
+            let database_server_stored = create_stored();
             mock.expect_get_database_server_stored()
                 .returning(|_, _| Err(DbError::DatabaseNotInitialized));
 
             // Test get_database_server_stored
             assert_eq!(
-                ref_.get_database_server_stored(&mock).unwrap_err(),
+                ref_trait.get_database_server_stored(&mock).unwrap_err(),
                 DbError::DatabaseNotInitialized,
                 "get_database_server_stored should return DbError::DatabaseNotInitialized if the key does not exist"
             );
 
-            let boxed_stored = stored.clone();
+            let boxed_stored = database_server_stored.clone();
             let mut mock2 = MockTestRequests::new();
             mock2
                 .expect_get_database_server_stored()
                 .returning(move |_, _| Ok(Some(boxed_stored.clone())));
             assert_eq!(
-                ref_.get_database_server_stored(&mock2).unwrap(),
-                Some(stored.clone()),
+                ref_trait.get_database_server_stored(&mock2).unwrap(),
+                Some(database_server_stored.clone()),
                 "get_database_server_stored should return the stored value if the key exists"
             );
         }
 
         #[test]
         fn test_put_database_server_stored() {
-            let ref_trait = DatabaseServerReference;
-            let data_base_server_stored = DatabaseServerStored {
-                database_server: DatabaseServer,
-                domains: HashMap::new(),
-            };
+            let ref_trait = create_ref();
+            let data_base_server_stored = create_stored();
+            
             let expected_effects = vec![DatabaseServerStoredEffect::Put(
                 ref_trait.cf_name(),
                 ref_trait.clone(),
@@ -216,14 +220,12 @@ mod tests {
             let effects = ref_trait.put_database_server_stored(&data_base_server_stored).unwrap();
             assert_eq!(effects, expected_effects);
         }
-        
+
         #[test]
         fn test_post_database_server_stored() {
-            let ref_trait = DatabaseServerReference;
-            let data_base_server_stored = DatabaseServerStored {
-                database_server: DatabaseServer,
-                domains: HashMap::new(),
-            };
+            let ref_trait = create_ref();
+            let data_base_server_stored = create_stored();
+            
             let expected_effects = vec![
                 DatabaseServerStoredEffect::CreateCf(ref_trait.cf_name()),
                 DatabaseServerStoredEffect::Put(
