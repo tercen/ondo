@@ -37,7 +37,7 @@ pub(super) trait DatabaseServerStoredReferenceTrait {
         data_base_server: &DatabaseServerStored,
     ) -> DbResult<Effects>;
     fn delete_database_server_stored(&self) -> DbResult<Effects>;
-    fn list_domain_names(&self, requests: &dyn Requests) -> DbResult<Vec<String>>;
+    fn list_domain_names_(&self, requests: &dyn Requests) -> DbResult<Vec<String>>;
 }
 
 pub trait DatabaseServerReferenceTrait {
@@ -110,7 +110,7 @@ impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
         Ok(effects)
     }
 
-    fn list_domain_names(&self, requests: &dyn Requests) -> DbResult<Vec<String>> {
+    fn list_domain_names_(&self, requests: &dyn Requests) -> DbResult<Vec<String>> {
         let database_server_stored = self.get_database_server_stored(requests)?;
         if let Some(database_server_stored) = database_server_stored {
             Ok(database_server_stored.domains.keys().cloned().collect())
@@ -188,7 +188,6 @@ mod tests {
         }
 
         #[test]
-        #[test]
         fn test_get_database_server_stored_failure() {
             let mut mock = MockTestRequests::new();
             let ref_trait = create_ref();
@@ -265,5 +264,20 @@ mod tests {
             let effects = ref_trait.delete_database_server_stored().unwrap();
             assert_eq!(effects, expected_effects);
         }
+
+        #[test]
+        fn test_list_domain_names_success() {
+            let ref_trait = create_ref();
+            let stored = create_stored();
+            let mut mock = MockTestRequests::new();
+        
+            let stored_clone = stored.clone();
+            mock.expect_get_database_server_stored()
+                .returning(move |_, _| Ok(Some(stored_clone.clone())));
+        
+            let domain_names = ref_trait.list_domain_names_(&mock).unwrap();
+            assert_eq!(domain_names, stored.domains.keys().cloned().collect::<Vec<_>>());
+        }
+        
     }
 }
