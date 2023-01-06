@@ -213,10 +213,8 @@ mod tests {
                 data_base_server_stored.clone(),
             )];
 
-            match ref_trait.put_database_server_stored(&data_base_server_stored) {
-                Ok(effects) => assert_eq!(effects, expected_effects),
-                Err(e) => panic!("Unexpected error: {}", e),
-            }
+            let effects = ref_trait.put_database_server_stored(&data_base_server_stored).unwrap();
+            assert_eq!(effects, expected_effects);
         }
     }
 }
