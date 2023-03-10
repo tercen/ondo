@@ -1,0 +1,123 @@
+syntax = "proto3";
+
+package Remote;
+
+// Create, Delete, Get, Update, List
+service Remote {
+    rpc Version(EmptyMessage) returns (VersionResponse) {}
+    rpc CreateDatabaseServer(DatabaseServerMessage) returns (EmptyMessage) {}
+    rpc DeleteDatabaseServer(DatabaseServerReferenceMessage) returns (EmptyMessage) {}
+    rpc GetDatabaseServer(DatabaseServerReferenceMessage) returns (DatabaseServerMessage) {}
+    rpc UpdateDatabaseServer(DatabaseServerMessage) returns (EmptyMessage) {}
+    rpc ListDomains(EmptyMessage) returns (ArrayOfStringResponse) {}
+
+    rpc CreateDomain(DomainMessage) returns (EmptyMessage) {}
+    rpc DeleteDomain(DomainReferenceMessage) returns (EmptyMessage) {}
+    rpc GetDomain(DomainReferenceMessage) returns (DomainMessage) {}
+    rpc UpdateDomain(DomainMessage) returns (EmptyMessage) {}
+    rpc ListTables(DomainReferenceMessage) returns (ArrayOfStringResponse) {}
+
+    rpc CreateTable(TableMessage) returns (EmptyMessage) {}
+    rpc DeleteTable(TableReferenceMessage) returns (EmptyMessage) {}
+    rpc GetTable(TableReferenceMessage) returns (TableMessage) {}
+    rpc UpdateTable(TableMessage) returns (EmptyMessage) {}
+    rpc ListIndexes(TableReferenceMessage) returns (ArrayOfStringResponse) {}
+    rpc ListValues(TableReferenceMessage) returns (JsonResponse) {}
+    rpc ListValuesByIdRange(TableIdRangeReferenceMessage) returns (JsonResponse) {}
+    rpc ListValuesByIdList(TableIdListReferenceMessage) returns (JsonResponse) {}
+
+    rpc CreateIndex(IndexMessage) returns (EmptyMessage) {}
+    rpc DeleteIndex(IndexReferenceMessage) returns (EmptyMessage) {}
+    rpc GetIndex(IndexReferenceMessage) returns (IndexMessage) {}
+    rpc UpdateIndex(IndexMessage) returns (EmptyMessage) {}
+
+    rpc CreateValue(TableValueMessage) returns (EmptyMessage) {}
+    rpc DeleteValue(TableValueReferenceMessage) returns (EmptyMessage) {}
+    rpc GetValue(TableValueReferenceMessage) returns (JsonResponse) {}
+    rpc UpdateValue(TableValueMessage) returns (EmptyMessage) {}
+
+    rpc FindValues(IndexedValueReferenceMessage) returns (JsonResponse) {}
+    rpc FindValuesByRange(IndexedValueRangeReferenceMessage) returns (JsonResponse) {}
+}
+
+message EmptyMessage {}
+
+message VersionResponse {
+    string version = 1;
+}
+
+message ArrayOfStringResponse {
+    repeated string values = 1;
+}
+
+message DatabaseServerReferenceMessage {
+}
+
+message DatabaseServerMessage {
+}
+
+message DomainReferenceMessage {
+    string domain_name = 1;
+}
+
+message DomainMessage {
+    DomainReferenceMessage domain_reference = 1;
+    // other fields
+}
+
+message TableReferenceMessage {
+    DomainReferenceMessage domain_reference = 1;
+    string table_name = 2;
+}
+
+message TableMessage {
+    TableReferenceMessage table_reference = 1;
+    // other fields
+}
+
+message IndexReferenceMessage {
+    TableReferenceMessage table_reference = 1;
+    string index_name = 2;
+}
+
+message IndexMessage {
+    IndexReferenceMessage index_reference = 1;
+    repeated string fields = 2;
+}
+
+message TableValueReferenceMessage {
+    TableReferenceMessage table_reference = 1;
+    uint64 _id = 2;
+}
+
+message TableValueMessage {
+    TableReferenceMessage table_reference = 1;
+    string json_value = 2; //_id field should be included therefore we use only table_reference
+}
+
+message JsonResponse {
+    string json_value = 1;
+}
+
+message TableIdRangeReferenceMessage {
+    TableReferenceMessage table_reference = 1;
+    uint64 start_id = 2;
+    uint64 end_id = 3;
+}
+
+message TableIdListReferenceMessage {
+    TableReferenceMessage table_reference = 1;
+    repeated uint64 ids = 2;
+}
+
+message IndexedValueRangeReferenceMessage {
+    IndexReferenceMessage index_reference = 1;
+    string start_key = 2;
+    string end_key = 3;
+}
+
+message IndexedValueReferenceMessage {
+    IndexReferenceMessage index_reference = 1;
+    string key = 2;
+}
+
