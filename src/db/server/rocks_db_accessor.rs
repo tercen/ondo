@@ -9,7 +9,7 @@ pub struct RocksDbAccessor {
 impl Default for RocksDbAccessor {
     fn default() -> Self {
         // Define the default path for the database
-        let db_path = "./ondo_rocksdb";
+        let db_path = "./db/ondo_rocksdb";
 
         // Create options for the RocksDB instance
         let mut options = Options::default();
