@@ -1,6 +1,6 @@
 use super::database_server_trait::DatabaseServerTrait;
 use super::rocks_db_accessor::RocksDbAccessor;
-use crate::remote::{
+use crate::ondo_remote::{
     ArrayOfStringResponse, DatabaseServerMessage, DatabaseServerReferenceMessage, EmptyMessage,
     VersionResponse,
 };

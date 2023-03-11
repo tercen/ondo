@@ -2,7 +2,7 @@ use super::table_value_server_trait::TableValueServerTrait;
 use super::rocks_db_accessor::RocksDbAccessor;
 use tonic::{Request, Response, Status};
 
-use crate::remote::*;
+use crate::ondo_remote::*;
 
 impl TableValueServerTrait for RocksDbAccessor {
     fn create_value(

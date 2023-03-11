@@ -1,10 +1,10 @@
 use tonic::transport::Server;
 use tonic::{Request, Response, Status};
 
-use ondo::remote;
-use remote::remote_server::{Remote, RemoteServer};
+use ondo::ondo_remote;
+use ondo_remote::ondo_remote_server::{OndoRemote, OndoRemoteServer};
 // use remote::{ArrayOfStringResponse, EmptyMessage, VersionResponse};
-use remote::*;
+use ondo_remote::*;
 
 use ondo::db::server::{
     database_server_trait::DatabaseServerTrait, domain_server_trait::DomainServerTrait,
@@ -19,7 +19,7 @@ pub struct MyServer {
 }
 
 #[tonic::async_trait]
-impl Remote for MyServer {
+impl OndoRemote for MyServer {
     async fn version(&self, r: Request<EmptyMessage>) -> Result<Response<VersionResponse>, Status> {
         self.rocks_db_accessor.version(r)
     }
@@ -227,7 +227,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let remote_server = MyServer::default();
     Server::builder()
-        .add_service(RemoteServer::new(remote_server))
+        .add_service(OndoRemoteServer::new(remote_server))
         .serve(addr)
         .await?;
 

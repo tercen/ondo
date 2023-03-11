@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package Remote;
+package OndoRemote;
 
 // Create, Delete, Get, Update, List
-service Remote {
+service OndoRemote {
     rpc Version(EmptyMessage) returns (VersionResponse) {}
     rpc CreateDatabaseServer(DatabaseServerMessage) returns (EmptyMessage) {}
     rpc DeleteDatabaseServer(DatabaseServerReferenceMessage) returns (EmptyMessage) {}

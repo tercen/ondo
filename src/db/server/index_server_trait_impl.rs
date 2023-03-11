@@ -1,6 +1,6 @@
 use super::index_server_trait::IndexServerTrait;
 use super::rocks_db_accessor::RocksDbAccessor;
-use crate::remote::*;
+use crate::ondo_remote::*;
 use tonic::{Request, Response, Status};
 
 impl IndexServerTrait for RocksDbAccessor {

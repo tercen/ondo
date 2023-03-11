@@ -1,6 +1,6 @@
 use tonic::{Request, Response, Status};
-use crate::remote;
-use remote::*;
+use crate::ondo_remote;
+use ondo_remote::*;
 
 pub trait IndexServerTrait {
     fn create_index(&self, _: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status>;

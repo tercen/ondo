@@ -1,6 +1,6 @@
 use super::domain_server_trait::DomainServerTrait;
 use super::rocks_db_accessor::RocksDbAccessor;
-use crate::remote::*;
+use crate::ondo_remote::*;
 use tonic::{Request, Response, Status};
 
 impl DomainServerTrait for RocksDbAccessor {

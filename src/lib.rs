@@ -5,6 +5,6 @@ pub mod hello {
     tonic::include_proto!("hello"); 
 }
 
-pub mod remote { 
-    tonic::include_proto!("remote"); 
+pub mod ondo_remote { 
+    tonic::include_proto!("ondo_remote"); 
 }

@@ -1,5 +1,5 @@
-use crate::remote;
-use remote::*;
+use crate::ondo_remote;
+use ondo_remote::*;
 use tonic::{Request, Response, Status};
 
 pub trait TableValueServerTrait {

@@ -1,7 +1,7 @@
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::table_server_trait::TableServerTrait;
-use crate::remote;
-use remote::*;
+use crate::ondo_remote;
+use ondo_remote::*;
 use tonic::{Request, Response, Status};
 
 impl TableServerTrait for RocksDbAccessor {
