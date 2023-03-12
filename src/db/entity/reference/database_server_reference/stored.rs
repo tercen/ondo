@@ -2,27 +2,12 @@
 //TEST: test cascade_delete
 
 use super::*;
-use crate::db::entity::reference::{
-    domain_reference::{stored::DomainStoredRequests, DomainReferenceTrait},
-    table_reference::stored::TableStoredRequests,
-    DomainReference,
-};
+use crate::db::entity::reference::effect::database_server_stored_effect::DatabaseServerStoredEffect;
+use crate::db::entity::reference::requests::database_server_stored_requests::DatabaseServerStoredRequests;
+use crate::db::entity::reference::requests::domain_stored_requests::DomainStoredRequests;
+use crate::db::entity::reference::{domain_reference::DomainReferenceTrait, DomainReference};
 
-pub trait DatabaseServerStoredRequests {
-    fn get_database_server_stored(
-        &self,
-        cf_name: &str,
-        key: &DatabaseServerName,
-    ) -> DbResult<Option<DatabaseServerStored>>;
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum DatabaseServerStoredEffect {
-    Put(String, DatabaseServerName, DatabaseServerStored),
-    Delete(String, DatabaseServerName),
-}
-
-pub trait DatabaseServerStoredReferenceTrait {
+pub(crate) trait DatabaseServerStoredReferenceTrait {
     fn container_cf_name(&self) -> String;
     fn required_cf_names(&self) -> Vec<String>;
     fn get_database_server_stored(
@@ -153,7 +138,7 @@ impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
 }
 
 #[cfg(test)]
-pub mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::db::entity::reference::domain_reference::stored::tests::{
         create_domain_stored, MockDomainStoredTestRequests,
@@ -165,7 +150,7 @@ pub mod tests {
     use std::collections::HashMap;
 
     mock! {
-        pub DatabaseServerStoredTestRequests {}
+        pub(crate) DatabaseServerStoredTestRequests {}
         impl DatabaseServerStoredRequests for DatabaseServerStoredTestRequests {
             fn get_database_server_stored(
                 &self,
@@ -174,16 +159,17 @@ pub mod tests {
             ) -> DbResult<Option<DatabaseServerStored>>;        }
     }
 
-    pub fn create_database_server_ref() -> DatabaseServerReference {
+    pub(crate) fn create_database_server_ref() -> DatabaseServerReference {
         DatabaseServerReference::new()
     }
 
-    pub fn create_database_server() -> DatabaseServer {
+    pub(crate) fn create_database_server() -> DatabaseServer {
         DatabaseServer
     }
 
-    pub fn create_database_server_stored() -> DatabaseServerStored {
+    pub(crate) fn create_database_server_stored() -> DatabaseServerStored {
         DatabaseServerStored {
+            meta_revision: 0,
             database_server: create_database_server(),
             domains: HashMap::new(),
         }

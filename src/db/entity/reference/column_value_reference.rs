@@ -1,23 +1,15 @@
 //column_value_reference.rs
 use super::effect::{Effect, Effects};
+use crate::db::entity::reference::requests::column_value_requests::ColumnValueRequests;
 use crate::db::{db_error::DbError, db_error::DbResult, entity::IndexValue};
+use crate::db::entity::reference::effect::column_value_effect::ColumnValueEffect;
 
 use serde_json::json;
 
-pub trait ColumnValueRequests {
-    fn get_column_value(&self, cf_name: &str, key: &ColumnKey) -> DbResult<Option<IndexValue>>;
-}
+pub(crate) type ColumnKey = IndexValue;
+pub(crate) type ColumnValue = IndexValue;
 
-pub type ColumnKey = IndexValue;
-pub type ColumnValue = IndexValue;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ColumnValueEffect {
-    Put(String, ColumnKey, ColumnValue),
-    Delete(String, ColumnKey),
-}
-
-pub trait ColumnValueReferenceTrait {
+pub(crate) trait ColumnValueReferenceTrait {
     fn get_column_value(&self, request: &dyn ColumnValueRequests) -> DbResult<Option<IndexValue>>;
     fn put_column_value(&self, value: &ColumnValue) -> DbResult<Effects>;
     fn delete_column_value(&self) -> DbResult<Effects>;
@@ -74,7 +66,7 @@ impl ColumnValueReferenceTrait for ColumnValueReference {
             Some(number) => number,
             None => return Err(DbError::NotU64),
         };
-        let new_n = n+1;
+        let new_n = n + 1;
         let new_value = json!(new_n);
         let effects = self.put_column_value(&new_value)?;
         Ok((new_n, effects))
@@ -166,7 +158,7 @@ mod tests {
             let column_value_ref = create_column_value_ref("sample_column", create_column_key());
             let initial_column_value = json!(1u64);
             let expected_column_value = json!(2u64);
-            
+
             let expected_effect = Effect::ColumnValueEffect(ColumnValueEffect::Put(
                 column_value_ref.column_reference.clone(),
                 column_value_ref.id.clone(),
@@ -185,7 +177,7 @@ mod tests {
             let mut mock = MockColumnValueTestRequests::new();
             let column_value_ref = create_column_value_ref("sample_column", create_column_key());
             let expected_column_value = json!(1u64);
-            
+
             let expected_effect = Effect::ColumnValueEffect(ColumnValueEffect::Put(
                 column_value_ref.column_reference.clone(),
                 column_value_ref.id.clone(),

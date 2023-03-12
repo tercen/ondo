@@ -3,13 +3,16 @@ pub type IndexValue = serde_json::Value;
 pub type IndexKey = Vec<IndexValue>;
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct KeyValue {
+pub(crate) struct KeyValue {
     key: IndexKey,
     value: IndexValue,
 }
 
-impl KeyValue{
+impl KeyValue {
     pub fn new(key: IndexKey, value: IndexValue) -> Self {
-        Self { key: key, value: value }
+        Self {
+            key: key,
+            value: value,
+        }
     }
 }

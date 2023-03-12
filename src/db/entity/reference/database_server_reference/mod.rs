@@ -1,21 +1,22 @@
 //database_server_reference.rs
+use crate::db::entity::reference::requests::database_server_stored_requests::DatabaseServerStoredRequests;
+use crate::db::entity::reference::requests::domain_stored_requests::DomainStoredRequests;
+use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
 use crate::db::{
     db_error::{DbError, DbResult},
     entity::{
         reference::{
-            domain_reference::stored::DomainStoredRequests,
             effect::{Effect, Effects},
-            table_reference::stored::TableStoredRequests,
             CfNameMaker,
         },
         DatabaseServer, DatabaseServerStored,
     },
 };
 
-pub mod stored;
+pub(crate) mod stored;
 use stored::*;
 
-pub trait DatabaseServerReferenceTrait {
+pub(crate) trait DatabaseServerReferenceTrait {
     fn get_database_server(
         &self,
         requests: &dyn DatabaseServerStoredRequests,
@@ -92,6 +93,7 @@ impl DatabaseServerReferenceTrait for DatabaseServerReference {
             }
             None => {
                 let new_stored = DatabaseServerStored {
+                    meta_revision: 0,
                     database_server: (*database_server).clone(),
                     domains: Default::default(),
                 };
@@ -129,7 +131,7 @@ mod tests {
 
     mod database_server_reference_trait {
         use super::*;
-
+        use crate::db::entity::reference::effect::database_server_stored_effect::DatabaseServerStoredEffect;
         #[test]
         fn test_get_database_server_failure() {
             let mut mock = MockDatabaseServerStoredTestRequests::new();
@@ -187,6 +189,7 @@ mod tests {
             let ref_trait = create_database_server_ref();
 
             let example_stored = DatabaseServerStored {
+                meta_revision: 0,
                 database_server: DatabaseServer,
                 domains: vec![
                     ("example1.com".to_owned(), ()),

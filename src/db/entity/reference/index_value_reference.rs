@@ -3,26 +3,14 @@ use super::{
     effect::{Effect, Effects},
     CfNameMaker, IndexReference,
 };
+use crate::db::entity::reference::effect::index_value_effect::IndexValueEffect;
+use crate::db::entity::reference::requests::index_value_requests::IndexValueRequests;
 use crate::db::{
     db_error::DbResult,
     entity::{IndexKey, IndexValue},
 };
 
-pub trait IndexValueRequests { //FIXME: Use Column Value instead of IndexValueRequests
-    fn get_index_value_stored(
-        &self,
-        cf_name: &str,
-        key: &IndexValueReference,
-    ) -> DbResult<Option<IndexValue>>;
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum IndexValueEffect {
-    Put(String, IndexValueReference, IndexValue), //FIXME: Use Column Value instead of IndexValueEffect
-    Delete(String, IndexValueReference),
-}
-
-pub trait IndexValueReferenceTrait {
+pub(crate) trait IndexValueReferenceTrait {
     fn container_cf_name(&self) -> String;
     fn get_index_value(&self, requests: &dyn IndexValueRequests) -> DbResult<Option<IndexValue>>;
     fn put_index_value(&self, id: &IndexValue) -> DbResult<Effects>;
@@ -30,7 +18,7 @@ pub trait IndexValueReferenceTrait {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IndexValueReference {
+pub(crate) struct IndexValueReference {
     pub index_reference: IndexReference,
     pub key: IndexKey,
 }

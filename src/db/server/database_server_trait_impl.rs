@@ -1,6 +1,6 @@
 use super::database_server_trait::DatabaseServerTrait;
-use super::db_error_to_status::{DbErrorOptionToStatus, DbErrorToStatus};
-use super::effects_sink::EffectSink;
+// use super::db_error_to_status::{DbErrorOptionToStatus, DbErrorToStatus};
+// use super::source_sink::effects_sink::EffectsSink;
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::to_entity_trait::ToEntity;
 use super::to_reference_trait::ToReference;
@@ -42,7 +42,7 @@ impl DatabaseServerTrait for RocksDbAccessor {
 
     fn create_database_server(
         &self,
-        r: Request<DatabaseServerMessage>,
+        _r: Request<DatabaseServerMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
         todo!();
         // r.to_reference()

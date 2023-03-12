@@ -12,8 +12,10 @@ use crate::db::{
     db_error::DbResult,
     entity::{IndexValue, TableValue},
 };
+use crate::db::entity::reference::effect::table_value_effect::TableValueEffect;
 
-pub trait TableValueRequests { //FIXME: Use Column Value instead of TableValueRequests
+pub(crate) trait TableValueRequests {
+    //FIXME: Use Column Value instead of TableValueRequests
     fn get_table_value(
         &self,
         cf_name: &str,
@@ -21,12 +23,7 @@ pub trait TableValueRequests { //FIXME: Use Column Value instead of TableValueRe
     ) -> DbResult<Option<TableValue>>;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum TableValueEffect {
-    Put(String, TableValueReference, TableValue), //FIXME: Use Column Value instead of TableValueEffect
-    Delete(String, TableValueReference),
-}
-pub trait TableValueReferenceTrait {
+pub(crate) trait TableValueReferenceTrait {
     fn container_cf_name(&self) -> String;
     fn get_table_value(&self, request: &dyn TableValueRequests) -> DbResult<Option<TableValue>>;
     fn put_table_value(&self, value: &TableValue) -> DbResult<Effects>;
@@ -37,7 +34,7 @@ pub trait TableValueReferenceTrait {
 pub type TableKey = IndexValue;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TableValueReference {
+pub(crate) struct TableValueReference {
     pub table_reference: TableReference,
     pub id: TableKey,
 }
@@ -95,7 +92,7 @@ mod tests {
     use serde_json::Value;
 
     mock! {
-        pub TableValueTestRequests {}
+        pub(crate) TableValueTestRequests {}
         impl TableValueRequests for TableValueTestRequests {
             fn get_table_value(
                 &self,
@@ -105,7 +102,7 @@ mod tests {
         }
     }
 
-    pub fn create_table_value_ref(
+    pub(crate) fn create_table_value_ref(
         domain_name: &str,
         table_name: &str,
         key: TableKey,
@@ -128,6 +125,7 @@ mod tests {
 
     mod table_value_reference_trait_tests {
         use super::*;
+        use crate::db::entity::reference::effect::table_value_effect::TableValueEffect;
 
         #[test]
         fn test_get_table_value() {

@@ -1,19 +1,20 @@
 //domain_reference.rs
 use super::{
-    database_server_reference::stored::DatabaseServerStoredRequests,
     effect::{Effect, Effects},
-    table_reference::stored::TableStoredRequests,
     CfNameMaker, DatabaseServerReference,
 };
+use crate::db::entity::reference::requests::database_server_stored_requests::DatabaseServerStoredRequests;
+use crate::db::entity::reference::requests::domain_stored_requests::DomainStoredRequests;
+use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
 use crate::db::{
     db_error::{DbError, DbResult},
     entity::{Domain, DomainStored},
 };
 
-pub mod stored;
+pub(crate) mod stored;
 use stored::*;
 
-pub trait DomainReferenceTrait {
+pub(crate) trait DomainReferenceTrait {
     fn get_domain(&self, requests: &dyn DomainStoredRequests) -> DbResult<Option<Domain>>;
     fn put_domain(&self, domain: &Domain, requests: &dyn DomainStoredRequests)
         -> DbResult<Effects>;
@@ -32,7 +33,7 @@ pub trait DomainReferenceTrait {
     fn list_table_names(&self, requests: &dyn DomainStoredRequests) -> DbResult<Vec<String>>;
 }
 
-type DomainName = String;
+pub(crate) type DomainName = String;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DomainReference {
     pub domain_name: DomainName,

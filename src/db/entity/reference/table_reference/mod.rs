@@ -1,9 +1,10 @@
 //table_reference.rs
 use super::{
-    domain_reference::stored::DomainStoredRequests,
     effect::{Effect, Effects},
     CfNameMaker, DomainReference,
 };
+use crate::db::entity::reference::requests::domain_stored_requests::DomainStoredRequests;
+use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
 use crate::{
     callback_iterator::*,
     db::{
@@ -12,10 +13,10 @@ use crate::{
     },
 };
 
-pub mod stored;
+pub(crate) mod stored;
 use stored::*;
 
-pub trait TableReferenceTrait {
+pub(crate) trait TableReferenceTrait {
     fn get_table(&self, requests: &dyn TableStoredRequests) -> DbResult<Option<Table>>;
     fn put_table(&self, table: &Table, requests: &dyn TableStoredRequests) -> DbResult<Effects>;
     fn post_table(

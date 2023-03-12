@@ -1,26 +1,18 @@
-use crate::db::entity::reference::table_reference::stored::TableStoredReferenceTrait;
-
 //domain_reference/stored.rs
 //TODO: validate table name
 //TEST: test cascade_delete
 
 use super::*;
+use crate::db::entity::reference::effect::domain_stored_effect::DomainStoredEffect;
+use crate::db::entity::reference::requests::database_server_stored_requests::DatabaseServerStoredRequests;
+use crate::db::entity::reference::requests::domain_stored_requests::DomainStoredRequests;
+use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
+use crate::db::entity::reference::table_reference::stored::TableStoredReferenceTrait;
 use crate::db::entity::reference::{
-    database_server_reference::stored::*,
-    table_reference::{stored::TableStoredRequests, TableReference},
+    database_server_reference::stored::*, table_reference::TableReference,
 };
 
-pub trait DomainStoredRequests {
-    fn get_domain_stored(&self, cf_name: &str, key: &DomainName) -> DbResult<Option<DomainStored>>;
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum DomainStoredEffect {
-    Put(String, DomainName, DomainStored),
-    Delete(String, DomainName),
-}
-
-pub trait DomainStoredReferenceTrait {
+pub(crate) trait DomainStoredReferenceTrait {
     fn container_cf_name(&self) -> String;
     fn required_cf_names(&self) -> Vec<String>;
     fn get_domain_stored(
@@ -157,7 +149,7 @@ impl DomainStoredReferenceTrait for DomainReference {
 }
 
 #[cfg(test)]
-pub mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::db::entity::reference::database_server_reference::stored::tests::{
         create_database_server_stored, MockDatabaseServerStoredTestRequests,
@@ -170,7 +162,7 @@ pub mod tests {
     use std::collections::HashMap;
 
     mock! {
-        pub DomainStoredTestRequests {}
+        pub(crate) DomainStoredTestRequests {}
         impl DomainStoredRequests for DomainStoredTestRequests {
             fn get_domain_stored(
                 &self,
@@ -179,17 +171,17 @@ pub mod tests {
             ) -> DbResult<Option<DomainStored>>;        }
     }
 
-    pub fn create_domain_ref() -> DomainReference {
+    pub(crate) fn create_domain_ref() -> DomainReference {
         DomainReference::new("sample_domain")
     }
 
-    pub fn create_domain() -> Domain {
+    pub(crate) fn create_domain() -> Domain {
         Domain {
             id: create_domain_ref(),
         }
     }
 
-    pub fn create_domain_stored() -> DomainStored {
+    pub(crate) fn create_domain_stored() -> DomainStored {
         DomainStored {
             domain: create_domain(),
             tables: HashMap::new(),
@@ -198,6 +190,7 @@ pub mod tests {
 
     mod domain_stored_reference_trait {
         use super::*;
+        use crate::db::entity::reference::effect::database_server_stored_effect::DatabaseServerStoredEffect;
 
         #[test]
         fn test_get_domain_stored_failure() {
@@ -254,6 +247,7 @@ pub mod tests {
                     "/server".to_owned(),
                     (),
                     DatabaseServerStored {
+                        meta_revision: 0,
                         database_server: DatabaseServer,
                         domains: {
                             vec!["sample_domain".to_owned()]
@@ -297,6 +291,7 @@ pub mod tests {
                     "/server".to_owned(),
                     (),
                     DatabaseServerStored {
+                        meta_revision: 0,
                         database_server: DatabaseServer,
                         domains: HashMap::new(),
                     },

@@ -2,17 +2,17 @@
 mod key_value;
 
 use super::reference::IndexReference;
-pub use key_value::*;
+pub(crate) use key_value::*;
 
-pub const DEFAULT_ID_FIELD: &str = "_id";
+pub(crate) const DEFAULT_ID_FIELD: &str = "_id";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Index {
+pub(crate) struct Index {
     pub id: IndexReference,
     pub fields: Vec<String>,
 }
 
-pub type IndexStored = Index;
+pub(crate) type IndexStored = Index;
 
 impl Index {
     pub fn get_fields(&self) -> Vec<String> {
@@ -34,7 +34,7 @@ impl Index {
             .collect()
     }
 
-    pub fn key_value_of(&self, doc: &IndexValue) -> KeyValue {
+    pub(crate) fn key_value_of(&self, doc: &IndexValue) -> KeyValue {
         let key = self.key_of(doc);
         let value = doc[DEFAULT_ID_FIELD].clone();
         KeyValue::new(key, value)

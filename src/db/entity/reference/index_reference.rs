@@ -5,15 +5,15 @@
 use super::effect::Effect;
 use super::effect::Effects;
 use super::table_reference::stored::TableStoredReferenceTrait;
-use super::table_reference::stored::TableStoredRequests;
 use super::CfNameMaker;
 use super::TableReference;
+use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
 use crate::db::{
     db_error::{DbError, DbResult},
     entity::Index,
 };
 
-pub trait IndexReferenceTrait {
+pub(crate) trait IndexReferenceTrait {
     fn required_cf_names(&self) -> Vec<String>;
     fn get_index(&self, parent_requests: &dyn TableStoredRequests) -> DbResult<Option<Index>>;
     fn put_index(
@@ -117,12 +117,11 @@ impl IndexReferenceTrait for IndexReference {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db::entity::reference::effect::table_stored_effect::TableStoredEffect;
     use crate::db::entity::reference::table_reference::stored::tests::{
         create_table, create_table_stored, MockTableStoredTestRequests,
     };
-    use crate::db::entity::{
-        reference::table_reference::stored::TableStoredEffect, Table, TableStored,
-    };
+    use crate::db::entity::{Table, TableStored};
 
     fn create_index_ref() -> IndexReference {
         IndexReference::new("sample_domain", "sample_table", "sample_index")

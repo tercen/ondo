@@ -1,26 +1,15 @@
 //table_reference/stored.rs
-use crate::db::entity::reference::cf_name::CfName;
-use crate::db::entity::reference::IndexReference;
-use crate::db::entity::TableValue;
-
 //TODO: validate domain name
 //TEST: test cascade_delete
-
 use super::*;
+use crate::db::entity::reference::effect::table_stored_effect::TableStoredEffect;
+use crate::db::entity::reference::requests::domain_stored_requests::DomainStoredRequests;
+use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
+use crate::db::entity::reference::IndexReference;
 use crate::db::entity::reference::{domain_reference::stored::*, index_reference::*};
+use crate::db::entity::TableValue;
 
-pub trait TableStoredRequests {
-    fn get_table_stored(&self, cf_name: &str, key: &TableName) -> DbResult<Option<TableStored>>;
-    fn iter<'a>(&'a self, value_cf_name: &str) -> CallbackIterator<'a, TableValue>;
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum TableStoredEffect {
-    Put(CfName, TableName, TableStored),
-    Delete(CfName, TableName),
-}
-
-pub trait TableStoredReferenceTrait {
+pub(crate) trait TableStoredReferenceTrait {
     fn container_cf_name(&self) -> String;
     fn required_cf_names(&self) -> Vec<String>;
     fn value_cf_name(&self) -> String;
@@ -161,7 +150,7 @@ pub mod tests {
     use std::collections::HashMap;
 
     mock! {
-        pub TableStoredTestRequests {}
+        pub(crate) TableStoredTestRequests {}
         impl TableStoredRequests for TableStoredTestRequests {
             fn get_table_stored(
                 &self,
@@ -172,17 +161,17 @@ pub mod tests {
         }
     }
 
-    pub fn create_table_ref() -> TableReference {
+    pub(crate) fn create_table_ref() -> TableReference {
         TableReference::new("sample_domain", "sample_table")
     }
 
-    pub fn create_table() -> Table {
+    pub(crate) fn create_table() -> Table {
         Table {
             id: create_table_ref(),
         }
     }
 
-    pub fn create_table_stored() -> TableStored {
+    pub(crate) fn create_table_stored() -> TableStored {
         TableStored {
             table: create_table(),
             indexes: HashMap::new(),
@@ -191,7 +180,7 @@ pub mod tests {
 
     mod table_stored_reference_trait {
         use super::*;
-
+        use crate::db::entity::reference::effect::domain_stored_effect::DomainStoredEffect;
         #[test]
         fn test_get_table_stored_failure() {
             let mut mock = MockTableStoredTestRequests::new();

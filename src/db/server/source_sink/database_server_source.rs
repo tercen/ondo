@@ -1,5 +1,8 @@
-use super::rocks_db_accessor::RocksDbAccessor;
-use crate::db::server::database_server::stored::DatabaseServerStoredRequests;
+use crate::db::db_error::DbResult;
+use crate::db::entity::database_server::DatabaseServerStored;
+use crate::db::entity::reference::database_server_reference::DatabaseServerName;
+use crate::db::entity::reference::requests::database_server_stored_requests::DatabaseServerStoredRequests;
+use crate::db::server::rocks_db_accessor::RocksDbAccessor;
 
 // pub trait DatabaseServerStoredRequests {
 //     fn get_database_server_stored(
@@ -15,7 +18,7 @@ impl DatabaseServerStoredRequests for RocksDbAccessor {
         cf_name: &str,
         _: &DatabaseServerName,
     ) -> DbResult<Option<DatabaseServerStored>> {
-        let db = self.db.get
+        todo!()
     }
 }
 

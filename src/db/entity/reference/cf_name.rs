@@ -3,8 +3,8 @@ use super::DomainReference;
 use super::IndexReference;
 use super::TableReference;
 
-pub struct CfNameMaker;
-pub type CfName = String;
+pub(crate) struct CfNameMaker;
+pub(crate) type CfName = String;
 
 impl CfNameMaker {
     pub fn for_server_meta() -> String {

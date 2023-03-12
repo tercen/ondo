@@ -31,3 +31,4 @@ pub(crate) use cf_name::*;
 
 pub(crate) mod effect;
 // TODO: Check get_ Ok(None) vs Err
+pub(crate) mod requests;
