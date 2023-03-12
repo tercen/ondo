@@ -1,7 +1,10 @@
 use rocksdb::{Options, DB};
 use std::sync::{Arc, Mutex, MutexGuard};
 
+use crate::db::db_error::DbError;
+
 // Define the struct that contains the RocksDB instance
+#[derive(Clone)]
 pub struct RocksDbAccessor {
     _db: Arc<Mutex<DB>>,
 }
@@ -28,7 +31,7 @@ impl Default for RocksDbAccessor {
 }
 
 impl RocksDbAccessor {
-    pub fn db(&self) -> MutexGuard<DB> {
-        self._db.lock().unwrap()
+    pub fn db_guard(&self) -> Result<MutexGuard<DB>, DbError> {
+        self._db.lock().map_err(|_| DbError::CanNotLockDbMutex)
     }
 }
