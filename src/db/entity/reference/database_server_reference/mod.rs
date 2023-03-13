@@ -12,6 +12,7 @@ use crate::db::{
         DatabaseServer, DatabaseServerStored,
     },
 };
+use serde::{Deserialize, Serialize};
 
 pub(crate) mod stored;
 use stored::*;
@@ -43,8 +44,8 @@ pub(crate) trait DatabaseServerReferenceTrait {
     ) -> DbResult<Vec<String>>;
 }
 
-pub type DatabaseServerName = ();
-#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) type DatabaseServerName = ();
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct DatabaseServerReference;
 
 impl DatabaseServerReference {

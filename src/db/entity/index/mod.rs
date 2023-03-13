@@ -1,4 +1,6 @@
 //index.rs
+use serde::{Deserialize, Serialize};
+
 mod key_value;
 
 use super::reference::IndexReference;
@@ -6,7 +8,7 @@ pub(crate) use key_value::*;
 
 pub(crate) const DEFAULT_ID_FIELD: &str = "_id";
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub(crate) struct Index {
     pub id: IndexReference,
     pub fields: Vec<String>,

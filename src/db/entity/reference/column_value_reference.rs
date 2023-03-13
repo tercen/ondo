@@ -3,8 +3,8 @@ use super::effect::{Effect, Effects};
 use crate::db::entity::reference::requests::column_value_requests::ColumnValueRequests;
 use crate::db::{db_error::DbError, db_error::DbResult, entity::IndexValue};
 use crate::db::entity::reference::effect::column_value_effect::ColumnValueEffect;
-
 use serde_json::json;
+use serde::{Serialize, Deserialize};
 
 pub(crate) type ColumnKey = IndexValue;
 pub(crate) type ColumnValue = IndexValue;
@@ -17,7 +17,7 @@ pub(crate) trait ColumnValueReferenceTrait {
         -> DbResult<(u64, Effects)>;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct ColumnValueReference {
     pub column_reference: String,
     pub id: ColumnKey,

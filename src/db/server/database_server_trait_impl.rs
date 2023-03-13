@@ -5,9 +5,7 @@ use super::rocks_db_accessor::RocksDbAccessor;
 use super::to_entity_trait::ToEntity;
 use super::to_reference_trait::ToReference;
 use crate::db::entity::database_server::DatabaseServer;
-use crate::db::entity::reference::database_server_reference::{
-    DatabaseServerReference, DatabaseServerReferenceTrait,
-};
+use crate::db::entity::reference::database_server_reference::DatabaseServerReference;
 use crate::ondo_remote::{
     ArrayOfStringResponse, DatabaseServerMessage, DatabaseServerReferenceMessage, EmptyMessage,
     VersionResponse,

@@ -10,6 +10,7 @@ use crate::db::{
     db_error::{DbError, DbResult},
     entity::{Domain, DomainStored},
 };
+use serde::{Deserialize, Serialize};
 
 pub(crate) mod stored;
 use stored::*;
@@ -34,7 +35,7 @@ pub(crate) trait DomainReferenceTrait {
 }
 
 pub(crate) type DomainName = String;
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct DomainReference {
     pub domain_name: DomainName,
 }

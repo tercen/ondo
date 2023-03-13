@@ -12,6 +12,7 @@ use crate::{
         entity::{table_value::TableValue, Table, TableStored},
     },
 };
+use serde::{Deserialize, Serialize};
 
 pub(crate) mod stored;
 use stored::*;
@@ -35,7 +36,7 @@ pub(crate) trait TableReferenceTrait {
 }
 
 pub type TableName = String;
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct TableReference {
     pub domain_name: String,
     pub table_name: TableName,

@@ -9,6 +9,7 @@ use crate::db::{
     db_error::DbResult,
     entity::{IndexKey, IndexValue},
 };
+use serde::{Deserialize, Serialize};
 
 pub(crate) trait IndexValueReferenceTrait {
     fn container_cf_name(&self) -> String;
@@ -17,7 +18,7 @@ pub(crate) trait IndexValueReferenceTrait {
     fn delete_index_value(&self) -> DbResult<Effects>;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub(crate) struct IndexValueReference {
     pub index_reference: IndexReference,
     pub key: IndexKey,

@@ -13,6 +13,7 @@ use crate::db::{
     entity::{IndexValue, TableValue},
 };
 use crate::db::entity::reference::effect::table_value_effect::TableValueEffect;
+use serde::{Deserialize, Serialize};
 
 pub(crate) trait TableValueRequests {
     //FIXME: Use Column Value instead of TableValueRequests
@@ -33,7 +34,7 @@ pub(crate) trait TableValueReferenceTrait {
 
 pub type TableKey = IndexValue;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub(crate) struct TableValueReference {
     pub table_reference: TableReference,
     pub id: TableKey,

@@ -12,6 +12,7 @@ use crate::db::{
     db_error::{DbError, DbResult},
     entity::Index,
 };
+use serde::{Deserialize, Serialize};
 
 pub(crate) trait IndexReferenceTrait {
     fn required_cf_names(&self) -> Vec<String>;
@@ -29,7 +30,7 @@ pub(crate) trait IndexReferenceTrait {
     fn delete_index(&self, parent_requests: &dyn TableStoredRequests) -> DbResult<Effects>;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct IndexReference {
     pub index_name: String,
     pub table_reference: TableReference,

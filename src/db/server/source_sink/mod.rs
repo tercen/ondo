@@ -14,4 +14,4 @@ pub(super) mod table_source;
 pub(super) mod table_value_sink;
 pub(super) mod table_value_source;
 
-// pub(super) mod serializer;
+pub(super) mod ondo_serializer;
