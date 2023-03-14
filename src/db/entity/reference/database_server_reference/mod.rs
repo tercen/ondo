@@ -86,13 +86,13 @@ impl DatabaseServerReferenceTrait for DatabaseServerReference {
         database_server: &DatabaseServer,
         requests: &dyn DatabaseServerStoredRequests,
     ) -> DbResult<Effects> {
-        let stored_opt = self.get_database_server_stored(requests)?;
-        match stored_opt {
-            Some(_) => {
+        let r_opt = self.get_database_server_stored(requests);
+        match r_opt {
+            Ok(Some(_)) => {
                 // Data already exists, return AlreadyExists error
                 Err(DbError::AlreadyExists)
             }
-            None => {
+            Ok(None) | Err(_) => {
                 let new_stored = DatabaseServerStored {
                     meta_revision: 0,
                     database_server: (*database_server).clone(),

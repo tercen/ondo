@@ -1,19 +1,20 @@
-use crate::db::entity::reference::index_value_reference::IndexValueReference;
 use super::OndoSerializer;
 use crate::db::db_error::DbError;
 use crate::db::db_error::DbResult;
-use bincode::{deserialize, serialize};
+use crate::db::entity::reference::index_value_reference::IndexValueReference;
+use rmp_serde::{from_slice, to_vec};
 use serde_json::{json, Value};
 
 impl OndoSerializer<IndexValueReference> for IndexValueReference {
     fn ondo_serialize(&self) -> DbResult<Vec<u8>> {
         let serde_value = json!(self);
-        serialize(&serde_value).map_err(|_| DbError::SerializationError)
+        to_vec(&serde_value).map_err(|e| DbError::SerializationError(e.to_string()))
     }
     fn ondo_deserialize(bytes: &[u8]) -> DbResult<IndexValueReference> {
-        let serde_value = deserialize::<Value>(bytes).map_err(|_| DbError::SerializationError)?;
-        let answer =
-            serde_json::from_value(serde_value).map_err(|_| DbError::SerializationError)?;
+        let serde_value =
+            from_slice::<Value>(bytes).map_err(|e| DbError::SerializationError(e.to_string()))?;
+        let answer = serde_json::from_value(serde_value)
+            .map_err(|e| DbError::SerializationError(e.to_string()))?;
         Ok(answer)
     }
 }

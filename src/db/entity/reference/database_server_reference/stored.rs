@@ -112,7 +112,7 @@ impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
         effects.extend(
             self.required_cf_names()
                 .iter()
-                .map(|cf_name| Effect::CreateCf(cf_name.clone())),
+                .map(|cf_name| Effect::DeleteCf(cf_name.clone())),
         );
 
         Ok(effects)
@@ -272,7 +272,7 @@ pub(crate) mod tests {
                 ref_trait
                     .required_cf_names()
                     .iter()
-                    .map(|cf_name| Effect::CreateCf(cf_name.clone())),
+                    .map(|cf_name| Effect::DeleteCf(cf_name.clone())),
             );
 
             let effects = ref_trait

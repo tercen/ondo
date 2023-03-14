@@ -3,7 +3,7 @@ use std::fmt;
 
 #[derive(Debug, PartialEq)]
 pub enum DbError {
-    Other,
+    Other(String),
     DatabaseNotInitialized,
     DomainNotInitialized,
     TableNotInitialized,
@@ -12,15 +12,15 @@ pub enum DbError {
     NotFound,
     NotU64,
     CanNotLockDbMutex,
-    SerializationError,
+    SerializationError(String),
     CfNotFound,
-    RocksDbError,
+    RocksDbError(rocksdb::Error),
 }
 
 impl fmt::Display for DbError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            DbError::Other => write!(f, "Other"),
+        match self {
+            DbError::Other(msg) => write!(f, "Error: {}!", &msg),
             DbError::DatabaseNotInitialized => write!(f, "DatabaseNotInitialized"),
             DbError::DomainNotInitialized => write!(f, "DomainNotInitialized"),
             DbError::TableNotInitialized => write!(f, "TableNotInitialized"),
@@ -29,9 +29,9 @@ impl fmt::Display for DbError {
             DbError::NotFound => write!(f, "NotFound"),
             DbError::NotU64 => write!(f, "Not u64"),
             DbError::CanNotLockDbMutex => write!(f, "Can not lock db mutex"),
-            DbError::SerializationError => write!(f, "Serialization error"),
+            DbError::SerializationError(msg) => write!(f, "Serialization error: {}", msg),
             DbError::CfNotFound => write!(f, "Column family not found"),
-            DbError::RocksDbError => write!(f, "RocksDb error"),
+            DbError::RocksDbError(err) => write!(f, "RocksDbError: {}", err),
         }
     }
 }
@@ -41,7 +41,7 @@ pub(crate) type DbResult<T> = Result<T, DbError>;
 impl From<DbError> for u32 {
     fn from(err: DbError) -> Self {
         match err {
-            DbError::Other => 0,
+            DbError::Other(_) => 0,
             DbError::NotFound => 1,
             DbError::DatabaseNotInitialized => 2,
             DbError::DomainNotInitialized => 3,
@@ -50,9 +50,9 @@ impl From<DbError> for u32 {
             DbError::AlreadyExists => 6,
             DbError::NotU64 => 7,
             DbError::CanNotLockDbMutex => 8,
-            DbError::SerializationError => 9,
+            DbError::SerializationError(_) => 9,
             DbError::CfNotFound => 10,
-            DbError::RocksDbError => 11,
+            DbError::RocksDbError(_) => 11,
         }
     }
 }

@@ -12,12 +12,13 @@ impl DatabaseServerStoredRequests for RocksDbAccessor {
         cf_name: &str,
         key: &DatabaseServerName,
     ) -> DbResult<Option<DatabaseServerStored>> {
-        let db = self.db_guard()?;
+        let guarded_db = self.guarded_db();
+        let db = guarded_db.read().map_err(|_| DbError::CanNotLockDbMutex)?;
         let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
         let ondo_key = DatabaseServerName::ondo_serialize(key)?;
         let answer = db
             .get_cf(cf, &ondo_key)
-            .map_err(|_| DbError::RocksDbError)?;
+            .map_err(|err| DbError::RocksDbError(err))?;
         answer
             .map(|bytes| DatabaseServerStored::ondo_deserialize(&bytes))
             .transpose()
