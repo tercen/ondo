@@ -20,8 +20,8 @@ impl EffectsSink for Vec<Effect> {
                     Effect::DeleteCf(cf_name) => {
                         db.drop_cf(cf_name).map_err(|_| DbError::RocksDbError).map_db_err_to_status()?;
                     }
-                    Effect::DatabaseServerStoredEffect(_) => {
-                        todo!();
+                    Effect::DatabaseServerStoredEffect(effect) => {
+                        super::database_server_sink::apply_effect(&db, effect).map_db_err_to_status()?;
                     }
                     Effect::DomainStoredEffect(_) => {
                         todo!();
