@@ -22,6 +22,6 @@ pub trait DatabaseServerTrait {
     ) -> Result<Response<EmptyMessage>, Status>;
     fn list_domains(
         &self,
-        _: Request<EmptyMessage>,
+        _: Request<DatabaseServerReferenceMessage>,
     ) -> Result<Response<ArrayOfStringResponse>, Status>;
 }

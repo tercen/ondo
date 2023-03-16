@@ -10,7 +10,7 @@ pub(super) fn apply_effect(
     effect: &TableStoredEffect,
 ) -> Result<(), DbError> {
     let guarded_db = ra.guarded_db();
-    let db = guarded_db.read().map_err(|_| DbError::CanNotLockDbMutex)?;
+    let db = RocksDbAccessor::db_read_lock(&guarded_db)?;
     match effect {
         TableStoredEffect::Put(cf_name, key, table_stored) => {
             let ondo_key = TableName::ondo_serialize(&key)?;

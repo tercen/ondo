@@ -35,7 +35,7 @@ impl ToEntity<DatabaseServer> for Request<DatabaseServerMessage> {
 
 impl FromEntity<DatabaseServer> for Response<DatabaseServerMessage> {
     fn from_entity(_entity: DatabaseServer) -> Self {
-        Response::new(DatabaseServerMessage {}) 
+        Response::new(DatabaseServerMessage {})
     }
 }
 
@@ -79,15 +79,23 @@ impl DatabaseServerTrait for RocksDbAccessor {
 
     fn update_database_server(
         &self,
-        _: Request<DatabaseServerMessage>,
+        r: Request<DatabaseServerMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        todo!()
+        r.to_reference()
+            .put_database_server(&r.to_entity(), self)
+            .map_db_err_to_status()?
+            .apply_effects(self)
     }
 
     fn list_domains(
         &self,
-        _: Request<EmptyMessage>,
+        r: Request<DatabaseServerReferenceMessage>,
     ) -> Result<Response<ArrayOfStringResponse>, Status> {
-        todo!()
+        let names = r
+            .to_reference()
+            .list_domain_names(self)
+            .map_db_err_to_status()?;
+        let response = ArrayOfStringResponse { values: names };
+        Ok(Response::new(response))
     }
 }

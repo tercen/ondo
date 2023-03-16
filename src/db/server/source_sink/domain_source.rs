@@ -9,7 +9,7 @@ use crate::db::server::source_sink::ondo_serializer::OndoSerializer;
 impl DomainStoredRequests for RocksDbAccessor {
     fn get_domain_stored(&self, cf_name: &str, key: &DomainName) -> DbResult<Option<DomainStored>> {
         let guarded_db = self.guarded_db();
-        let db = guarded_db.read().map_err(|_| DbError::CanNotLockDbMutex)?;
+        let db = RocksDbAccessor::db_read_lock(&guarded_db)?;
         let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
         let ondo_key = DomainName::ondo_serialize(key)?;
         let answer = db

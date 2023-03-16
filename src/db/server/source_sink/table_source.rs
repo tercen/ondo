@@ -13,7 +13,7 @@ impl TableStoredRequests for RocksDbAccessor {
         key: &TableName,
     ) -> DbResult<Option<TableStored>> {
         let guarded_db = self.guarded_db();
-        let db = guarded_db.read().map_err(|_| DbError::CanNotLockDbMutex)?;
+        let db = RocksDbAccessor::db_read_lock(&guarded_db)?;
         let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
         let ondo_key = TableName::ondo_serialize(key)?;
         let answer = db

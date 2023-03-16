@@ -16,9 +16,7 @@ impl EffectsSink for Vec<Effect> {
             match effect {
                 Effect::CreateCf(cf_name) => {
                     let guarded_db = ra.guarded_db();
-                    let mut db = guarded_db
-                        .write()
-                        .map_err(|_| DbError::CanNotLockDbMutex)
+                    let mut db = RocksDbAccessor::db_write_lock(&guarded_db)
                         .map_db_err_to_status()?;
                     db.create_cf(cf_name, &cf_opts)
                         .map_err(|err| DbError::RocksDbError(err))
@@ -26,9 +24,7 @@ impl EffectsSink for Vec<Effect> {
                 }
                 Effect::DeleteCf(cf_name) => {
                     let guarded_db = ra.guarded_db();
-                    let mut db = guarded_db
-                        .write()
-                        .map_err(|_| DbError::CanNotLockDbMutex)
+                    let mut db = RocksDbAccessor::db_write_lock(&guarded_db)
                         .map_db_err_to_status()?;
                     db.drop_cf(cf_name)
                         .map_err(|err| DbError::RocksDbError(err))

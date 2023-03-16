@@ -10,7 +10,7 @@ pub(super) fn apply_effect(
     effect: &DomainStoredEffect,
 ) -> Result<(), DbError> {
     let guarded_db = ra.guarded_db();
-    let db = guarded_db.read().map_err(|_| DbError::CanNotLockDbMutex)?;
+    let db = RocksDbAccessor::db_read_lock(&guarded_db)?;
     match effect {
         DomainStoredEffect::Put(cf_name, key, domain_stored) => {
             let ondo_key = DomainName::ondo_serialize(&key)?;
