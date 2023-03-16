@@ -5,6 +5,7 @@ use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
 use super::to_entity_trait::FromEntity;
 use super::to_entity_trait::ToEntity;
+use super::to_reference_trait::FromReference;
 use super::to_reference_trait::ToReference;
 use crate::db::entity::domain::Domain;
 use crate::db::entity::reference::domain_reference::DomainReference;
@@ -12,40 +13,67 @@ use crate::db::entity::reference::domain_reference::DomainReferenceTrait;
 use crate::ondo_remote::*;
 use tonic::{Request, Response, Status};
 
-impl ToReference<DomainReference> for Request<DomainReferenceMessage> {
+impl ToReference<DomainReference> for DomainReferenceMessage {
     fn to_reference(&self) -> DomainReference {
         DomainReference {
-            domain_name: self.get_ref().domain_name.clone(),
+            domain_name: self.domain_name.clone(),
         }
+    }
+}
+
+impl ToReference<DomainReference> for Request<DomainReferenceMessage> {
+    fn to_reference(&self) -> DomainReference {
+        self.get_ref().to_reference()
+    }
+}
+
+impl ToReference<DomainReference> for DomainMessage {
+    fn to_reference(&self) -> DomainReference {
+        let r_msg = self.domain_reference.as_ref().unwrap();
+        r_msg.to_reference()
     }
 }
 
 impl ToReference<DomainReference> for Request<DomainMessage> {
     fn to_reference(&self) -> DomainReference {
-        let msg = self.get_ref();
-        let r_msg = msg.domain_reference.as_ref().unwrap();
-        DomainReference {
-            domain_name: r_msg.domain_name.clone(),
-        }
+        self.get_ref().to_reference()
     }
 }
 
-impl ToEntity<Domain> for Request<DomainMessage> {
+impl ToEntity<Domain> for DomainMessage {
     fn to_entity(&self) -> Domain {
         let r = self.to_reference();
         Domain { id: r }
     }
 }
 
+impl ToEntity<Domain> for Request<DomainMessage> {
+    fn to_entity(&self) -> Domain {
+        self.get_ref().to_entity()
+    }
+}
+
+impl FromReference<DomainReference> for DomainReferenceMessage {
+    fn from_reference(r: DomainReference) -> Self {
+        DomainReferenceMessage {
+            domain_name: r.domain_name,
+        }
+    }
+}
+
+impl FromEntity<Domain> for DomainMessage {
+    fn from_entity(entity: Domain) -> Self {
+        let r_msg = DomainReferenceMessage::from_reference(entity.id);
+        DomainMessage {
+            domain_reference: Some(r_msg),
+        }
+    }
+}
+
 impl FromEntity<Domain> for Response<DomainMessage> {
     fn from_entity(entity: Domain) -> Self {
-        let r = entity.id;
-        let r_msg = DomainReferenceMessage {
-            domain_name: r.domain_name,
-        };
-        Response::new(DomainMessage {
-            domain_reference: Some(r_msg),
-        })
+        let msg = DomainMessage::from_entity(entity);
+        Response::new(msg)
     }
 }
 

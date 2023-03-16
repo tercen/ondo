@@ -8,3 +8,4 @@ pub(crate) trait TableStoredRequests {
     fn get_table_stored(&self, cf_name: &str, key: &TableName) -> DbResult<Option<TableStored>>;
     fn iter<'a>(&'a self, value_cf_name: &str) -> CallbackIterator<'a, TableValue>;
 }
+//TODO: need get values also by id range and id list
