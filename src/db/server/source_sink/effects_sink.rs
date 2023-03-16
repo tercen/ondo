@@ -16,16 +16,16 @@ impl EffectsSink for Vec<Effect> {
             match effect {
                 Effect::CreateCf(cf_name) => {
                     let guarded_db = ra.guarded_db();
-                    let mut db = RocksDbAccessor::db_write_lock(&guarded_db)
-                        .map_db_err_to_status()?;
+                    let mut db =
+                        RocksDbAccessor::db_write_lock(&guarded_db).map_db_err_to_status()?;
                     db.create_cf(cf_name, &cf_opts)
                         .map_err(|err| DbError::RocksDbError(err))
                         .map_db_err_to_status()?;
                 }
                 Effect::DeleteCf(cf_name) => {
                     let guarded_db = ra.guarded_db();
-                    let mut db = RocksDbAccessor::db_write_lock(&guarded_db)
-                        .map_db_err_to_status()?;
+                    let mut db =
+                        RocksDbAccessor::db_write_lock(&guarded_db).map_db_err_to_status()?;
                     db.drop_cf(cf_name)
                         .map_err(|err| DbError::RocksDbError(err))
                         .map_db_err_to_status()?;
@@ -34,11 +34,11 @@ impl EffectsSink for Vec<Effect> {
                     super::database_server_sink::apply_effect(&ra, effect)
                         .map_db_err_to_status()?;
                 }
-                Effect::DomainStoredEffect(_) => {
-                    todo!();
+                Effect::DomainStoredEffect(effect) => {
+                    super::domain_sink::apply_effect(&ra, effect).map_db_err_to_status()?;
                 }
-                Effect::TableStoredEffect(_) => {
-                    todo!();
+                Effect::TableStoredEffect(effect) => {
+                    super::table_sink::apply_effect(&ra, effect).map_db_err_to_status()?;
                 }
                 Effect::TableValueEffect(_) => {
                     todo!();
