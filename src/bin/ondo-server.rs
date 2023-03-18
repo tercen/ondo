@@ -223,6 +223,12 @@ impl OndoRemote for MyServer {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    tokio::spawn(async move {
+        tokio::signal::ctrl_c().await.unwrap();
+        std::process::exit(0);
+    });
+
     let addr = "0.0.0.0:50051".parse()?;
 
     let remote_server = MyServer::default();
