@@ -12,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client  = OndoRemoteClient::connect(addr).await?;
     let request = Request::new(EmptyMessage{});
     let response = client.version(request).await?;
-    println!("response: {}", response.into_inner().version);
+    println!("response: {:?}", response.into_inner());
 
     Ok(())
 }
