@@ -8,14 +8,14 @@ impl IndexedValueServerTrait for RocksDbAccessor {
     fn find_values(
         &self,
         _: Request<IndexedValueReferenceMessage>,
-    ) -> Result<Response<JsonResponse>, Status> {
+    ) -> Result<Response<JsonMessage>, Status> {
         todo!()
     }
 
     fn find_values_by_range(
         &self,
         _: Request<IndexedValueRangeReferenceMessage>,
-    ) -> Result<Response<JsonResponse>, Status> {
+    ) -> Result<Response<JsonMessage>, Status> {
         todo!()
     }
 }

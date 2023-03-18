@@ -4,31 +4,32 @@
 //TODO!XXX: post -> put self index
 //TODO!XXX!XXX!XXX: post -> create id
 //TODO!XXX: find by index
+use super::requests::table_value_requests::TableValueRequests;
 use super::{
     effect::{Effect, Effects},
+    requests::column_value_requests::ColumnValueRequests,
     CfNameMaker, TableReference,
 };
+use crate::db::entity::index::DEFAULT_ID_FIELD;
+use crate::db::entity::reference::column_value_reference::ColumnValueReference;
+use crate::db::entity::reference::column_value_reference::ColumnValueReferenceTrait;
+use crate::db::entity::reference::effect::table_value_effect::TableValueEffect;
 use crate::db::{
     db_error::DbResult,
     entity::{IndexValue, TableValue},
 };
-use crate::db::entity::reference::effect::table_value_effect::TableValueEffect;
 use serde::{Deserialize, Serialize};
-
-pub(crate) trait TableValueRequests {
-    //FIXME: Use Column Value instead of TableValueRequests
-    fn get_table_value(
-        &self,
-        cf_name: &str,
-        key: &TableValueReference,
-    ) -> DbResult<Option<TableValue>>;
-}
+use serde_json::Value;
 
 pub(crate) trait TableValueReferenceTrait {
     fn container_cf_name(&self) -> String;
     fn get_table_value(&self, request: &dyn TableValueRequests) -> DbResult<Option<TableValue>>;
     fn put_table_value(&self, value: &TableValue) -> DbResult<Effects>;
-    fn post_table_value(&self, value: &TableValue) -> DbResult<Effects>;
+    fn post_table_value(
+        &mut self,
+        value: &mut TableValue,
+        column_value_requests: &dyn ColumnValueRequests,
+    ) -> DbResult<(Value, Effects)>;
     fn delete_table_value(&self) -> DbResult<Effects>;
 }
 
@@ -71,8 +72,43 @@ impl TableValueReferenceTrait for TableValueReference {
         Ok(vec![effect])
     }
 
-    fn post_table_value(&self, value: &TableValue) -> DbResult<Effects> {
-        self.put_table_value(value)
+    fn post_table_value(
+        &mut self,
+        value: &mut TableValue,
+        column_value_requests: &dyn ColumnValueRequests,
+    ) -> DbResult<(Value, Effects)> {
+        let mut effects: Vec<Effect> = Vec::new();
+        let existing_id_opt = value.get(DEFAULT_ID_FIELD);
+        let no_id = serde_json::json!(0u64);
+        let id_not_found = existing_id_opt.is_none() || existing_id_opt == Some(&no_id);
+
+        let id_used = match id_not_found {
+            true => {
+                let domain_reference = self.table_reference.to_domain_reference();
+                let table_counter_reference = ColumnValueReference {
+                    column_reference: domain_reference.cf_name_for_table_counters(),
+                    id: serde_json::json!(self.table_reference.table_name),
+                };
+                let (new_id, counter_effects) =
+                    table_counter_reference.increment_column_value(column_value_requests)?;
+                effects.extend(counter_effects);
+                if let Some(obj) = value.as_object_mut() {
+                    obj.insert(
+                        DEFAULT_ID_FIELD.to_owned(),
+                        Value::Number(serde_json::Number::from(new_id)),
+                    );
+                }
+                serde_json::json!(new_id)
+            }
+            false => {
+                let value = existing_id_opt.unwrap();
+                value.clone()
+            }
+        };
+        self.id = id_used.clone();
+        let put_effects = self.put_table_value(value)?;
+        effects.extend(put_effects);
+        Ok((id_used, effects))
     }
 
     fn delete_table_value(&self) -> DbResult<Effects> {

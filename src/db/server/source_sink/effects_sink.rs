@@ -40,14 +40,14 @@ impl EffectsSink for Vec<Effect> {
                 Effect::TableStoredEffect(effect) => {
                     super::table_sink::apply_effect(&ra, effect).map_db_err_to_status()?;
                 }
-                Effect::TableValueEffect(_) => {
-                    todo!();
+                Effect::TableValueEffect(effect) => {
+                    super::table_value_sink::apply_effect(&ra, effect).map_db_err_to_status()?;
                 }
                 Effect::IndexValueEffect(_) => {
-                    todo!();
+                    todo!(); //TODO IndexValueEffect
                 }
-                Effect::ColumnValueEffect(_) => {
-                    todo!();
+                Effect::ColumnValueEffect(effect) => {
+                    super::column_value_sink::apply_effect(&ra, effect).map_db_err_to_status()?;
                 }
             }
         }

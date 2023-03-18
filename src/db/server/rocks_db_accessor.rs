@@ -1,8 +1,8 @@
 // use rocksdb::{Options, DB};
+use crate::db::db_error::DbError;
+use crate::db::db_error::DbResult;
 use rocksdb::{Options, DB};
 use std::sync::{Arc, RwLock};
-use crate::db::db_error::DbResult;
-use crate::db::db_error::DbError;
 
 // Define the struct that contains the RocksDB instance
 #[derive(Clone)]
@@ -48,7 +48,9 @@ impl RocksDbAccessor {
         guarded_db.read().map_err(|_| DbError::CanNotLockDbMutex)
     }
 
-    pub fn db_write_lock(guarded_db: &Arc<RwLock<DB>>) -> DbResult<std::sync::RwLockWriteGuard<DB>> {
+    pub fn db_write_lock(
+        guarded_db: &Arc<RwLock<DB>>,
+    ) -> DbResult<std::sync::RwLockWriteGuard<DB>> {
         guarded_db.write().map_err(|_| DbError::CanNotLockDbMutex)
     }
 }

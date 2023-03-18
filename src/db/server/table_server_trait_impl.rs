@@ -132,21 +132,21 @@ impl TableServerTrait for RocksDbAccessor {
     fn list_values(
         &self,
         _: Request<TableReferenceMessage>,
-    ) -> Result<Response<JsonResponse>, Status> {
+    ) -> Result<Response<JsonMessage>, Status> {
         todo!()
     }
 
     fn list_values_by_id_range(
         &self,
         _: Request<TableIdRangeReferenceMessage>,
-    ) -> Result<Response<JsonResponse>, Status> {
+    ) -> Result<Response<JsonMessage>, Status> {
         todo!()
     }
 
     fn list_values_by_id_list(
         &self,
         _: Request<TableIdListReferenceMessage>,
-    ) -> Result<Response<JsonResponse>, Status> {
+    ) -> Result<Response<JsonMessage>, Status> {
         todo!()
     }
 }
