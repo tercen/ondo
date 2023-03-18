@@ -16,7 +16,7 @@ RUN cargo fetch
 FROM builder-dependencies as builder
 ENV MYAPPNAME=ondo-server
 ENV RUSTFLAGS="-C instrument-coverage"
-ENV LLVM_PROFILE_FILE="local-coverage/${MYAPPNAME}.profraw"
+ENV LLVM_PROFILE_FILE="local-coverage/ondo-server.profraw"
 COPY . .
 
 FROM builder as checker
@@ -26,9 +26,9 @@ FROM checker as test
 RUN cargo test
 
 FROM test as coverage
-RUN $RUSTUPBIN/llvm-profdata merge -sparse local-coverage/${MYAPPNAME}.profraw -o local-coverage/${MYAPPNAME}.profdata
+RUN $RUSTUPBIN/llvm-profdata merge -sparse local-coverage/ondo-server.profraw -o local-coverage/ondo-server.profdata
 CMD cp -r local-coverage/* coverage/ &&\
-    $RUSTUPBIN/llvm-cov report -Xdemangler=$RUSTFILT target/debug/${MYAPPNAME}  -instr-profile=coverage/${MYAPPNAME}.profdata
+    $RUSTUPBIN/llvm-cov report -Xdemangler=$RUSTFILT target/debug/ondo-server  -instr-profile=coverage/ondo-server.profdata
 
 FROM test as dev-builder
 RUN cargo build
@@ -36,8 +36,8 @@ RUN cargo build
 FROM debian:buster-slim as dev
 # RUN apt-get update && apt-get install -y extra-runtime-dependencies && rm -rf /var/lib/apt/lists/*
 RUN apt-get update && rm -rf /var/lib/apt/lists/*
-COPY --from=dev-builder /usr/src/myapp/target/debug/${MYAPPNAME} /usr/local/bin/${MYAPPNAME}
-CMD ["${MYAPPNAME}"]
+COPY --from=dev-builder /usr/src/myapp/target/debug/ondo-server /usr/local/bin/ondo-server
+CMD ["ondo-server"]
 
 FROM test as release-builder
 ARG VERSION
@@ -55,8 +55,6 @@ RUN echo RUSTFLAGS=$RUSTFLAGS
 
 RUN cargo build --release
 
-FROM debian:buster-slim as release
-# RUN apt-get update && apt-get install -y extra-runtime-dependencies && rm -rf /var/lib/apt/lists/*
-# RUN apt-get update && rm -rf /var/lib/apt/lists/*
-COPY --from=release-builder /usr/src/myapp/target/release/${MYAPPNAME} /usr/local/bin/${MYAPPNAME}
-CMD ["${MYAPPNAME}"]
+FROM debian:bullseye-slim as release
+COPY --from=release-builder /usr/src/myapp/target/release/ondo-server /usr/local/bin/ondo-server
+CMD ["ondo-server"]
