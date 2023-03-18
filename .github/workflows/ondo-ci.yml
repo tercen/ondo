@@ -1,0 +1,71 @@
+# This is a basic workflow to help you get started with Actions
+
+name: ondo-ci
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the main branch
+on:
+  push:
+    branches: [ main, stage, prod, 5-ci-integration ]
+    tags:
+      - '*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  pull_request:
+    branches: [ main, stage, prod ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+#    runs-on: self-hosted
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+    - name: VERSION
+      run: |
+        echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+    - name: SEMVER VERSION
+      run: |
+        SEMVER=( ${VERSION//./ } )
+        echo "VERSION_MAJOR=${SEMVER[0]}" >> $GITHUB_ENV
+        echo "VERSION_MINOR=${SEMVER[1]}" >> $GITHUB_ENV
+        echo "VERSION_PATCH=${SEMVER[2]}" >> $GITHUB_ENV
+    - name: COMMIT_NUMBER
+      run: |
+        echo "COMMIT_NUMBER=${GITHUB_SHA::8}" >> $GITHUB_ENV
+    - name: Docker build
+      run: docker build --build-arg BUILD_RUSTFLAGS="" --build-arg VERSION=$VERSION --build-arg COMMIT_NUMBER=$COMMIT_NUMBER --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") -t tercen/ondo .
+    - name: docker login
+      run: docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_PASSWORD }}
+    - name: docker tag/push COMMIT_NUMBER
+      run: |
+        docker tag tercen/ondo tercen/ondo:${COMMIT_NUMBER}
+        docker push tercen/ondo:${COMMIT_NUMBER}
+    - name: docker tag/push latest
+      run: |
+        docker tag tercen/ondo tercen/ondo:latest
+        docker push tercen/ondo:latest
+      if: env.VERSION == 'prod'
+    - name: docker tag/push dev
+      run: |
+        docker tag tercen/ondo tercen/ondo:dev
+        docker push tercen/ondo:dev
+      if: env.VERSION == '5-ci-integration'
+#      if: env.VERSION == 'main'
+    - name: docker tag/push stage
+      run: |
+        docker tag tercen/ondo tercen/ondo:stage
+        docker push tercen/ondo:stage
+      if: env.VERSION == 'stage'
+    - name: docker minor tag version
+      run: |
+        docker tag tercen/ondo tercen/ondo:${VERSION_MAJOR}
+        docker push tercen/ondo:${VERSION_MAJOR}
+        docker tag tercen/ondo tercen/ondo:${VERSION_MAJOR}.${VERSION_MINOR}
+        docker push tercen/ondo:${VERSION_MAJOR}.${VERSION_MINOR}
+        docker tag tercen/ondo tercen/ondo:${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
+        docker push tercen/ondo:${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
+      if: env.VERSION_PATCH != ''

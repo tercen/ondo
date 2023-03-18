@@ -40,7 +40,21 @@ COPY --from=dev-builder /usr/src/myapp/target/debug/${MYAPPNAME} /usr/local/bin/
 CMD ["${MYAPPNAME}"]
 
 FROM test as release-builder
-ENV RUSTFLAGS=""
+ARG VERSION
+ARG COMMIT_NUMBER
+ARG TERCEN_DATE
+
+ENV VERSION=$VERSION
+ENV COMMIT_NUMBER=$COMMIT_NUMBER
+#ENV CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+ENV BUILD_DATE=$BUILD_DATE
+
+ARG BUILD_RUSTFLAGS
+
+ENV RUSTFLAGS=$BUILD_RUSTFLAGS
+
+RUN echo RUSTFLAGS=$RUSTFLAGS
+
 RUN cargo build --release
 
 FROM debian:buster-slim as release
