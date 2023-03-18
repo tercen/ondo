@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/wrappers.proto";
+
 package OndoRemote;
 
 // Create, Delete, Get, Update, List
@@ -22,6 +24,7 @@ service OndoRemote {
     rpc GetTable(TableReferenceMessage) returns (TableMessage) {}
     rpc UpdateTable(TableMessage) returns (EmptyMessage) {}
     rpc ListIndexes(TableReferenceMessage) returns (ArrayOfStringResponse) {}
+
     rpc ListValues(TableReferenceMessage) returns (JsonMessage) {}
     rpc ListValuesByIdRange(TableIdRangeReferenceMessage) returns (JsonMessage) {}
     rpc ListValuesByIdList(TableIdListReferenceMessage) returns (JsonMessage) {}
@@ -31,7 +34,7 @@ service OndoRemote {
     rpc GetIndex(IndexReferenceMessage) returns (IndexMessage) {}
     rpc UpdateIndex(IndexMessage) returns (EmptyMessage) {}
 
-    rpc CreateValue(TableValueMessage) returns (JsonMessage) {}
+    rpc CreateValue(CreateTableValueMessage) returns (OndoKeyMessage) {}
     rpc DeleteValue(TableValueReferenceMessage) returns (EmptyMessage) {}
     rpc GetValue(TableValueReferenceMessage) returns (JsonMessage) {}
     rpc UpdateValue(TableValueMessage) returns (EmptyMessage) {}
@@ -85,39 +88,58 @@ message IndexMessage {
     repeated string fields = 2;
 }
 
+message CreateTableValueReferenceMessage {
+    TableReferenceMessage table_reference = 1;
+    OptionalOndoKeyMessage key = 2;
+}
+
+message CreateTableValueMessage {
+    CreateTableValueReferenceMessage create_table_value_reference = 1;
+    string json = 2; //_id field should be included therefore we use only table_reference
+}
+
 message TableValueReferenceMessage {
     TableReferenceMessage table_reference = 1;
-    string json_id = 2;
+    OndoKeyMessage key = 2;
 }
 
 message TableValueMessage {
-    TableReferenceMessage table_reference = 1;
-    string json_value = 2; //_id field should be included therefore we use only table_reference
+    TableValueReferenceMessage table_value_reference = 1;
+    string json = 2; //_id field should be included therefore we use only table_reference
 }
 
 message JsonMessage {
-    string json_value = 1;
+    string json = 1;
 }
 
 message TableIdRangeReferenceMessage {
     TableReferenceMessage table_reference = 1;
-    uint64 start_id = 2;
-    uint64 end_id = 3;
+    OndoKeyMessage start_key = 2;
+    OndoKeyMessage end_key = 3;
 }
 
 message TableIdListReferenceMessage {
     TableReferenceMessage table_reference = 1;
-    repeated uint64 ids = 2;
+    repeated OndoKeyMessage keys = 2;
 }
 
 message IndexedValueRangeReferenceMessage {
     IndexReferenceMessage index_reference = 1;
-    string start_key = 2;
-    string end_key = 3;
+    OndoKeyMessage start_key = 2;
+    OndoKeyMessage end_key = 3;
 }
 
 message IndexedValueReferenceMessage {
     IndexReferenceMessage index_reference = 1;
-    string key = 2;
+    OndoKeyMessage key = 2;
 }
 
+// Ondo Key 
+
+message OndoKeyMessage {
+    repeated string json_keys = 1;
+}
+
+message OptionalOndoKeyMessage {
+    OndoKeyMessage ondo_key = 1;  // Maps to Option by default
+}

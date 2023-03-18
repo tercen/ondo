@@ -3,111 +3,82 @@ use super::db_error_to_status::DbErrorToStatus;
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
 use super::table_value_server_trait::TableValueServerTrait;
-use super::to_entity_trait::FromEntity;
-use super::to_entity_trait::ToEntity;
-use super::to_reference_trait::FromReference;
-use super::to_reference_trait::ToReference;
-use super::value_to_json::ValueToJson;
-use crate::db::entity::index::DEFAULT_ID_FIELD;
+use crate::db::entity::reference::table_value_reference::CreateTableValueReference;
+use crate::db::entity::reference::table_value_reference::CreateTableValueReferenceTrait;
 use crate::db::entity::reference::table_value_reference::TableValueReference;
 use crate::db::entity::reference::table_value_reference::TableValueReferenceTrait;
-use crate::db::entity::table_value::TableValue;
 use crate::ondo_remote;
 use ondo_remote::*;
-use serde_json::json;
 use serde_json::Value;
 use tonic::{Request, Response, Status};
 
-impl ToReference<TableValueReference> for TableValueReferenceMessage {
-    fn to_reference(&self) -> TableValueReference {
+impl<'a> Into<TableValueReference> for &'a TableValueReferenceMessage {
+    fn into(self) -> TableValueReference {
         TableValueReference {
-            table_reference: self.table_reference.as_ref().unwrap().to_reference(),
-            id: Value::json_to_value(&self.json_id),
+            table_reference: self.table_reference.as_ref().unwrap().into(),
+            id: self.key.as_ref().unwrap().into(),
+        }
+    }
+}
+impl<'a> Into<CreateTableValueReference> for &'a CreateTableValueReferenceMessage {
+    fn into(self) -> CreateTableValueReference {
+        CreateTableValueReference {
+            table_reference: self.table_reference.as_ref().unwrap().into(),
+            id: self.key.as_ref().unwrap().into(),
         }
     }
 }
 
-impl ToReference<TableValueReference> for Request<TableValueReferenceMessage> {
-    fn to_reference(&self) -> TableValueReference {
-        self.get_ref().to_reference()
-    }
+#[derive(Clone)]
+struct TableValuePayload {
+    table_reference: TableValueReference,
+    value: Value,
 }
-
-impl ToReference<TableValueReference> for TableValueMessage {
-    fn to_reference(&self) -> TableValueReference {
-        let tr_msg = self.table_reference.as_ref().unwrap();
-        let data = Value::json_to_value(&self.json_value);
-        let useless_id = json!(0u64);
-        let id = data.get(DEFAULT_ID_FIELD).unwrap_or(&useless_id);
-        TableValueReference {
-            table_reference: tr_msg.to_reference(),
-            id: id.clone(),
+impl<'a> Into<TableValuePayload> for &'a TableValueMessage {
+    fn into(self) -> TableValuePayload {
+        TableValuePayload {
+            table_reference: self.table_value_reference.as_ref().unwrap().into(),
+            value: serde_json::from_str(&self.json).unwrap(),
         }
     }
 }
 
-impl ToReference<TableValueReference> for Request<TableValueMessage> {
-    fn to_reference(&self) -> TableValueReference {
-        self.get_ref().to_reference()
-    }
+#[derive(Clone)]
+struct CreateTableValuePayload {
+    create_table_reference: CreateTableValueReference,
+    value: Value,
 }
-
-impl ToEntity<Value> for TableValueMessage {
-    fn to_entity(&self) -> TableValue {
-        Value::json_to_value(&self.json_value)
-    }
-}
-
-impl ToEntity<Value> for Request<TableValueMessage> {
-    fn to_entity(&self) -> Value {
-        self.get_ref().to_entity()
-    }
-}
-
-impl FromReference<TableValueReference> for TableValueReferenceMessage {
-    fn from_reference(r: TableValueReference) -> Self {
-        TableValueReferenceMessage {
-            table_reference: Some(TableReferenceMessage::from_reference(r.table_reference)),
-            json_id: Value::value_to_json(&r.id),
+impl<'a> Into<CreateTableValuePayload> for &'a CreateTableValueMessage {
+    fn into(self) -> CreateTableValuePayload {
+        CreateTableValuePayload {
+            create_table_reference: self.create_table_value_reference.as_ref().unwrap().into(),
+            value: serde_json::from_str(&self.json).unwrap(),
         }
-    }
-}
-
-impl FromEntity<Value> for JsonMessage {
-    fn from_entity(entity: Value) -> Self {
-        JsonMessage {
-            json_value: Value::value_to_json(&entity),
-        }
-    }
-}
-
-impl FromEntity<Value> for Response<JsonMessage> {
-    fn from_entity(entity: Value) -> Self {
-        let msg = JsonMessage::from_entity(entity);
-        Response::new(msg)
     }
 }
 
 impl TableValueServerTrait for RocksDbAccessor {
-    fn create_value(&self, r: Request<TableValueMessage>) -> Result<Response<JsonMessage>, Status> {
-        let mut reference = r.to_reference();
-        let mut entity = r.to_entity();
+    fn create_value(
+        &self,
+        r: Request<CreateTableValueMessage>,
+    ) -> Result<Response<OndoKeyMessage>, Status> {
+        let payload: CreateTableValuePayload = r.get_ref().into();
+        let reference = payload.create_table_reference;
+        let mut entity = payload.value;
         let (new_id, effects) = reference
-            .post_table_value(&mut entity, self)
+            .post_table_value(&mut entity, self, self, self)
             .map_db_err_to_status()?;
         effects.apply_effects(self)?;
-        let json_new_id = Value::value_to_json(&new_id);
-        Ok(Response::new(JsonMessage {
-            json_value: json_new_id,
-        }))
+        Ok(Response::new(new_id.into()))
     }
 
     fn delete_value(
         &self,
         r: Request<TableValueReferenceMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        r.to_reference()
-            .delete_table_value()
+        let reference: TableValueReference = r.get_ref().into();
+        reference
+            .delete_table_value(self, self)
             .map_db_err_to_status()?
             .apply_effects(self)
     }
@@ -116,19 +87,121 @@ impl TableValueServerTrait for RocksDbAccessor {
         &self,
         r: Request<TableValueReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        r.to_reference()
+        let reference: TableValueReference = r.get_ref().into();
+        reference
             .get_table_value(self)
             .map_db_err_option_to_status()
-            .map(|entity| Response::<JsonMessage>::from_entity(entity))
+            .map(|entity| Response::new(entity.into()))
     }
 
     fn update_value(
         &self,
         r: Request<TableValueMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        r.to_reference()
-            .put_table_value(&r.to_entity())
+        let payload: TableValuePayload = r.get_ref().into();
+        let entity = payload.value;
+        let reference = payload.table_reference;
+        reference
+            .put_table_value(&entity, self, self)
             .map_db_err_to_status()?
             .apply_effects(self)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_table_value_reference_message_into_table_value_reference() {
+        let message = TableValueReferenceMessage {
+            table_reference: Some(TableReferenceMessage {
+                domain_reference: Some(DomainReferenceMessage {
+                    domain_name: "example.com".to_string(),
+                }),
+                table_name: "table1".to_string(),
+            }),
+            key: Some(OndoKeyMessage {
+                json_keys: vec![r#"{"key":"value"}"#.to_string()],
+            }),
+        };
+        let reference: TableValueReference = (&message).into();
+        assert_eq!(reference.table_reference.domain_reference.domain_name, "example.com");
+        assert_eq!(reference.table_reference.table_name, "table1");
+        assert_eq!(reference.id.values.len(), 1);
+        assert_eq!(reference.id.values[0]["key"], "value");
+    }
+
+    #[test]
+    fn test_table_value_message_into_table_value_payload() {
+        let message = TableValueMessage {
+            table_value_reference: Some(TableValueReferenceMessage {
+                table_reference: Some(TableReferenceMessage {
+                    domain_reference: Some(DomainReferenceMessage {
+                        domain_name: "example.com".to_string(),
+                    }),
+                    table_name: "table1".to_string(),
+                }),
+                key: Some(OndoKeyMessage {
+                    json_keys: vec![r#"{"key":"value"}"#.to_string()],
+                }),
+            }),
+            json: r#"{"key":"value"}"#.to_string(),
+        };
+        let payload: TableValuePayload = (&message).into();
+        assert_eq!(payload.table_reference.table_reference.domain_reference.domain_name, "example.com");
+        assert_eq!(payload.table_reference.table_reference.table_name, "table1");
+        assert_eq!(payload.table_reference.id.values.len(), 1);
+        assert_eq!(payload.table_reference.id.values[0]["key"], "value");
+        assert_eq!(payload.value["key"], "value");
+    }
+
+#[test]
+fn test_create_table_value_reference_message_into_create_table_value_reference() {
+    let message = CreateTableValueReferenceMessage {
+        table_reference: Some(TableReferenceMessage {
+            domain_reference: Some(DomainReferenceMessage {
+                domain_name: "example.com".to_string(),
+            }),
+            table_name: "table1".to_string(),
+        }),
+        key: Some(OptionalOndoKeyMessage {
+            ondo_key: Some(OndoKeyMessage {
+                json_keys: vec![r#"{"key":"value"}"#.to_string()],
+            })
+        }),
+    };
+    let reference: CreateTableValueReference = (&message).into();
+    assert_eq!(reference.table_reference.domain_reference.domain_name, "example.com");
+    assert_eq!(reference.table_reference.table_name, "table1");
+    assert_eq!(reference.clone().id.unwrap().values.len(), 1);
+    assert_eq!(reference.id.unwrap().values[0]["key"], "value");
+}
+
+#[test]
+fn test_create_table_value_message_into_create_table_value_payload() {
+    let message = CreateTableValueMessage {
+        create_table_value_reference: Some(CreateTableValueReferenceMessage {
+            table_reference: Some(TableReferenceMessage {
+                domain_reference: Some(DomainReferenceMessage {
+                    domain_name: "example.com".to_string(),
+                }),
+                table_name: "table1".to_string(),
+            }),
+            key: Some(OptionalOndoKeyMessage {
+                ondo_key: Some(OndoKeyMessage {
+                    json_keys: vec![r#"{"key":"value"}"#.to_string()],
+                })
+            }),
+        }),
+        json: r#"{"key":"value"}"#.to_string(),
+    };
+    let payload: CreateTableValuePayload = (&message).into();
+    assert_eq!(payload.create_table_reference.table_reference.domain_reference.domain_name, "example.com");
+    assert_eq!(payload.create_table_reference.table_reference.table_name, "table1");
+    assert_eq!(payload.clone().create_table_reference.id.unwrap().values.len(), 1);
+    assert_eq!(payload.create_table_reference.id.unwrap().values[0]["key"], "value");
+    assert_eq!(payload.value["key"], "value");
+}
+
+    }

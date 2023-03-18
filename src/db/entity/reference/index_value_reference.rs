@@ -64,6 +64,7 @@ impl IndexValueReferenceTrait for IndexValueReference {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db::entity::ondo_key::OndoKey;
     use mockall::*;
     use serde_json::value::Number;
     use serde_json::Value;
@@ -92,10 +93,11 @@ mod tests {
     }
 
     fn create_index_key() -> IndexKey {
-        vec![
+        let values = vec![
             Value::String("key1".to_owned()),
             Value::String("key2".to_owned()),
-        ]
+        ];
+        OndoKey { values }
     }
 
     mod index_value_reference_trait_tests {

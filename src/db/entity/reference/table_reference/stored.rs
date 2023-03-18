@@ -28,7 +28,10 @@ pub(crate) trait TableStoredReferenceTrait {
         parent_requests: &dyn DomainStoredRequests,
     ) -> DbResult<Effects>;
     fn list_index_names_(&self, requests: &dyn TableStoredRequests) -> DbResult<Vec<String>>;
-    fn iter_<'a>(&self, requests: &'a dyn TableStoredRequests) -> CallbackIterator<'a, TableValue>;
+    fn all_values_<'a>(
+        &self,
+        requests: &'a dyn TableStoredRequests,
+    ) -> Box<dyn Iterator<Item = TableValue>>;
 }
 
 impl TableStoredReferenceTrait for TableReference {
@@ -44,8 +47,11 @@ impl TableStoredReferenceTrait for TableReference {
         vec![self.value_cf_name()]
     }
 
-    fn iter_<'a>(&self, requests: &'a dyn TableStoredRequests) -> CallbackIterator<'a, TableValue> {
-        requests.iter(&self.value_cf_name())
+    fn all_values_<'a>(
+        &self,
+        requests: &'a dyn TableStoredRequests,
+    ) -> Box<dyn Iterator<Item = TableValue>> {
+        requests.all_values(&self.value_cf_name())
     }
 
     fn get_table_stored(
@@ -157,8 +163,7 @@ pub mod tests {
                 cf_name: &str,
                 key: &TableName,
             ) -> DbResult<Option<TableStored>>;
-            fn iter<'a>(&'a self, value_cf_name: &str) -> CallbackIterator<'a, TableValue>;
-        }
+            fn all_values<'a>(&'a self, value_cf_name: &str) -> Box<dyn Iterator<Item = TableValue>>;        }
     }
 
     pub(crate) fn create_table_ref() -> TableReference {
@@ -167,7 +172,7 @@ pub mod tests {
 
     pub(crate) fn create_table() -> Table {
         Table {
-            id: create_table_ref(),
+            reference: create_table_ref(),
         }
     }
 
@@ -219,9 +224,9 @@ pub mod tests {
                 "sample_table".to_owned(),
                 TableStored {
                     table: Table {
-                        id: TableReference {
+                        reference: TableReference {
+                            domain_reference: DomainReference::new("sample_domain"),
                             table_name: "sample_table".to_owned(),
-                            domain_name: "sample_domain".to_owned(),
                         },
                     },
                     indexes: HashMap::new(),
@@ -243,7 +248,7 @@ pub mod tests {
                     "sample_domain".to_owned(),
                     DomainStored {
                         domain: Domain {
-                            id: DomainReference {
+                            reference: DomainReference {
                                 domain_name: "sample_domain".to_owned(),
                             },
                         },
@@ -259,9 +264,9 @@ pub mod tests {
                     "sample_table".to_owned(),
                     TableStored {
                         table: Table {
-                            id: TableReference {
+                            reference: TableReference {
                                 table_name: "sample_table".to_owned(),
-                                domain_name: "sample_domain".to_owned(),
+                                domain_reference: DomainReference::new("sample_domain"),
                             },
                         },
                         indexes: HashMap::new(),
@@ -290,7 +295,7 @@ pub mod tests {
                     "sample_domain".to_owned(),
                     DomainStored {
                         domain: Domain {
-                            id: DomainReference {
+                            reference: DomainReference {
                                 domain_name: "sample_domain".to_owned(),
                             },
                         },

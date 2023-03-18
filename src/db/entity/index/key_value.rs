@@ -1,11 +1,12 @@
 //key_value.rs
-pub type IndexValue = serde_json::Value;
-pub type IndexKey = Vec<IndexValue>;
+use crate::db::entity::ondo_key::OndoKey;
+pub(crate) type IndexValue = serde_json::Value;
+pub(crate) type IndexKey = OndoKey;
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct KeyValue {
-    key: IndexKey,
-    value: IndexValue,
+    pub key: IndexKey,
+    pub value: IndexValue,
 }
 
 impl KeyValue {

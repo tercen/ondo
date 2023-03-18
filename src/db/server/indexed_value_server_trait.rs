@@ -1,6 +1,6 @@
-use tonic::{Request, Response, Status};
 use crate::ondo_remote;
 use ondo_remote::*;
+use tonic::{Request, Response, Status};
 
 pub trait IndexedValueServerTrait {
     fn find_values(

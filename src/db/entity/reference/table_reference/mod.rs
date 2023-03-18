@@ -5,12 +5,9 @@ use super::{
 };
 use crate::db::entity::reference::requests::domain_stored_requests::DomainStoredRequests;
 use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
-use crate::{
-    callback_iterator::*,
-    db::{
-        db_error::{DbError, DbResult},
-        entity::{table_value::TableValue, Table, TableStored},
-    },
+use crate::db::{
+    db_error::{DbError, DbResult},
+    entity::{table_value::TableValue, Table, TableStored},
 };
 use serde::{Deserialize, Serialize};
 
@@ -32,32 +29,38 @@ pub(crate) trait TableReferenceTrait {
         parent_requests: &dyn DomainStoredRequests,
     ) -> DbResult<Effects>;
     fn list_index_names(&self, requests: &dyn TableStoredRequests) -> DbResult<Vec<String>>;
-    fn iter<'a>(&self, requests: &'a dyn TableStoredRequests) -> CallbackIterator<'a, TableValue>;
+    fn all_values<'a>(
+        &self,
+        requests: &'a dyn TableStoredRequests,
+    ) -> Box<dyn Iterator<Item = TableValue>>;
 }
 
 pub type TableName = String;
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct TableReference {
-    pub domain_name: String,
+    pub domain_reference: DomainReference,
     pub table_name: TableName,
 }
 
 impl TableReference {
     pub fn new(domain_name: &str, table_name: &str) -> Self {
         TableReference {
-            domain_name: domain_name.to_string(),
+            domain_reference: DomainReference::new(domain_name),
             table_name: table_name.to_string(),
         }
     }
 
     pub fn to_domain_reference(&self) -> DomainReference {
-        DomainReference::new(&self.domain_name)
+        self.domain_reference.clone()
     }
 }
 
 impl TableReferenceTrait for TableReference {
-    fn iter<'a>(&self, requests: &'a dyn TableStoredRequests) -> CallbackIterator<'a, TableValue> {
-        self.iter_(requests)
+    fn all_values<'a>(
+        &self,
+        requests: &'a dyn TableStoredRequests,
+    ) -> Box<dyn Iterator<Item = TableValue>> {
+        self.all_values_(requests)
     }
 
     fn get_table(&self, requests: &dyn TableStoredRequests) -> DbResult<Option<Table>> {
