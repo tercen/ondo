@@ -17,8 +17,8 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-#    runs-on: self-hosted
+#    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -37,7 +37,7 @@ jobs:
       run: |
         echo "COMMIT_NUMBER=${GITHUB_SHA::8}" >> $GITHUB_ENV
     - name: Docker build
-      run: docker build --build-arg BUILD_RUSTFLAGS="" --build-arg VERSION=$VERSION --build-arg COMMIT_NUMBER=$COMMIT_NUMBER --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") -t tercen/ondo .
+      run: docker build --target release --build-arg BUILD_RUSTFLAGS="" --build-arg VERSION=$VERSION --build-arg COMMIT_NUMBER=$COMMIT_NUMBER --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") -t tercen/ondo .
     - name: docker login
       run: docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_PASSWORD }}
     - name: docker tag/push COMMIT_NUMBER
