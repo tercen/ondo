@@ -3,7 +3,9 @@ name = "ondo"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.68.0"
-default-run = "ondo-server"
+
+# docker build failed on : RUN cargo fetch, default-run target `ondo-server` not found
+#default-run = "ondo-server"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
