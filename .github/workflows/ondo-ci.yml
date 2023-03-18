@@ -53,8 +53,7 @@ jobs:
       run: |
         docker tag tercen/ondo tercen/ondo:dev
         docker push tercen/ondo:dev
-      if: env.VERSION == '5-ci-integration'
-#      if: env.VERSION == 'main'
+      if: env.VERSION == 'main'
     - name: docker tag/push stage
       run: |
         docker tag tercen/ondo tercen/ondo:stage
