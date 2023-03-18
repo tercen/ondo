@@ -11,3 +11,4 @@ Cargo.lock
 /ondo/target/
 /ondo/coverage
 /ondo/local-coverage
+.idea
