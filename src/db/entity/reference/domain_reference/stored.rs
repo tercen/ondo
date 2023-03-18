@@ -42,7 +42,7 @@ impl DomainStoredReferenceTrait for DomainReference {
     fn required_cf_names(&self) -> Vec<String> {
         vec![
             CfNameMaker::for_table_meta(self),
-            CfNameMaker::for_table_counters(self),
+            self.cf_name_for_table_counters(),
         ]
     }
 

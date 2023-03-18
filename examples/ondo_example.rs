@@ -3,8 +3,10 @@
 use ondo::db::server::{
     database_server_trait::DatabaseServerTrait, domain_server_trait::DomainServerTrait,
     rocks_db_accessor::RocksDbAccessor, table_server_trait::TableServerTrait,
+    table_value_server_trait::TableValueServerTrait,
 };
 use ondo::ondo_remote::*;
+use serde::{Deserialize, Serialize};
 use tonic::Request;
 
 fn main() {
@@ -68,7 +70,54 @@ fn table_server_example(rda: &RocksDbAccessor, domain_reference_msg: &DomainRefe
     println!("Updated Table: {:?}", answer);
     let answer = rda.list_indexes(Request::new(table_reference_msg.clone()));
     println!("Listed Tables: {:?}", answer);
+    table_value_server_example(rda, &table_reference_msg);
     let answer = rda.delete_table(Request::new(table_reference_msg.clone()));
     println!("Deleted Table: {:?}", answer);
     println!("TODO list functions not yet implemented")
+}
+
+fn table_value_server_example(rda: &RocksDbAccessor, table_reference_msg: &TableReferenceMessage) {
+    println!("!!! Table Value Server Example !!!");
+
+    #[derive(Serialize, Deserialize)]
+    struct Person {
+        pub _id: u64,
+        pub name: String,
+        pub age: u32,
+    }
+
+    let mut person = Person {
+        _id: 0u64, // Auto id kicks in if _id is 0 or it does not exist in JSON
+        age: 42,
+        name: "Bob".to_owned(),
+    };
+
+    let table_value_msg = TableValueMessage {
+        table_reference: Some(table_reference_msg.clone()),
+        json_value: serde_json::to_string(&person).unwrap(),
+    };
+
+    let answer = rda.create_value(Request::new(table_value_msg.clone()));
+    println!("Created Value: {:?}", answer);
+    let new_id_json = answer.unwrap().get_ref().json_value.clone();
+    let table_value_reference_msg = TableValueReferenceMessage {
+        table_reference: Some(table_reference_msg.clone()),
+        json_id: new_id_json.clone(), //Update reference with new id
+    };
+
+    let answer = rda.get_value(Request::new(table_value_reference_msg.clone()));
+    println!("Got Value: {:?}", answer);
+
+    let new_id_u64: u64 = serde_json::from_str(&new_id_json).unwrap();
+    person._id = new_id_u64;
+    person.age = 43;
+    let table_value_msg2 = TableValueMessage {
+        table_reference: Some(table_reference_msg.clone()),
+        json_value: serde_json::to_string(&person).unwrap(),
+    };
+
+    let answer = rda.update_value(Request::new(table_value_msg2.clone()));
+    println!("Updated Value: {:?}", answer);
+    let answer = rda.delete_value(Request::new(table_value_reference_msg.clone()));
+    println!("Deleted Value: {:?}", answer);
 }

@@ -28,7 +28,10 @@ impl CfNameMaker {
     }
 
     pub fn for_index_values(r: &IndexReference) -> String {
-        format!("{}::/{}/indexes/{}", r.table_reference.domain_name, r.table_reference.table_name, r.index_name)
+        format!(
+            "{}::/{}/indexes/{}",
+            r.table_reference.domain_name, r.table_reference.table_name, r.index_name
+        )
     }
 }
 
@@ -40,7 +43,7 @@ mod tests {
     fn test_for_server_meta() {
         assert_eq!(CfNameMaker::for_server_meta(), "/server");
     }
-   
+
     #[test]
     fn test_for_domain_meta() {
         assert_eq!(CfNameMaker::for_domain_meta(), "/domains");
@@ -61,6 +64,9 @@ mod tests {
     #[test]
     fn test_for_index_values() {
         let r = IndexReference::new("domain1", "table1", "index1");
-        assert_eq!(CfNameMaker::for_index_values(&r), "domain1::/table1/indexes/index1");
+        assert_eq!(
+            CfNameMaker::for_index_values(&r),
+            "domain1::/table1/indexes/index1"
+        );
     }
 }

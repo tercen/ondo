@@ -3,8 +3,7 @@ use ondo_remote::*;
 use tonic::{Request, Response, Status};
 
 pub trait TableValueServerTrait {
-    fn create_value(&self, _: Request<TableValueMessage>)
-        -> Result<Response<EmptyMessage>, Status>;
+    fn create_value(&self, _: Request<TableValueMessage>) -> Result<Response<JsonMessage>, Status>;
     fn delete_value(
         &self,
         _: Request<TableValueReferenceMessage>,
@@ -12,7 +11,7 @@ pub trait TableValueServerTrait {
     fn get_value(
         &self,
         _: Request<TableValueReferenceMessage>,
-    ) -> Result<Response<JsonResponse>, Status>;
+    ) -> Result<Response<JsonMessage>, Status>;
     fn update_value(&self, _: Request<TableValueMessage>)
         -> Result<Response<EmptyMessage>, Status>;
 }

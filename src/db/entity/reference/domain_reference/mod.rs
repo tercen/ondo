@@ -50,6 +50,10 @@ impl DomainReference {
     pub fn to_database_server_reference(&self) -> DatabaseServerReference {
         DatabaseServerReference::new()
     }
+
+    pub fn cf_name_for_table_counters(&self) -> String {
+        CfNameMaker::for_table_counters(self)
+    }
 }
 
 impl DomainReferenceTrait for DomainReference {

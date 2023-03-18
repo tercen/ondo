@@ -12,7 +12,8 @@ pub mod table_server_trait_impl;
 pub mod table_value_server_trait;
 pub mod table_value_server_trait_impl;
 
-mod to_entity_trait;
-mod to_reference_trait;
 mod db_error_to_status;
 mod source_sink;
+mod to_entity_trait;
+mod to_reference_trait;
+mod value_to_json;

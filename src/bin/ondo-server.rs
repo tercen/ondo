@@ -132,21 +132,21 @@ impl OndoRemote for MyServer {
     async fn list_values(
         &self,
         r: Request<TableReferenceMessage>,
-    ) -> Result<Response<JsonResponse>, Status> {
+    ) -> Result<Response<JsonMessage>, Status> {
         self.rocks_db_accessor.list_values(r)
     }
 
     async fn list_values_by_id_range(
         &self,
         r: Request<TableIdRangeReferenceMessage>,
-    ) -> Result<Response<JsonResponse>, Status> {
+    ) -> Result<Response<JsonMessage>, Status> {
         self.rocks_db_accessor.list_values_by_id_range(r)
     }
 
     async fn list_values_by_id_list(
         &self,
         r: Request<TableIdListReferenceMessage>,
-    ) -> Result<Response<JsonResponse>, Status> {
+    ) -> Result<Response<JsonMessage>, Status> {
         self.rocks_db_accessor.list_values_by_id_list(r)
     }
 
@@ -181,7 +181,7 @@ impl OndoRemote for MyServer {
     async fn create_value(
         &self,
         r: Request<TableValueMessage>,
-    ) -> Result<Response<EmptyMessage>, Status> {
+    ) -> Result<Response<JsonMessage>, Status> {
         self.rocks_db_accessor.create_value(r)
     }
 
@@ -195,7 +195,7 @@ impl OndoRemote for MyServer {
     async fn get_value(
         &self,
         r: Request<TableValueReferenceMessage>,
-    ) -> Result<Response<JsonResponse>, Status> {
+    ) -> Result<Response<JsonMessage>, Status> {
         self.rocks_db_accessor.get_value(r)
     }
 
@@ -209,14 +209,14 @@ impl OndoRemote for MyServer {
     async fn find_values(
         &self,
         r: Request<IndexedValueReferenceMessage>,
-    ) -> Result<Response<JsonResponse>, Status> {
+    ) -> Result<Response<JsonMessage>, Status> {
         self.rocks_db_accessor.find_values(r)
     }
 
     async fn find_values_by_range(
         &self,
         r: Request<IndexedValueRangeReferenceMessage>,
-    ) -> Result<Response<JsonResponse>, Status> {
+    ) -> Result<Response<JsonMessage>, Status> {
         self.rocks_db_accessor.find_values_by_range(r)
     }
 }

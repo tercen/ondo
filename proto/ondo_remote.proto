@@ -22,22 +22,22 @@ service OndoRemote {
     rpc GetTable(TableReferenceMessage) returns (TableMessage) {}
     rpc UpdateTable(TableMessage) returns (EmptyMessage) {}
     rpc ListIndexes(TableReferenceMessage) returns (ArrayOfStringResponse) {}
-    rpc ListValues(TableReferenceMessage) returns (JsonResponse) {}
-    rpc ListValuesByIdRange(TableIdRangeReferenceMessage) returns (JsonResponse) {}
-    rpc ListValuesByIdList(TableIdListReferenceMessage) returns (JsonResponse) {}
+    rpc ListValues(TableReferenceMessage) returns (JsonMessage) {}
+    rpc ListValuesByIdRange(TableIdRangeReferenceMessage) returns (JsonMessage) {}
+    rpc ListValuesByIdList(TableIdListReferenceMessage) returns (JsonMessage) {}
 
     rpc CreateIndex(IndexMessage) returns (EmptyMessage) {}
     rpc DeleteIndex(IndexReferenceMessage) returns (EmptyMessage) {}
     rpc GetIndex(IndexReferenceMessage) returns (IndexMessage) {}
     rpc UpdateIndex(IndexMessage) returns (EmptyMessage) {}
 
-    rpc CreateValue(TableValueMessage) returns (EmptyMessage) {}
+    rpc CreateValue(TableValueMessage) returns (JsonMessage) {}
     rpc DeleteValue(TableValueReferenceMessage) returns (EmptyMessage) {}
-    rpc GetValue(TableValueReferenceMessage) returns (JsonResponse) {}
+    rpc GetValue(TableValueReferenceMessage) returns (JsonMessage) {}
     rpc UpdateValue(TableValueMessage) returns (EmptyMessage) {}
 
-    rpc FindValues(IndexedValueReferenceMessage) returns (JsonResponse) {}
-    rpc FindValuesByRange(IndexedValueRangeReferenceMessage) returns (JsonResponse) {}
+    rpc FindValues(IndexedValueReferenceMessage) returns (JsonMessage) {}
+    rpc FindValuesByRange(IndexedValueRangeReferenceMessage) returns (JsonMessage) {}
 }
 
 message EmptyMessage {}
@@ -87,7 +87,7 @@ message IndexMessage {
 
 message TableValueReferenceMessage {
     TableReferenceMessage table_reference = 1;
-    uint64 _id = 2;
+    string json_id = 2;
 }
 
 message TableValueMessage {
@@ -95,7 +95,7 @@ message TableValueMessage {
     string json_value = 2; //_id field should be included therefore we use only table_reference
 }
 
-message JsonResponse {
+message JsonMessage {
     string json_value = 1;
 }
 
