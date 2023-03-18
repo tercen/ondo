@@ -6,7 +6,7 @@ name: ondo-ci
 # events but only for the main branch
 on:
   push:
-    branches: [ main, stage, prod, 5-ci-integration ]
+    branches: [ main, stage, prod ]
     tags:
       - '*' # Push events to matching v*, i.e. v1.0, v20.15.10
   pull_request:
