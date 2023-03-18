@@ -41,8 +41,14 @@ impl FromEntity<DatabaseServer> for Response<DatabaseServerMessage> {
 
 impl DatabaseServerTrait for RocksDbAccessor {
     fn version(&self, _: Request<EmptyMessage>) -> Result<Response<VersionResponse>, Status> {
+        let version = self.get_version();
         let response = VersionResponse {
-            version: "0".to_owned(),
+            major: version.major,
+            minor: version.minor,
+            patch: version.patch,
+            commit: version.commit,
+            date: version.date,
+            features: version.features,
         };
         Ok(Response::new(response))
     }

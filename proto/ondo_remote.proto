@@ -43,7 +43,12 @@ service OndoRemote {
 message EmptyMessage {}
 
 message VersionResponse {
-    string version = 1;
+     uint64 major = 1;
+      uint64 minor = 2;
+     uint64 patch = 3;
+      string commit = 4;
+      string date = 5;
+      string features = 6;
 }
 
 message ArrayOfStringResponse {
