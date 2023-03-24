@@ -180,8 +180,8 @@ impl OndoRemote for MyServer {
 
     async fn create_value(
         &self,
-        r: Request<TableValueMessage>,
-    ) -> Result<Response<JsonMessage>, Status> {
+        r: Request<CreateTableValueMessage>,
+    ) -> Result<Response<OndoKeyMessage>, Status> {
         self.rocks_db_accessor.create_value(r)
     }
 

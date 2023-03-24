@@ -24,13 +24,15 @@ impl CfNameMaker {
     }
 
     pub fn for_table_values(r: &TableReference) -> String {
-        format!("{}::/{}", r.domain_name, r.table_name)
+        format!("{}::/{}", r.domain_reference.domain_name, r.table_name)
     }
 
     pub fn for_index_values(r: &IndexReference) -> String {
         format!(
             "{}::/{}/indexes/{}",
-            r.table_reference.domain_name, r.table_reference.table_name, r.index_name
+            r.table_reference.domain_reference.domain_name,
+            r.table_reference.table_name,
+            r.index_name
         )
     }
 }

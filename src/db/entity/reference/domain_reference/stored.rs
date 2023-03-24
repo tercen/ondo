@@ -107,8 +107,8 @@ impl DomainStoredReferenceTrait for DomainReference {
             let table_names = domain_reference.list_table_names_(requests)?;
             for table_name in table_names {
                 let table_reference = TableReference {
+                    domain_reference: domain_reference.clone(),
                     table_name: table_name.clone(),
-                    domain_name: domain_reference.domain_name.clone(),
                 };
                 effects.extend(table_reference.delete_table_stored(table_requests, requests)?);
             }
@@ -177,7 +177,7 @@ pub(crate) mod tests {
 
     pub(crate) fn create_domain() -> Domain {
         Domain {
-            id: create_domain_ref(),
+            reference: create_domain_ref(),
         }
     }
 
@@ -248,7 +248,7 @@ pub(crate) mod tests {
                     (),
                     DatabaseServerStored {
                         meta_revision: 0,
-                        database_server: DatabaseServer,
+                        database_server: DatabaseServer::default(),
                         domains: {
                             vec!["sample_domain".to_owned()]
                                 .into_iter()
@@ -262,7 +262,7 @@ pub(crate) mod tests {
                     "sample_domain".to_owned(),
                     DomainStored {
                         domain: Domain {
-                            id: DomainReference {
+                            reference: DomainReference {
                                 domain_name: "sample_domain".to_owned(),
                             },
                         },
@@ -292,7 +292,7 @@ pub(crate) mod tests {
                     (),
                     DatabaseServerStored {
                         meta_revision: 0,
-                        database_server: DatabaseServer,
+                        database_server: DatabaseServer::default(),
                         domains: HashMap::new(),
                     },
                 )),

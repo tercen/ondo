@@ -1,4 +1,5 @@
 //index.rs
+use crate::db::entity::ondo_key::OndoKey;
 use serde::{Deserialize, Serialize};
 
 mod key_value;
@@ -27,13 +28,14 @@ impl Index {
     pub fn key_of(&self, doc: &IndexValue) -> IndexKey {
         let fields = self.get_fields();
 
-        fields
+        let values: Vec<serde_json::Value> = fields
             .iter()
             .map(|f: &String| {
                 let item = doc[f].clone();
                 item
             })
-            .collect()
+            .collect();
+        OndoKey { values }
     }
 
     pub(crate) fn key_value_of(&self, doc: &IndexValue) -> KeyValue {
@@ -46,6 +48,7 @@ impl Index {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db::entity::reference::DomainReference;
     use crate::db::entity::reference::TableReference;
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
@@ -77,7 +80,7 @@ mod tests {
         Index {
             id: IndexReference {
                 table_reference: TableReference {
-                    domain_name: "sample_domain".to_owned(),
+                    domain_reference: DomainReference::new("sample_domain"),
                     table_name: "sample_table".to_owned(),
                 },
                 index_name: "sample_index".to_owned(),
@@ -94,7 +97,7 @@ mod tests {
             vec![
                 "city".to_owned(),
                 "age".to_owned(),
-                DEFAULT_ID_FIELD.to_string()
+                DEFAULT_ID_FIELD.to_string() // FIXME: Missing Index record id
             ]
         );
     }
@@ -103,9 +106,11 @@ mod tests {
     fn test_key_of() {
         let index = sample_index();
         let doc = sample_document_json();
-        assert_eq!(
-            *index.key_of(&doc),
-            vec![json!("New York"), json!(30), json!(1)]
-        );
+
+        let expected_key = OndoKey {
+            values: vec![json!("New York"), json!(30), json!(1)],
+        };
+
+        assert_eq!(index.key_of(&doc), expected_key);
     }
 }

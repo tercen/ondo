@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct Table {
-    pub id: TableReference,
+    pub reference: TableReference,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]

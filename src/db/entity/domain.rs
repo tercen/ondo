@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct Domain {
-    pub id: DomainReference,
+    pub reference: DomainReference,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]

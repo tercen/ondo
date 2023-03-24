@@ -160,11 +160,11 @@ pub(crate) mod tests {
     }
 
     pub(crate) fn create_database_server_ref() -> DatabaseServerReference {
-        DatabaseServerReference::new()
+        DatabaseServerReference::default()
     }
 
     pub(crate) fn create_database_server() -> DatabaseServer {
-        DatabaseServer
+        DatabaseServer::default()
     }
 
     pub(crate) fn create_database_server_stored() -> DatabaseServerStored {

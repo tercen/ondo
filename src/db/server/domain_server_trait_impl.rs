@@ -3,84 +3,51 @@ use super::db_error_to_status::DbErrorToStatus;
 use super::domain_server_trait::DomainServerTrait;
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
-use super::to_entity_trait::FromEntity;
-use super::to_entity_trait::ToEntity;
-use super::to_reference_trait::FromReference;
-use super::to_reference_trait::ToReference;
 use crate::db::entity::domain::Domain;
 use crate::db::entity::reference::domain_reference::DomainReference;
 use crate::db::entity::reference::domain_reference::DomainReferenceTrait;
 use crate::ondo_remote::*;
 use tonic::{Request, Response, Status};
 
-impl ToReference<DomainReference> for DomainReferenceMessage {
-    fn to_reference(&self) -> DomainReference {
+impl<'a> Into<DomainReference> for &'a DomainReferenceMessage {
+    fn into(self) -> DomainReference {
         DomainReference {
             domain_name: self.domain_name.clone(),
         }
     }
 }
 
-impl ToReference<DomainReference> for Request<DomainReferenceMessage> {
-    fn to_reference(&self) -> DomainReference {
-        self.get_ref().to_reference()
-    }
-}
-
-impl ToReference<DomainReference> for DomainMessage {
-    fn to_reference(&self) -> DomainReference {
-        let r_msg = self.domain_reference.as_ref().unwrap();
-        r_msg.to_reference()
-    }
-}
-
-impl ToReference<DomainReference> for Request<DomainMessage> {
-    fn to_reference(&self) -> DomainReference {
-        self.get_ref().to_reference()
-    }
-}
-
-impl ToEntity<Domain> for DomainMessage {
-    fn to_entity(&self) -> Domain {
-        let r = self.to_reference();
-        Domain { id: r }
-    }
-}
-
-impl ToEntity<Domain> for Request<DomainMessage> {
-    fn to_entity(&self) -> Domain {
-        self.get_ref().to_entity()
-    }
-}
-
-impl FromReference<DomainReference> for DomainReferenceMessage {
-    fn from_reference(r: DomainReference) -> Self {
+impl Into<DomainReferenceMessage> for DomainReference {
+    fn into(self) -> DomainReferenceMessage {
         DomainReferenceMessage {
-            domain_name: r.domain_name,
+            domain_name: self.domain_name,
         }
     }
 }
 
-impl FromEntity<Domain> for DomainMessage {
-    fn from_entity(entity: Domain) -> Self {
-        let r_msg = DomainReferenceMessage::from_reference(entity.id);
+impl<'a> Into<Domain> for &'a DomainMessage {
+    fn into(self) -> Domain {
+        Domain {
+            reference: self.domain_reference.as_ref().unwrap().into(),
+        }
+    }
+}
+
+impl Into<DomainMessage> for Domain {
+    fn into(self) -> DomainMessage {
+        let r_msg: DomainReferenceMessage = self.reference.into();
         DomainMessage {
             domain_reference: Some(r_msg),
         }
     }
 }
 
-impl FromEntity<Domain> for Response<DomainMessage> {
-    fn from_entity(entity: Domain) -> Self {
-        let msg = DomainMessage::from_entity(entity);
-        Response::new(msg)
-    }
-}
-
 impl DomainServerTrait for RocksDbAccessor {
     fn create_domain(&self, r: Request<DomainMessage>) -> Result<Response<EmptyMessage>, Status> {
-        r.to_reference()
-            .post_domain(&r.to_entity(), self, self)
+        let entity: Domain = r.get_ref().into();
+        entity
+            .reference
+            .post_domain(&entity, self, self)
             .map_db_err_to_status()?
             .apply_effects(self)
     }
@@ -89,7 +56,8 @@ impl DomainServerTrait for RocksDbAccessor {
         &self,
         r: Request<DomainReferenceMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        r.to_reference()
+        let reference: DomainReference = r.get_ref().into();
+        reference
             .delete_domain(self, self, self)
             .map_db_err_to_status()?
             .apply_effects(self)
@@ -99,15 +67,18 @@ impl DomainServerTrait for RocksDbAccessor {
         &self,
         r: Request<DomainReferenceMessage>,
     ) -> Result<Response<DomainMessage>, Status> {
-        r.to_reference()
+        let reference: DomainReference = r.get_ref().into();
+        reference
             .get_domain(self)
             .map_db_err_option_to_status()
-            .map(|entity| Response::<DomainMessage>::from_entity(entity))
+            .map(|entity| Response::new(entity.into()))
     }
 
     fn update_domain(&self, r: Request<DomainMessage>) -> Result<Response<EmptyMessage>, Status> {
-        r.to_reference()
-            .put_domain(&r.to_entity(), self)
+        let entity: Domain = r.get_ref().into();
+        entity
+            .reference
+            .put_domain(&entity, self)
             .map_db_err_to_status()?
             .apply_effects(self)
     }
@@ -116,11 +87,55 @@ impl DomainServerTrait for RocksDbAccessor {
         &self,
         r: Request<DomainReferenceMessage>,
     ) -> Result<Response<ArrayOfStringResponse>, Status> {
-        let names = r
-            .to_reference()
-            .list_table_names(self)
-            .map_db_err_to_status()?;
+        let reference: DomainReference = r.get_ref().into();
+        let names = reference.list_table_names(self).map_db_err_to_status()?;
         let response = ArrayOfStringResponse { values: names };
         Ok(Response::new(response))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_domain_reference_message_into_domain_reference() {
+        let message = DomainReferenceMessage {
+            domain_name: "example.com".to_string(),
+        };
+        let reference: DomainReference = (&message).into();
+        assert_eq!(reference.domain_name, "example.com");
+    }
+
+    #[test]
+    fn test_domain_reference_into_domain_reference_message() {
+        let reference = DomainReference {
+            domain_name: "example.com".to_string(),
+        };
+        let message: DomainReferenceMessage = reference.into();
+        assert_eq!(message.domain_name, "example.com");
+    }
+
+    #[test]
+    fn test_domain_message_into_domain() {
+        let reference = DomainReference {
+            domain_name: "example.com".to_string(),
+        };
+        let message = DomainMessage {
+            domain_reference: Some(reference.into()),
+        };
+        let domain: Domain = (&message).into();
+        assert_eq!(domain.reference.domain_name, "example.com");
+    }
+
+    #[test]
+    fn test_domain_into_domain_message() {
+        let domain = Domain {
+            reference: DomainReference {
+                domain_name: "example.com".to_string(),
+            },
+        };
+        let message: DomainMessage = domain.into();
+        assert_eq!(message.domain_reference.unwrap().domain_name, "example.com");
     }
 }

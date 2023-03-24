@@ -4,18 +4,19 @@ use crate::ondo_remote;
 use ondo_remote::*;
 use tonic::{Request, Response, Status};
 
+//FIXME: Implement IndexedValueServerTrait and tests for it.
 impl IndexedValueServerTrait for RocksDbAccessor {
     fn find_values(
         &self,
         _: Request<IndexedValueReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        todo!()
+        todo!("indexing")
     }
 
     fn find_values_by_range(
         &self,
         _: Request<IndexedValueRangeReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        todo!()
+        todo!("indexing")
     }
 }

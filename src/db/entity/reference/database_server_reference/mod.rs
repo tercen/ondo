@@ -45,14 +45,8 @@ pub(crate) trait DatabaseServerReferenceTrait {
 }
 
 pub(crate) type DatabaseServerName = ();
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, Default)]
 pub struct DatabaseServerReference;
-
-impl DatabaseServerReference {
-    pub fn new() -> Self {
-        DatabaseServerReference
-    }
-}
 
 impl DatabaseServerReferenceTrait for DatabaseServerReference {
     // Gets a DatabaseServer from the database.
@@ -191,7 +185,7 @@ mod tests {
 
             let example_stored = DatabaseServerStored {
                 meta_revision: 0,
-                database_server: DatabaseServer,
+                database_server: DatabaseServer::default(),
                 domains: vec![
                     ("example1.com".to_owned(), ()),
                     ("example2.com".to_owned(), ()),

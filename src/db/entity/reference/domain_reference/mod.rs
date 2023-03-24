@@ -48,7 +48,7 @@ impl DomainReference {
     }
 
     pub fn to_database_server_reference(&self) -> DatabaseServerReference {
-        DatabaseServerReference::new()
+        DatabaseServerReference::default()
     }
 
     pub fn cf_name_for_table_counters(&self) -> String {

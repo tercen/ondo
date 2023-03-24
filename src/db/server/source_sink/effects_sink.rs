@@ -44,7 +44,7 @@ impl EffectsSink for Vec<Effect> {
                     super::table_value_sink::apply_effect(&ra, effect).map_db_err_to_status()?;
                 }
                 Effect::IndexValueEffect(_) => {
-                    todo!(); //TODO IndexValueEffect
+                    todo!("indexing"); //TODO IndexValueEffect
                 }
                 Effect::ColumnValueEffect(effect) => {
                     super::column_value_sink::apply_effect(&ra, effect).map_db_err_to_status()?;
