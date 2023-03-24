@@ -18,7 +18,8 @@ impl OndoSerializer<OndoKey> for OndoKey {
         let serialized_fields = get_fields_from_key(bytes);
         let mut fields: Vec<serde_json::Value> = Vec::new();
         for serialized_field in serialized_fields {
-            let field = from_slice::<serde_json::Value>(&serialized_field).expect("Failed to deserialize field");
+            let field = from_slice::<serde_json::Value>(&serialized_field)
+                .expect("Failed to deserialize field");
             fields.push(field);
         }
         let key = OndoKey { values: fields };
@@ -150,7 +151,11 @@ mod tests {
 
     #[test]
     fn test_binary_key_round_trip() {
-        let input: Vec<Vec<u8>> = vec![vec![0x41, 0x6E, 0x79], vec![0x20, 0x64, 0x61], vec![0x74, 0x61]];
+        let input: Vec<Vec<u8>> = vec![
+            vec![0x41, 0x6E, 0x79],
+            vec![0x20, 0x64, 0x61],
+            vec![0x74, 0x61],
+        ];
 
         let binary_key = get_binary_key(input.clone());
         let fields = get_fields_from_key(&binary_key);

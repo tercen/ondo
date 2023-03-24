@@ -1,18 +1,22 @@
 use tonic::transport::Server;
 use tonic::{Request, Response, Status};
 
-use ondo::hello;
-use hello::hello_server::{HelloServer, Hello};
+use hello::hello_server::{Hello, HelloServer};
 use hello::{HelloRequest, HelloResponse};
-
+use ondo::hello;
 
 #[derive(Default)]
 pub struct MyServer {}
 
 #[tonic::async_trait]
 impl Hello for MyServer {
-    async fn hello_world(&self, _ : Request<HelloRequest>) -> Result<Response<HelloResponse>, Status> {
-        let response = HelloResponse { message: "Hello, World!".to_string() };
+    async fn hello_world(
+        &self,
+        _: Request<HelloRequest>,
+    ) -> Result<Response<HelloResponse>, Status> {
+        let response = HelloResponse {
+            message: "Hello, World!".to_string(),
+        };
         Ok(Response::new(response))
     }
 }

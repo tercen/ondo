@@ -10,7 +10,7 @@ pub(crate) type TableValue = serde_json::Value;
 pub(crate) fn do_index_table_value(value: &TableValue, the_index: &Index) -> DbResult<Effects> {
     let key_value = the_index.key_value_of(&value);
     let index_value_reference = IndexValueReference {
-        index_reference: the_index.id.clone(),
+        index_reference: the_index.reference.clone(),
         key: key_value.key,
     };
     let r_index_value_effects = index_value_reference.put_index_value(&key_value.value);
@@ -20,7 +20,7 @@ pub(crate) fn do_index_table_value(value: &TableValue, the_index: &Index) -> DbR
 pub(crate) fn do_deindex_table_value(value: &TableValue, the_index: &Index) -> DbResult<Effects> {
     let key_value = the_index.key_value_of(&value);
     let index_value_reference = IndexValueReference {
-        index_reference: the_index.id.clone(),
+        index_reference: the_index.reference.clone(),
         key: key_value.key,
     };
     let r_index_value_effects = index_value_reference.delete_index_value();

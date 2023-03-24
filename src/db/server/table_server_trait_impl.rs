@@ -1,11 +1,14 @@
 use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
+use super::rocks_db_accessor::DbReadLockGuardWrapper;
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
 use super::table_server_trait::TableServerTrait;
+use crate::db::db_error::DbError;
 use crate::db::entity::reference::table_reference::TableReference;
 use crate::db::entity::reference::table_reference::TableReferenceTrait;
 use crate::db::entity::table::Table;
+use crate::db::entity::table_value::TableValue;
 use crate::ondo_remote;
 use ondo_remote::*;
 use tonic::{Request, Response, Status};
@@ -103,9 +106,18 @@ impl TableServerTrait for RocksDbAccessor {
 
     fn list_values(
         &self,
-        _: Request<TableReferenceMessage>,
+        r: Request<TableReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        todo!("indexing")
+        let guarded_db = self.guarded_db();
+        let guard = RocksDbAccessor::db_read_lock(&guarded_db).map_db_err_to_status()?;
+        let db_wrapper = DbReadLockGuardWrapper { guard };
+        let reference: TableReference = r.get_ref().into();
+        let iterator = reference.all_values(&db_wrapper).map_db_err_to_status()?;
+        let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
+        let values = values_result.map_db_err_to_status()?;
+        let json = serde_json::to_string(&values).map_err(|e| Status::internal(e.to_string()))?;
+        let response = Response::new(JsonMessage { json });
+        Ok(response)
     }
 
     fn list_values_by_id_range(
@@ -182,7 +194,16 @@ mod tests {
             },
         };
         let message: TableMessage = table.into();
-        assert_eq!(message.clone().table_reference.unwrap().domain_reference.unwrap().domain_name, "example.com");
+        assert_eq!(
+            message
+                .clone()
+                .table_reference
+                .unwrap()
+                .domain_reference
+                .unwrap()
+                .domain_name,
+            "example.com"
+        );
         assert_eq!(message.table_reference.unwrap().table_name, "table1");
     }
 }

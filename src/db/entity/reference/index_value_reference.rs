@@ -47,7 +47,7 @@ impl IndexValueReferenceTrait for IndexValueReference {
     fn put_index_value(&self, id: &IndexValue) -> DbResult<Effects> {
         let effect = Effect::IndexValueEffect(IndexValueEffect::Put(
             self.container_cf_name(),
-            self.clone(),
+            self.key.clone(),
             id.clone(),
         ));
         Ok(vec![effect])
@@ -55,7 +55,7 @@ impl IndexValueReferenceTrait for IndexValueReference {
     fn delete_index_value(&self) -> DbResult<Effects> {
         let effect = Effect::IndexValueEffect(IndexValueEffect::Delete(
             self.container_cf_name(),
-            self.clone(),
+            self.key.clone(),
         ));
         Ok(vec![effect])
     }
@@ -134,7 +134,7 @@ mod tests {
             let effects = index_value_ref.put_index_value(&index_value).unwrap();
             let expected_effect = Effect::IndexValueEffect(IndexValueEffect::Put(
                 "sample_domain::/sample_table/indexes/sample_index".to_owned(),
-                index_value_ref.clone(),
+                index_value_ref.key.clone(),
                 index_value,
             ));
 
@@ -153,7 +153,7 @@ mod tests {
             let effects = index_value_ref.delete_index_value().unwrap();
             let expected_effect = Effect::IndexValueEffect(IndexValueEffect::Delete(
                 "sample_domain::/sample_table/indexes/sample_index".to_owned(),
-                index_value_ref.clone(),
+                index_value_ref.key.clone(),
             ));
 
             assert_eq!(effects.len(), 1);

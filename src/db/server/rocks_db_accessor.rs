@@ -2,7 +2,7 @@
 use crate::db::db_error::DbError;
 use crate::db::db_error::DbResult;
 use rocksdb::{Options, DB};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, RwLockReadGuard};
 
 // Define the struct that contains the RocksDB instance
 #[derive(Clone)]
@@ -18,7 +18,7 @@ pub struct Version {
     pub patch: u64,
     pub commit: String,
     pub date: String,
-    pub features: String
+    pub features: String,
 }
 
 impl Default for RocksDbAccessor {
@@ -64,18 +64,26 @@ impl RocksDbAccessor {
     }
 
     pub fn get_version(&self) -> Version {
-        let ver = match semver::Version::parse(option_env!("VERSION").unwrap_or("0.0.0"))  {
+        let ver = match semver::Version::parse(option_env!("VERSION").unwrap_or("0.0.0")) {
             Ok(ver) => ver,
-            Err(_) => semver::Version::parse("0.0.0").unwrap()
+            Err(_) => semver::Version::parse("0.0.0").unwrap(),
         };
 
         Version {
-            major : ver.major,
-            minor : ver.minor,
-            patch : ver.patch,
-            commit : option_env!("COMMIT_NUMBER").map(|env| env.to_string()).unwrap_or("".to_string()),
-            date : option_env!("BUILD_DATE").map(|env| env.to_string()).unwrap_or("".to_string()),
+            major: ver.major,
+            minor: ver.minor,
+            patch: ver.patch,
+            commit: option_env!("COMMIT_NUMBER")
+                .map(|env| env.to_string())
+                .unwrap_or("".to_string()),
+            date: option_env!("BUILD_DATE")
+                .map(|env| env.to_string())
+                .unwrap_or("".to_string()),
             features: "".to_string(),
         }
     }
+}
+
+pub(crate) struct DbReadLockGuardWrapper<'a> {
+    pub(crate) guard: RwLockReadGuard<'a, DB>,
 }

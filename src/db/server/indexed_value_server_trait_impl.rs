@@ -4,7 +4,6 @@ use crate::ondo_remote;
 use ondo_remote::*;
 use tonic::{Request, Response, Status};
 
-//FIXME: Implement IndexedValueServerTrait and tests for it.
 impl IndexedValueServerTrait for RocksDbAccessor {
     fn find_values(
         &self,

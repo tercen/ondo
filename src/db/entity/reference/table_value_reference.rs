@@ -77,8 +77,6 @@ impl CreateTableValueReference {
     }
 }
 
-// FIXME: Indexing has to use index counter
-
 fn do_indexing(
     table_value_reference: &TableValueReference,
     table_value: &TableValue,

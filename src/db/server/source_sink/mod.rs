@@ -13,3 +13,4 @@ pub(super) mod table_value_sink;
 pub(super) mod table_value_source;
 
 pub(super) mod ondo_serializer;
+mod rocks_trait;

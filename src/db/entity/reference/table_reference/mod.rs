@@ -5,6 +5,7 @@ use super::{
 };
 use crate::db::entity::reference::requests::domain_stored_requests::DomainStoredRequests;
 use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
+use crate::db::entity::reference::requests::table_stored_requests::TableStoredIteratorRequests;
 use crate::db::{
     db_error::{DbError, DbResult},
     entity::{table_value::TableValue, Table, TableStored},
@@ -31,8 +32,8 @@ pub(crate) trait TableReferenceTrait {
     fn list_index_names(&self, requests: &dyn TableStoredRequests) -> DbResult<Vec<String>>;
     fn all_values<'a>(
         &self,
-        requests: &'a dyn TableStoredRequests,
-    ) -> Box<dyn Iterator<Item = TableValue>>;
+        requests: &'a dyn TableStoredIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>>;
 }
 
 pub type TableName = String;
@@ -58,8 +59,8 @@ impl TableReference {
 impl TableReferenceTrait for TableReference {
     fn all_values<'a>(
         &self,
-        requests: &'a dyn TableStoredRequests,
-    ) -> Box<dyn Iterator<Item = TableValue>> {
+        requests: &'a dyn TableStoredIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
         self.all_values_(requests)
     }
 

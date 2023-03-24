@@ -223,7 +223,6 @@ impl OndoRemote for MyServer {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     tokio::spawn(async move {
         tokio::signal::ctrl_c().await.unwrap();
         std::process::exit(0);

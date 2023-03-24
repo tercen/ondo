@@ -11,7 +11,7 @@ pub(crate) const DEFAULT_ID_FIELD: &str = "_id";
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub(crate) struct Index {
-    pub id: IndexReference,
+    pub reference: IndexReference,
     pub fields: Vec<String>,
 }
 
@@ -19,8 +19,8 @@ pub(crate) type IndexStored = Index;
 
 impl Index {
     pub fn get_fields(&self) -> Vec<String> {
-        let mut my_fields = self.fields.clone();
-        my_fields.push(DEFAULT_ID_FIELD.to_string());
+        let mut my_fields = vec![DEFAULT_ID_FIELD.to_string()];
+        my_fields.extend(self.fields.clone());
         my_fields
     }
 
@@ -78,7 +78,7 @@ mod tests {
 
     fn sample_index() -> Index {
         Index {
-            id: IndexReference {
+            reference: IndexReference {
                 table_reference: TableReference {
                     domain_reference: DomainReference::new("sample_domain"),
                     table_name: "sample_table".to_owned(),
@@ -95,9 +95,9 @@ mod tests {
         assert_eq!(
             *index.get_fields(),
             vec![
+                DEFAULT_ID_FIELD.to_string(),
                 "city".to_owned(),
                 "age".to_owned(),
-                DEFAULT_ID_FIELD.to_string() // FIXME: Missing Index record id
             ]
         );
     }
@@ -108,7 +108,7 @@ mod tests {
         let doc = sample_document_json();
 
         let expected_key = OndoKey {
-            values: vec![json!("New York"), json!(30), json!(1)],
+            values: vec![json!(1), json!("New York"), json!(30)],
         };
 
         assert_eq!(index.key_of(&doc), expected_key);

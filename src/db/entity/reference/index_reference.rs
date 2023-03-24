@@ -10,6 +10,7 @@ use super::CfNameMaker;
 use super::DomainReference;
 use super::TableReference;
 use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
+use crate::db::entity::reference::requests::table_stored_requests::TableStoredIteratorRequests;
 use crate::db::entity::table_value::do_index_table_value;
 use crate::db::{
     db_error::{DbError, DbResult},
@@ -36,8 +37,8 @@ pub(crate) trait IndexReferenceTrait {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct IndexReference {
-    pub index_name: String,
     pub table_reference: TableReference,
+    pub index_name: String,
 }
 
 impl IndexReference {
@@ -57,17 +58,18 @@ impl IndexReference {
     }
 }
 
-trait IndexReferencePrivateTrait {
+trait IndexReferencePrivateTrait<'a> {
     fn recreate_index_values_cf(&self) -> Effects;
     fn index_related_table_values(
         &self,
         table_requests: &dyn TableStoredRequests,
+        table_stored_iterator_requests: &'a dyn TableStoredIteratorRequests<'a>,
     ) -> DbResult<Effects>;
     fn create_required_cfs(&self) -> Effects;
     fn delete_required_cfs(&self) -> Effects;
 }
 
-impl IndexReferencePrivateTrait for IndexReference {
+impl<'a> IndexReferencePrivateTrait<'a> for IndexReference {
     fn recreate_index_values_cf(&self) -> Effects {
         let delete_effect = Effect::DeleteCf(self.value_cf_name());
         let create_effect = Effect::CreateCf(self.value_cf_name());
@@ -77,13 +79,15 @@ impl IndexReferencePrivateTrait for IndexReference {
     fn index_related_table_values(
         &self,
         table_stored_requests: &dyn TableStoredRequests,
+        table_stored_iterator_requests: &'a dyn TableStoredIteratorRequests<'a>,
     ) -> DbResult<Effects> {
         let table_reference = self.to_table_reference();
         let the_index = self
             .get_index(table_stored_requests)?
             .ok_or(DbError::IndexNotInitialized)?;
-        let mut all_values = table_reference.all_values(table_stored_requests);
-        let nested_effects = all_values.try_fold(vec![], |mut acc, value| {
+        let all_values = table_reference.all_values(table_stored_iterator_requests);
+        let nested_effects = all_values?.try_fold(vec![], |mut acc, r_value| {
+            let value = r_value?;
             let r_index_value_effects = do_index_table_value(&value, &the_index);
             match r_index_value_effects {
                 Ok(index_value_effect) => {
@@ -194,7 +198,7 @@ mod tests {
 
     fn create_index() -> Index {
         Index {
-            id: create_index_ref(),
+            reference: create_index_ref(),
             fields: vec!["sample_field".to_owned()],
         }
     }
@@ -267,7 +271,7 @@ mod tests {
                     indexes: [(
                         "sample_index".to_owned(),
                         Index {
-                            id: IndexReference {
+                            reference: IndexReference {
                                 index_name: "sample_index".to_owned(),
                                 table_reference: TableReference {
                                     domain_reference: DomainReference::new("sample_domain"),
@@ -328,7 +332,7 @@ mod tests {
                         indexes: [(
                             "sample_index".to_owned(),
                             Index {
-                                id: IndexReference {
+                                reference: IndexReference {
                                     index_name: "sample_index".to_owned(),
                                     table_reference: TableReference {
                                         domain_reference: DomainReference::new("sample_domain"),

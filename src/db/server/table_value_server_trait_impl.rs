@@ -126,7 +126,10 @@ mod tests {
             }),
         };
         let reference: TableValueReference = (&message).into();
-        assert_eq!(reference.table_reference.domain_reference.domain_name, "example.com");
+        assert_eq!(
+            reference.table_reference.domain_reference.domain_name,
+            "example.com"
+        );
         assert_eq!(reference.table_reference.table_name, "table1");
         assert_eq!(reference.id.values.len(), 1);
         assert_eq!(reference.id.values[0]["key"], "value");
@@ -149,39 +152,23 @@ mod tests {
             json: r#"{"key":"value"}"#.to_string(),
         };
         let payload: TableValuePayload = (&message).into();
-        assert_eq!(payload.table_reference.table_reference.domain_reference.domain_name, "example.com");
+        assert_eq!(
+            payload
+                .table_reference
+                .table_reference
+                .domain_reference
+                .domain_name,
+            "example.com"
+        );
         assert_eq!(payload.table_reference.table_reference.table_name, "table1");
         assert_eq!(payload.table_reference.id.values.len(), 1);
         assert_eq!(payload.table_reference.id.values[0]["key"], "value");
         assert_eq!(payload.value["key"], "value");
     }
 
-#[test]
-fn test_create_table_value_reference_message_into_create_table_value_reference() {
-    let message = CreateTableValueReferenceMessage {
-        table_reference: Some(TableReferenceMessage {
-            domain_reference: Some(DomainReferenceMessage {
-                domain_name: "example.com".to_string(),
-            }),
-            table_name: "table1".to_string(),
-        }),
-        key: Some(OptionalOndoKeyMessage {
-            ondo_key: Some(OndoKeyMessage {
-                json_keys: vec![r#"{"key":"value"}"#.to_string()],
-            })
-        }),
-    };
-    let reference: CreateTableValueReference = (&message).into();
-    assert_eq!(reference.table_reference.domain_reference.domain_name, "example.com");
-    assert_eq!(reference.table_reference.table_name, "table1");
-    assert_eq!(reference.clone().id.unwrap().values.len(), 1);
-    assert_eq!(reference.id.unwrap().values[0]["key"], "value");
-}
-
-#[test]
-fn test_create_table_value_message_into_create_table_value_payload() {
-    let message = CreateTableValueMessage {
-        create_table_value_reference: Some(CreateTableValueReferenceMessage {
+    #[test]
+    fn test_create_table_value_reference_message_into_create_table_value_reference() {
+        let message = CreateTableValueReferenceMessage {
             table_reference: Some(TableReferenceMessage {
                 domain_reference: Some(DomainReferenceMessage {
                     domain_name: "example.com".to_string(),
@@ -191,17 +178,64 @@ fn test_create_table_value_message_into_create_table_value_payload() {
             key: Some(OptionalOndoKeyMessage {
                 ondo_key: Some(OndoKeyMessage {
                     json_keys: vec![r#"{"key":"value"}"#.to_string()],
-                })
+                }),
             }),
-        }),
-        json: r#"{"key":"value"}"#.to_string(),
-    };
-    let payload: CreateTableValuePayload = (&message).into();
-    assert_eq!(payload.create_table_reference.table_reference.domain_reference.domain_name, "example.com");
-    assert_eq!(payload.create_table_reference.table_reference.table_name, "table1");
-    assert_eq!(payload.clone().create_table_reference.id.unwrap().values.len(), 1);
-    assert_eq!(payload.create_table_reference.id.unwrap().values[0]["key"], "value");
-    assert_eq!(payload.value["key"], "value");
-}
-
+        };
+        let reference: CreateTableValueReference = (&message).into();
+        assert_eq!(
+            reference.table_reference.domain_reference.domain_name,
+            "example.com"
+        );
+        assert_eq!(reference.table_reference.table_name, "table1");
+        assert_eq!(reference.clone().id.unwrap().values.len(), 1);
+        assert_eq!(reference.id.unwrap().values[0]["key"], "value");
     }
+
+    #[test]
+    fn test_create_table_value_message_into_create_table_value_payload() {
+        let message = CreateTableValueMessage {
+            create_table_value_reference: Some(CreateTableValueReferenceMessage {
+                table_reference: Some(TableReferenceMessage {
+                    domain_reference: Some(DomainReferenceMessage {
+                        domain_name: "example.com".to_string(),
+                    }),
+                    table_name: "table1".to_string(),
+                }),
+                key: Some(OptionalOndoKeyMessage {
+                    ondo_key: Some(OndoKeyMessage {
+                        json_keys: vec![r#"{"key":"value"}"#.to_string()],
+                    }),
+                }),
+            }),
+            json: r#"{"key":"value"}"#.to_string(),
+        };
+        let payload: CreateTableValuePayload = (&message).into();
+        assert_eq!(
+            payload
+                .create_table_reference
+                .table_reference
+                .domain_reference
+                .domain_name,
+            "example.com"
+        );
+        assert_eq!(
+            payload.create_table_reference.table_reference.table_name,
+            "table1"
+        );
+        assert_eq!(
+            payload
+                .clone()
+                .create_table_reference
+                .id
+                .unwrap()
+                .values
+                .len(),
+            1
+        );
+        assert_eq!(
+            payload.create_table_reference.id.unwrap().values[0]["key"],
+            "value"
+        );
+        assert_eq!(payload.value["key"], "value");
+    }
+}
