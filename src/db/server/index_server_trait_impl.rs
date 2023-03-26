@@ -1,12 +1,17 @@
 use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
 use super::index_server_trait::IndexServerTrait;
+use super::rocks_db_accessor::DbReadLockGuardWrapper;
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
+use crate::db::db_error::DbError;
 use crate::db::entity::index::Index;
+use crate::db::entity::ondo_key::OndoKey;
 use crate::db::entity::reference::index_reference::IndexReference;
 use crate::db::entity::reference::index_reference::IndexReferenceTrait;
-use crate::ondo_remote::*;
+use crate::db::entity::table_value::TableValue;
+use crate::ondo_remote;
+use ondo_remote::*;
 use tonic::{Request, Response, Status};
 
 impl<'a> Into<IndexReference> for &'a IndexReferenceMessage {
@@ -42,6 +47,34 @@ impl Into<IndexMessage> for Index {
         IndexMessage {
             fields: fields,
             index_reference: Some(reference),
+        }
+    }
+}
+
+struct IndexedValueReference {
+    index_reference: IndexReference,
+    key: OndoKey,
+}
+impl<'a> Into<IndexedValueReference> for &'a IndexedValueReferenceMessage {
+    fn into(self) -> IndexedValueReference {
+        IndexedValueReference {
+            index_reference: self.index_reference.as_ref().unwrap().into(),
+            key: self.key.as_ref().unwrap().into(),
+        }
+    }
+}
+
+struct IndexedValueRangeReference {
+    index_reference: IndexReference,
+    start_key: OndoKey,
+    end_key: OndoKey,
+}
+impl<'a> Into<IndexedValueRangeReference> for &'a IndexedValueRangeReferenceMessage {
+    fn into(self) -> IndexedValueRangeReference {
+        IndexedValueRangeReference {
+            index_reference: self.index_reference.as_ref().unwrap().into(),
+            start_key: self.start_key.as_ref().unwrap().into(),
+            end_key: self.end_key.as_ref().unwrap().into(),
         }
     }
 }
@@ -85,5 +118,44 @@ impl IndexServerTrait for RocksDbAccessor {
             .put_index(&entity, self)
             .map_db_err_to_status()?
             .apply_effects(self)
+    }
+
+    fn find_values(
+        &self,
+        r: Request<IndexedValueReferenceMessage>,
+    ) -> Result<Response<JsonMessage>, Status> {
+        let guarded_db = self.guarded_db();
+        let db_wrapper = DbReadLockGuardWrapper::new(&guarded_db).map_db_err_to_status()?;
+        let indexed_value_reference: IndexedValueReference = r.get_ref().into();
+        let reference = indexed_value_reference.index_reference;
+        let key_prefix = indexed_value_reference.key;
+        let iterator = reference
+            .all_values_with_key_prefix(key_prefix, self, &db_wrapper)
+            .map_db_err_to_status()?;
+        let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
+        let values = values_result.map_db_err_to_status()?;
+        let json = serde_json::to_string(&values).map_err(|e| Status::internal(e.to_string()))?;
+        let response = Response::new(JsonMessage { json });
+        Ok(response)
+    }
+
+    fn find_values_by_range(
+        &self,
+        r: Request<IndexedValueRangeReferenceMessage>,
+    ) -> Result<Response<JsonMessage>, Status> {
+        let guarded_db = self.guarded_db();
+        let db_wrapper = DbReadLockGuardWrapper::new(&guarded_db).map_db_err_to_status()?;
+        let indexed_value_range_reference: IndexedValueRangeReference = r.get_ref().into();
+        let reference = indexed_value_range_reference.index_reference;
+        let start_key_prefix = indexed_value_range_reference.start_key;
+        let end_key_prefix = indexed_value_range_reference.end_key;
+        let iterator = reference
+            .all_values_with_key_range(start_key_prefix, end_key_prefix, self, &db_wrapper)
+            .map_db_err_to_status()?;
+        let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
+        let values = values_result.map_db_err_to_status()?;
+        let json = serde_json::to_string(&values).map_err(|e| Status::internal(e.to_string()))?;
+        let response = Response::new(JsonMessage { json });
+        Ok(response)
     }
 }

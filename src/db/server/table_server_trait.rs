@@ -21,6 +21,10 @@ pub trait TableServerTrait {
         &self,
         r: Request<TableReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status>;
+    fn list_values_by_key_prefix(
+        &self,
+        r: Request<TableValueReferenceMessage>,
+    ) -> Result<Response<JsonMessage>, Status>;
     fn list_values_by_id_range(
         &self,
         r: Request<TableIdRangeReferenceMessage>,

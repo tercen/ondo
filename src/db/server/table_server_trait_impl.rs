@@ -5,8 +5,11 @@ use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
 use super::table_server_trait::TableServerTrait;
 use crate::db::db_error::DbError;
+use crate::db::entity::ondo_key::OndoKey;
 use crate::db::entity::reference::table_reference::TableReference;
 use crate::db::entity::reference::table_reference::TableReferenceTrait;
+use crate::db::entity::reference::table_value_reference::TableValueReference;
+use crate::db::entity::reference::table_value_reference::TableValueReferenceTrait;
 use crate::db::entity::table::Table;
 use crate::db::entity::table_value::TableValue;
 use crate::ondo_remote;
@@ -49,6 +52,34 @@ impl Into<TableMessage> for Table {
     fn into(self) -> TableMessage {
         TableMessage {
             table_reference: Some(self.reference.into()),
+        }
+    }
+}
+
+struct TableIdRangeReference {
+    table_reference: TableReference,
+    start_key: OndoKey,
+    end_key: OndoKey,
+}
+impl<'a> Into<TableIdRangeReference> for &'a TableIdRangeReferenceMessage {
+    fn into(self) -> TableIdRangeReference {
+        TableIdRangeReference {
+            table_reference: self.table_reference.as_ref().unwrap().into(),
+            start_key: self.start_key.as_ref().unwrap().into(),
+            end_key: self.end_key.as_ref().unwrap().into(),
+        }
+    }
+}
+
+struct TableIdListReference {
+    table_reference: TableReference,
+    keys: Vec<OndoKey>,
+}
+impl<'a> Into<TableIdListReference> for &'a TableIdListReferenceMessage {
+    fn into(self) -> TableIdListReference {
+        TableIdListReference {
+            table_reference: self.table_reference.as_ref().unwrap().into(),
+            keys: self.keys.iter().map(|k| k.into()).collect(),
         }
     }
 }
@@ -109,8 +140,7 @@ impl TableServerTrait for RocksDbAccessor {
         r: Request<TableReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
         let guarded_db = self.guarded_db();
-        let guard = RocksDbAccessor::db_read_lock(&guarded_db).map_db_err_to_status()?;
-        let db_wrapper = DbReadLockGuardWrapper { guard };
+        let db_wrapper = DbReadLockGuardWrapper::new(&guarded_db).map_db_err_to_status()?;
         let reference: TableReference = r.get_ref().into();
         let iterator = reference.all_values(&db_wrapper).map_db_err_to_status()?;
         let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
@@ -120,18 +150,70 @@ impl TableServerTrait for RocksDbAccessor {
         Ok(response)
     }
 
+    fn list_values_by_key_prefix(
+        &self,
+        r: Request<TableValueReferenceMessage>,
+    ) -> Result<Response<JsonMessage>, Status> {
+        let guarded_db = self.guarded_db();
+        let db_wrapper = DbReadLockGuardWrapper::new(&guarded_db).map_db_err_to_status()?;
+        let value_reference: TableValueReference = r.get_ref().into();
+        let reference = value_reference.table_reference;
+        let key_prefix = value_reference.id; // Assuming 'id' is the key_prefix field in TableValueReference
+        let iterator = reference
+            .all_values_with_key_prefix(key_prefix, &db_wrapper)
+            .map_db_err_to_status()?;
+        let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
+        let values = values_result.map_db_err_to_status()?;
+        let json = serde_json::to_string(&values).map_err(|e| Status::internal(e.to_string()))?;
+        let response = Response::new(JsonMessage { json });
+        Ok(response)
+    }
+
     fn list_values_by_id_range(
         &self,
-        _: Request<TableIdRangeReferenceMessage>,
+        r: Request<TableIdRangeReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        todo!("indexing")
+        let guarded_db = self.guarded_db();
+        let db_wrapper = DbReadLockGuardWrapper::new(&guarded_db).map_db_err_to_status()?;
+        let range_reference: TableIdRangeReference = r.get_ref().into();
+        let reference = range_reference.table_reference;
+        let start_key = range_reference.start_key;
+        let end_key = range_reference.end_key;
+        let iterator = reference
+            .all_values_with_key_range(start_key, end_key, &db_wrapper)
+            .map_db_err_to_status()?;
+        let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
+        let values = values_result.map_db_err_to_status()?;
+        let json = serde_json::to_string(&values).map_err(|e| Status::internal(e.to_string()))?;
+        let response = Response::new(JsonMessage { json });
+        Ok(response)
     }
 
     fn list_values_by_id_list(
         &self,
-        _: Request<TableIdListReferenceMessage>,
+        r: Request<TableIdListReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        todo!("indexing")
+        let table_id_list_reference: TableIdListReference = r.get_ref().into();
+        let table_reference = table_id_list_reference.table_reference;
+        let keys = table_id_list_reference.keys;
+
+        let values_result: Result<Vec<TableValue>, DbError> = keys
+            .into_iter()
+            .map(|ondo_key| {
+                let table_value_reference = TableValueReference {
+                    table_reference: table_reference.clone(),
+                    id: ondo_key,
+                };
+                table_value_reference
+                    .get_table_value(self)
+                    .and_then(|opt| opt.ok_or(DbError::NotFound))
+            })
+            .collect();
+
+        let values = values_result.map_db_err_to_status()?;
+        let json = serde_json::to_string(&values).map_err(|e| Status::internal(e.to_string()))?;
+        let response = Response::new(JsonMessage { json });
+        Ok(response)
     }
 }
 

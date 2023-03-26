@@ -1,6 +1,7 @@
 use super::rocks_trait::RocksTrait;
 use crate::db::db_error::DbError::CfNotFound;
 use crate::db::db_error::{DbError, DbResult};
+use crate::db::entity::ondo_key::OndoKey;
 use crate::db::entity::reference::requests::table_stored_requests::TableStoredIteratorRequests;
 use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
 use crate::db::entity::reference::table_reference::TableName;
@@ -34,6 +35,45 @@ impl<'a> TableStoredIteratorRequests<'a> for DbReadLockGuardWrapper<'a> {
         let raw_all_iterator = self.guard.get_records_in_cf(value_cf_name)?;
 
         let all_iterator = raw_all_iterator.map(|result| {
+            result.and_then(|(_, v)| Value::ondo_deserialize(&v)) // Flatten the nested Result
+        });
+
+        let ok_iterator = Box::new(all_iterator);
+        Ok(ok_iterator)
+    }
+
+    fn all_values_with_key_prefix(
+        &'a self,
+        value_cf_name: &str,
+        key_prefix: OndoKey,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
+        let serialized_key_prefix = key_prefix.ondo_serialize()?;
+        let raw_iterator = self
+            .guard
+            .get_records_in_cf_with_key_prefix(value_cf_name, serialized_key_prefix)?;
+
+        let all_iterator = raw_iterator.map(|result| {
+            result.and_then(|(_, v)| Value::ondo_deserialize(&v)) // Flatten the nested Result
+        });
+
+        let ok_iterator = Box::new(all_iterator);
+        Ok(ok_iterator)
+    }
+    fn all_values_with_key_range(
+        &'a self,
+        value_cf_name: &str,
+        start_key: OndoKey,
+        end_key: OndoKey,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
+        let serialized_start_key = start_key.ondo_serialize()?;
+        let serialized_end_key = end_key.ondo_serialize()?;
+        let raw_iterator = self.guard.get_records_in_cf_with_key_range(
+            value_cf_name,
+            serialized_start_key,
+            serialized_end_key,
+        )?;
+
+        let all_iterator = raw_iterator.map(|result| {
             result.and_then(|(_, v)| Value::ondo_deserialize(&v)) // Flatten the nested Result
         });
 

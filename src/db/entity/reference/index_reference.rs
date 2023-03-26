@@ -1,7 +1,5 @@
 //index_reference.rs
 //TODO: validate index name
-//TODO!XXX!XXX: post-> create index values
-//TODO!XXX!XXX: put-> drop cf, create index values
 use super::effect::Effect;
 use super::effect::Effects;
 use super::table_reference::stored::TableStoredReferenceTrait;
@@ -9,9 +7,15 @@ use super::table_reference::TableReferenceTrait;
 use super::CfNameMaker;
 use super::DomainReference;
 use super::TableReference;
-use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
+use crate::db::entity::ondo_key::OndoKey;
+use crate::db::entity::reference::requests::index_requests::IndexIteratorRequests;
 use crate::db::entity::reference::requests::table_stored_requests::TableStoredIteratorRequests;
+use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
+use crate::db::entity::reference::requests::table_value_requests::TableValueRequests;
+use crate::db::entity::reference::table_value_reference::TableValueReference;
+use crate::db::entity::reference::table_value_reference::TableValueReferenceTrait;
 use crate::db::entity::table_value::do_index_table_value;
+use crate::db::entity::table_value::TableValue;
 use crate::db::{
     db_error::{DbError, DbResult},
     entity::Index,
@@ -33,6 +37,31 @@ pub(crate) trait IndexReferenceTrait {
         parent_requests: &dyn TableStoredRequests,
     ) -> DbResult<Effects>;
     fn delete_index(&self, parent_requests: &dyn TableStoredRequests) -> DbResult<Effects>;
+
+    fn all_values_with_key_prefix<'a>(
+        &self,
+        key_prefix: OndoKey,
+        table_value_requests: &'a dyn TableValueRequests,
+        requests: &'a dyn IndexIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>>;
+    fn all_index_values_with_key_prefix<'a>(
+        &self,
+        key_prefix: OndoKey,
+        requests: &'a dyn IndexIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<OndoKey>> + 'a>>;
+    fn all_values_with_key_range<'a>(
+        &self,
+        start_key_prefix: OndoKey,
+        end_key_prefix: OndoKey,
+        table_value_requests: &'a dyn TableValueRequests,
+        requests: &'a dyn IndexIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>>;
+    fn all_index_values_with_key_range<'a>(
+        &self,
+        start_key_prefix: OndoKey,
+        end_key_prefix: OndoKey,
+        requests: &'a dyn IndexIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<OndoKey>> + 'a>>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -180,6 +209,94 @@ impl IndexReferenceTrait for IndexReference {
         let mut effects = self.table_reference.put_table_stored(&table_stored)?;
         effects.extend(self.delete_required_cfs());
         Ok(effects)
+    }
+
+    fn all_values_with_key_prefix<'a>(
+        &self,
+        key_prefix: OndoKey,
+        table_value_requests: &'a dyn TableValueRequests,
+        requests: &'a dyn IndexIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
+        let index_value_iterator = self.all_index_values_with_key_prefix(key_prefix, requests)?;
+        let table_reference = self.table_reference.clone();
+        let table_value_iterator = index_value_iterator.map(move |ondo_key_result| {
+            let ondo_key = ondo_key_result?;
+            let table_value_reference = TableValueReference {
+                table_reference: table_reference.clone(),
+                id: ondo_key,
+            };
+            table_value_reference
+                .get_table_value(table_value_requests)
+                .and_then(|opt| opt.ok_or(DbError::NotFound))
+        });
+        Ok(Box::new(table_value_iterator))
+    }
+
+    fn all_index_values_with_key_prefix<'a>(
+        &self,
+        key_prefix: OndoKey,
+        requests: &'a dyn IndexIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<OndoKey>> + 'a>> {
+        let index_iterator =
+            requests.all_values_with_key_prefix(&self.value_cf_name(), key_prefix)?;
+        let index_value_iterator = index_iterator.map(move |index_value_result| {
+            let index_value = index_value_result?;
+            let ondo_key = serde_json::from_value::<OndoKey>(index_value).map_err(|e| {
+                DbError::Other(format!(
+                    "Failed to deserialize OndoKey from index value: {}",
+                    e
+                ))
+            })?;
+            Ok(ondo_key)
+        });
+        Ok(Box::new(index_value_iterator))
+    }
+
+    fn all_values_with_key_range<'a>(
+        &self,
+        start_key_prefix: OndoKey,
+        end_key_prefix: OndoKey,
+        table_value_requests: &'a dyn TableValueRequests,
+        requests: &'a dyn IndexIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
+        let index_value_iterator =
+            self.all_index_values_with_key_range(start_key_prefix, end_key_prefix, requests)?;
+        let table_reference = self.table_reference.clone();
+        let table_value_iterator = index_value_iterator.map(move |ondo_key_result| {
+            let ondo_key = ondo_key_result?;
+            let table_value_reference = TableValueReference {
+                table_reference: table_reference.clone(),
+                id: ondo_key,
+            };
+            table_value_reference
+                .get_table_value(table_value_requests)
+                .and_then(|opt| opt.ok_or(DbError::NotFound))
+        });
+        Ok(Box::new(table_value_iterator))
+    }
+
+    fn all_index_values_with_key_range<'a>(
+        &self,
+        start_key_prefix: OndoKey,
+        end_key_prefix: OndoKey,
+        requests: &'a dyn IndexIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<OndoKey>> + 'a>> {
+        let index_iterator = requests.all_values_with_key_range(
+            &self.value_cf_name(),
+            start_key_prefix,
+            end_key_prefix,
+        )?;
+        let index_value_iterator = index_iterator.map(move |index_value_result| {
+            let index_value = index_value_result?;
+            let ondo_key = serde_json::from_value::<OndoKey>(index_value).map_err(|e| {
+                DbError::Other(format!(
+                    "Failed to deserialize OndoKey from index value: {}",
+                    e
+                ))
+            })?;
+            Ok(ondo_key)
+        });
+        Ok(Box::new(index_value_iterator))
     }
 }
 

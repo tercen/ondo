@@ -19,8 +19,8 @@ pub(crate) type IndexStored = Index;
 
 impl Index {
     pub fn get_fields(&self) -> Vec<String> {
-        let mut my_fields = vec![DEFAULT_ID_FIELD.to_string()];
-        my_fields.extend(self.fields.clone());
+        let mut my_fields = self.fields.clone();
+        my_fields.push(DEFAULT_ID_FIELD.to_owned());
         my_fields
     }
 

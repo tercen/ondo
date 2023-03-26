@@ -2,7 +2,6 @@
 use crate::db::entity::reference::database_server_reference::DatabaseServerReference;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-// TODO: Version number of Database server
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize, Default)]
 pub(crate) struct DatabaseServer {

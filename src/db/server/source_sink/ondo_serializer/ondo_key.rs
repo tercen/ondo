@@ -1,4 +1,5 @@
 use super::OndoSerializer;
+use crate::db::constants::BINARY_KEY_DELIMITER;
 use crate::db::db_error::DbResult;
 use crate::db::entity::ondo_key::OndoKey;
 use rmp_serde::{from_slice, to_vec};
@@ -27,7 +28,7 @@ impl OndoSerializer<OndoKey> for OndoKey {
     }
 }
 
-// We use a vector of binary keys on a key-valute store, we need a separator for partial key searches.
+// We use a vector of binary keys on a key-value store, we need a separator for partial key searches.
 // We convert the vector of keys to 7 bit and use the unused bit as a separator.
 //    convert_to_7_bit: Converts a field to 7-bit representation.
 //    get_binary_key: Creates a binary key from an array of byte fields.
@@ -35,24 +36,22 @@ impl OndoSerializer<OndoKey> for OndoKey {
 //    get_fields_from_key: Extracts the original fields from a binary key.
 
 fn get_binary_key(fields: Vec<Vec<u8>>) -> Vec<u8> {
-    let delimiter = 0b1u8; // Delimiter byte (0x80)
     let mut key = Vec::new();
 
     for field in fields {
         let converted_field = convert_to_7_bit(&field);
         key.extend_from_slice(&converted_field);
-        key.push(delimiter);
+        key.push(BINARY_KEY_DELIMITER);
     }
     key
 }
 
 fn get_fields_from_key(key: &[u8]) -> Vec<Vec<u8>> {
-    let delimiter = 0b1u8;
     let mut fields = Vec::new();
     let mut start = 0;
 
     for (i, byte) in key.iter().enumerate() {
-        if *byte == delimiter {
+        if *byte == BINARY_KEY_DELIMITER {
             let field = convert_from_7_bit(&key[start..i]);
             fields.push(field);
             start = i + 1;

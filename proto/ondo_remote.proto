@@ -4,43 +4,101 @@ import "google/protobuf/wrappers.proto";
 
 package OndoRemote;
 
-// Create, Delete, Get, Update, List
+/// OndoRemote is a gRPC service providing a remote API for managing
+/// database servers, domains, tables, indexes, and values.
+/// The service enables interactions with a hierarchical data storage system:
+/// a database server contains multiple domains, each domain contains multiple tables,
+/// each table contains values and indexes, and each index contains references to values.
 service OndoRemote {
+    /// Version returns the version information of the server, including major, minor, and patch versions,
+    /// commit hash, build date, and a list of enabled features.
     rpc Version(EmptyMessage) returns (VersionResponse) {}
+
+    /// Database Server operations
+
+    /// CreateDatabaseServer creates a new database server with the given configuration.
     rpc CreateDatabaseServer(DatabaseServerMessage) returns (EmptyMessage) {}
+    /// DeleteDatabaseServer removes an existing database server identified by the given reference.
     rpc DeleteDatabaseServer(DatabaseServerReferenceMessage) returns (EmptyMessage) {}
+    /// GetDatabaseServer retrieves the configuration of an existing database server identified by the given reference.
     rpc GetDatabaseServer(DatabaseServerReferenceMessage) returns (DatabaseServerMessage) {}
+    /// UpdateDatabaseServer updates the configuration of an existing database server with the given data.
     rpc UpdateDatabaseServer(DatabaseServerMessage) returns (EmptyMessage) {}
+    /// ListDomains returns a list of domain names hosted on the specified database server.
     rpc ListDomains(DatabaseServerReferenceMessage) returns (ArrayOfStringResponse) {}
 
+    /// Domain operations
+
+    /// CreateDomain creates a new domain with the given configuration.
     rpc CreateDomain(DomainMessage) returns (EmptyMessage) {}
+    /// DeleteDomain removes an existing domain identified by the given reference.
     rpc DeleteDomain(DomainReferenceMessage) returns (EmptyMessage) {}
+    /// GetDomain retrieves the configuration of an existing domain identified by the given reference.
     rpc GetDomain(DomainReferenceMessage) returns (DomainMessage) {}
+    /// UpdateDomain updates the configuration of an existing domain with the given data.
     rpc UpdateDomain(DomainMessage) returns (EmptyMessage) {}
+    /// ListTables returns a list of table names within the specified domain.
     rpc ListTables(DomainReferenceMessage) returns (ArrayOfStringResponse) {}
 
+    /// Table operations
+
+    /// CreateTable creates a new table with the given configuration.
     rpc CreateTable(TableMessage) returns (EmptyMessage) {}
+    /// DeleteTable removes an existing table identified by the given reference.
     rpc DeleteTable(TableReferenceMessage) returns (EmptyMessage) {}
+    /// GetTable retrieves the configuration of an existing table identified by the given reference.
     rpc GetTable(TableReferenceMessage) returns (TableMessage) {}
+    /// UpdateTable updates the configuration of an existing table with the given data.
     rpc UpdateTable(TableMessage) returns (EmptyMessage) {}
+    /// ListIndexes returns a list of index names associated with the specified table.
     rpc ListIndexes(TableReferenceMessage) returns (ArrayOfStringResponse) {}
 
+    /// Table Value operations
+
+    /// ListValues retrieves all values associated with the specified table reference.
+    /// Requires a full key for efficient lookups.
     rpc ListValues(TableReferenceMessage) returns (JsonMessage) {}
+    /// ListValuesByKeyPrefix retrieves all values that share the specified key prefix within a table.
+    rpc ListValuesByKeyPrefix(TableValueReferenceMessage) returns (JsonMessage) {}
+    /// ListValuesByIdRange retrieves all values whose keys fall within the specified range (inclusive) within a table.
+    /// Also supports key prefix lookups.
     rpc ListValuesByIdRange(TableIdRangeReferenceMessage) returns (JsonMessage) {}
+    /// ListValuesByIdList retrieves all values whose keys are listed in the provided list of keys within a table.
     rpc ListValuesByIdList(TableIdListReferenceMessage) returns (JsonMessage) {}
 
-    rpc CreateIndex(IndexMessage) returns (EmptyMessage) {}
-    rpc DeleteIndex(IndexReferenceMessage) returns (EmptyMessage) {}
-    rpc GetIndex(IndexReferenceMessage) returns (IndexMessage) {}
-    rpc UpdateIndex(IndexMessage) returns (EmptyMessage) {}
+/// Index operations
 
-    rpc CreateValue(CreateTableValueMessage) returns (OndoKeyMessage) {}
-    rpc DeleteValue(TableValueReferenceMessage) returns (EmptyMessage) {}
-    rpc GetValue(TableValueReferenceMessage) returns (JsonMessage) {}
-    rpc UpdateValue(TableValueMessage) returns (EmptyMessage) {}
+/// CreateIndex creates a new index with the given configuration.
+rpc CreateIndex(IndexMessage) returns (EmptyMessage) {}
+/// DeleteIndex removes an existing index identified by the given reference.
+rpc DeleteIndex(IndexReferenceMessage) returns (EmptyMessage) {}
+/// GetIndex retrieves the configuration of an existing index identified by the given reference.
+rpc GetIndex(IndexReferenceMessage) returns (IndexMessage) {}
+/// UpdateIndex updates the configuration of an existing index with the given data.
+rpc UpdateIndex(IndexMessage) returns (EmptyMessage) {}
 
-    rpc FindValues(IndexedValueReferenceMessage) returns (JsonMessage) {}
-    rpc FindValuesByRange(IndexedValueRangeReferenceMessage) returns (JsonMessage) {}
+/// Indexed Value operations
+
+/// FindValues performs a key prefix search on the specified index and returns the matching values.
+rpc FindValues(IndexedValueReferenceMessage) returns (JsonMessage) {}
+/// FindValuesByRange retrieves all values whose indexed keys fall within the specified range (inclusive) in an index.
+/// Also supports key prefix lookups.
+rpc FindValuesByRange(IndexedValueRangeReferenceMessage) returns (JsonMessage) {}
+
+/// Table Value CRUD operations
+
+/// CreateValue creates a new value in the specified table.
+/// The CreateTableValueMessage can contain an optional key sequence for efficient key prefix search (ListValuesByKeyPrefix).
+rpc CreateValue(CreateTableValueMessage) returns (OndoKeyMessage) {}
+/// DeleteValue removes an existing value identified by the given table value reference.
+rpc DeleteValue(TableValueReferenceMessage) returns (EmptyMessage) {}
+/// GetValue retrieves the value associated with the given table value reference.
+rpc GetValue(TableValueReferenceMessage) returns (JsonMessage) {}
+/// UpdateValue updates the value identified by the given table value reference with the new data.
+rpc UpdateValue(TableValueMessage) returns (EmptyMessage) {}
+
+/// Note: When creating a table value, the CreateTableValueMessage can have an optional key.
+/// If the key is not provided, the database server will generate a key, which is a 64-bit integer.
 }
 
 message EmptyMessage {}
@@ -70,7 +128,7 @@ message DomainReferenceMessage {
 
 message DomainMessage {
     DomainReferenceMessage domain_reference = 1;
-    // other fields
+    /// other fields
 }
 
 message TableReferenceMessage {
@@ -80,7 +138,7 @@ message TableReferenceMessage {
 
 message TableMessage {
     TableReferenceMessage table_reference = 1;
-    // other fields
+    /// other fields
 }
 
 message IndexReferenceMessage {
@@ -146,5 +204,5 @@ message OndoKeyMessage {
 }
 
 message OptionalOndoKeyMessage {
-    OndoKeyMessage ondo_key = 1;  // Maps to Option by default
+    OndoKeyMessage ondo_key = 1;  /// Maps to Option by default
 }

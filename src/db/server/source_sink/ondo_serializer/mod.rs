@@ -13,7 +13,7 @@ pub(super) mod table_value;
 pub(super) mod unit;
 pub(super) mod vec_serde_value;
 
-pub(super) trait OndoSerializer<T> {
+pub(crate) trait OndoSerializer<T> {
     fn ondo_serialize(&self) -> DbResult<Vec<u8>>;
     fn ondo_deserialize(bytes: &[u8]) -> DbResult<T>;
 }

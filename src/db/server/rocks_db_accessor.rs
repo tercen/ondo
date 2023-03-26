@@ -87,3 +87,14 @@ impl RocksDbAccessor {
 pub(crate) struct DbReadLockGuardWrapper<'a> {
     pub(crate) guard: RwLockReadGuard<'a, DB>,
 }
+
+// In the same module where DbReadLockGuardWrapper is defined
+
+impl<'a> DbReadLockGuardWrapper<'a> {
+    pub(crate) fn new(
+        guarded_db: &'a Arc<RwLock<DB>>,
+    ) -> Result<DbReadLockGuardWrapper<'a>, DbError> {
+        let guard = RocksDbAccessor::db_read_lock(guarded_db)?;
+        Ok(DbReadLockGuardWrapper { guard })
+    }
+}

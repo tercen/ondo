@@ -3,10 +3,11 @@
 //TEST: test cascade_delete
 use super::*;
 use crate::db::db_error::DbResult;
+use crate::db::entity::ondo_key::OndoKey;
 use crate::db::entity::reference::effect::table_stored_effect::TableStoredEffect;
 use crate::db::entity::reference::requests::domain_stored_requests::DomainStoredRequests;
-use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
 use crate::db::entity::reference::requests::table_stored_requests::TableStoredIteratorRequests;
+use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
 use crate::db::entity::reference::IndexReference;
 use crate::db::entity::reference::{domain_reference::stored::*, index_reference::*};
 use crate::db::entity::TableValue;
@@ -34,6 +35,17 @@ pub(crate) trait TableStoredReferenceTrait {
         &self,
         requests: &'a dyn TableStoredIteratorRequests<'a>,
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>>;
+    fn all_values_with_key_prefix_<'a>(
+        &self,
+        key_prefix: OndoKey,
+        requests: &'a dyn TableStoredIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>>;
+    fn all_values_with_key_range_<'a>(
+        &self,
+        start_key: OndoKey,
+        end_key: OndoKey,
+        requests: &'a dyn TableStoredIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>>;
 }
 
 impl TableStoredReferenceTrait for TableReference {
@@ -54,6 +66,23 @@ impl TableStoredReferenceTrait for TableReference {
         requests: &'a dyn TableStoredIteratorRequests<'a>,
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
         requests.all_values(&self.value_cf_name())
+    }
+
+    fn all_values_with_key_prefix_<'a>(
+        &self,
+        key_prefix: OndoKey,
+        requests: &'a dyn TableStoredIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
+        requests.all_values_with_key_prefix(&self.value_cf_name(), key_prefix)
+    }
+
+    fn all_values_with_key_range_<'a>(
+        &self,
+        start_key: OndoKey,
+        end_key: OndoKey,
+        requests: &'a dyn TableStoredIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
+        requests.all_values_with_key_range(&self.value_cf_name(), start_key, end_key)
     }
 
     fn get_table_stored(

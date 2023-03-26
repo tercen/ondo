@@ -3,9 +3,10 @@ use super::{
     effect::{Effect, Effects},
     CfNameMaker, DomainReference,
 };
+use crate::db::entity::ondo_key::OndoKey;
 use crate::db::entity::reference::requests::domain_stored_requests::DomainStoredRequests;
-use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
 use crate::db::entity::reference::requests::table_stored_requests::TableStoredIteratorRequests;
+use crate::db::entity::reference::requests::table_stored_requests::TableStoredRequests;
 use crate::db::{
     db_error::{DbError, DbResult},
     entity::{table_value::TableValue, Table, TableStored},
@@ -32,6 +33,17 @@ pub(crate) trait TableReferenceTrait {
     fn list_index_names(&self, requests: &dyn TableStoredRequests) -> DbResult<Vec<String>>;
     fn all_values<'a>(
         &self,
+        requests: &'a dyn TableStoredIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>>;
+    fn all_values_with_key_prefix<'a>(
+        &self,
+        key_prefix: OndoKey,
+        requests: &'a dyn TableStoredIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>>;
+    fn all_values_with_key_range<'a>(
+        &self,
+        start_key: OndoKey,
+        end_key: OndoKey,
         requests: &'a dyn TableStoredIteratorRequests<'a>,
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>>;
 }
@@ -64,6 +76,21 @@ impl TableReferenceTrait for TableReference {
         self.all_values_(requests)
     }
 
+    fn all_values_with_key_prefix<'a>(
+        &self,
+        key_prefix: OndoKey,
+        requests: &'a dyn TableStoredIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
+        self.all_values_with_key_prefix_(key_prefix, requests)
+    }
+    fn all_values_with_key_range<'a>(
+        &self,
+        start_key: OndoKey,
+        end_key: OndoKey,
+        requests: &'a dyn TableStoredIteratorRequests<'a>,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
+        self.all_values_with_key_range_(start_key, end_key, requests)
+    }
     fn get_table(&self, requests: &dyn TableStoredRequests) -> DbResult<Option<Table>> {
         self.get_table_stored(requests)
             .map(|opt| opt.map(|table_stored| table_stored.table))
