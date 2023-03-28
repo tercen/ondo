@@ -77,6 +77,8 @@ impl CreateTableValueReference {
     }
 }
 
+//TODO:XXX Full text indexing
+//TODO:XXX Serve to  https://github.com/openai/chatgpt-retrieval-plugin?s=31
 fn do_indexing(
     table_value_reference: &TableValueReference,
     table_value: &TableValue,
