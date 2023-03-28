@@ -42,7 +42,7 @@ impl<'a> RocksTrait<'a> for DB {
         let cf_handle = self.cf_handle(value_cf_name).ok_or(DbError::CfNotFound)?;
         let mut read_options = ReadOptions::default();
         read_options.set_prefix_same_as_start(true);
-        let iterator_mode = IteratorMode::Start;
+        let iterator_mode = IteratorMode::From(&key_prefix, Direction::Forward);
         let raw_iterator = self.iterator_cf_opt(cf_handle, read_options, iterator_mode);
         let prefixed_iterator = raw_iterator.filter(move |result| {
             result
