@@ -36,7 +36,7 @@ impl<'a> IndexIteratorRequests<'a> for DbReadLockGuardWrapper<'a> {
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<IndexValue>> + 'a>> {
         let serialized_start_key_prefix = start_key_prefix.ondo_serialize()?;
         let serialized_end_key_prefix = end_key_prefix.ondo_serialize()?;
-        let raw_iterator = self.guard.get_records_in_cf_with_key_range(
+        let raw_iterator = self.guard.get_records_in_cf_with_key_range_old(
             value_cf_name,
             serialized_start_key_prefix,
             serialized_end_key_prefix,
