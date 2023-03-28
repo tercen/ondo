@@ -18,7 +18,7 @@ impl<'a> IndexIteratorRequests<'a> for DbReadLockGuardWrapper<'a> {
         let serialized_key_prefix = key_prefix.ondo_serialize()?;
         let raw_iterator = self
             .guard
-            .get_records_in_cf_with_key_prefix(value_cf_name, serialized_key_prefix)?;
+            .get_records_in_cf_with_key_prefix_old(value_cf_name, serialized_key_prefix)?;
 
         let all_iterator = raw_iterator.map(|result| {
             result.and_then(|(_, v)| Value::ondo_deserialize(&v)) // Flatten the nested Result
