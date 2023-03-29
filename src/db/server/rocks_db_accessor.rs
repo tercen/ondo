@@ -11,6 +11,7 @@ pub struct RocksDbAccessor {
     db: Arc<RwLock<DB>>,
     db_path: String,
     options: Options,
+    temp_dir: Option<Arc<TempDir>>, // We have to keep temp_dir in scope, so that it is alive as long as the database is alive
 }
 
 pub struct Version {
@@ -29,12 +30,12 @@ impl Default for RocksDbAccessor {
         let mut options = Options::default();
         options.create_if_missing(true);
 
-        Self::init(db_path, options)
+        Self::init(db_path, options, None)
     }
 }
 
 impl RocksDbAccessor {
-    fn init(db_path: String, options: Options) -> Self {
+    fn init(db_path: String, options: Options, temp_dir: Option<Arc<TempDir>>) -> Self {
         let cf_names = DB::list_cf(&options, &db_path).unwrap_or(Vec::new());
         let raw_db = DB::open_cf(&options, &db_path, cf_names).unwrap();
         let db = Arc::new(RwLock::new(raw_db));
@@ -43,6 +44,7 @@ impl RocksDbAccessor {
             db,
             db_path,
             options,
+            temp_dir,
         }
     }
 
@@ -53,7 +55,7 @@ impl RocksDbAccessor {
         let mut options = Options::default();
         options.create_if_missing(true);
 
-        Self::init(db_path, options)
+        Self::init(db_path, options, Some(Arc::new(temp_dir)))
     }
 
     pub fn guarded_db(&self) -> Arc<RwLock<DB>> {
@@ -103,5 +105,18 @@ impl<'a> DbReadLockGuardWrapper<'a> {
     ) -> Result<DbReadLockGuardWrapper<'a>, DbError> {
         let guard = RocksDbAccessor::db_read_lock(guarded_db)?;
         Ok(DbReadLockGuardWrapper { guard })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_in_memory() {
+        let db_accessor = RocksDbAccessor::in_memory();
+
+        assert!(db_accessor.db.read().is_ok());
+        assert!(db_accessor.temp_dir.is_some());
     }
 }
