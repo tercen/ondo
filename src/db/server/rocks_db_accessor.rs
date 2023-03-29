@@ -1,17 +1,16 @@
-// use rocksdb::{Options, DB};
 use crate::db::db_error::DbError;
 use crate::db::db_error::DbResult;
 use rocksdb::{Options, DB};
 use std::sync::{Arc, RwLock, RwLockReadGuard};
 use tempfile::TempDir;
 
-// Define the struct that contains the RocksDB instance
+type DbArc = Arc<(RwLock<DB>, Option<TempDir>)>;
+
 #[derive(Clone)]
 pub struct RocksDbAccessor {
-    db: Arc<RwLock<DB>>,
+    db: DbArc,
     db_path: String,
     options: Options,
-    temp_dir: Option<Arc<TempDir>>, // We have to keep temp_dir in scope, so that it is alive as long as the database is alive
 }
 
 pub struct Version {
@@ -30,21 +29,20 @@ impl Default for RocksDbAccessor {
         let mut options = Options::default();
         options.create_if_missing(true);
 
-        Self::init(db_path, options, None)
+        Self::init(db_path, options)
     }
 }
 
 impl RocksDbAccessor {
-    fn init(db_path: String, options: Options, temp_dir: Option<Arc<TempDir>>) -> Self {
+    fn init(db_path: String, options: Options) -> Self {
         let cf_names = DB::list_cf(&options, &db_path).unwrap_or(Vec::new());
         let raw_db = DB::open_cf(&options, &db_path, cf_names).unwrap();
-        let db = Arc::new(RwLock::new(raw_db));
+        let db = Arc::new((RwLock::new(raw_db), None));
 
         RocksDbAccessor {
             db,
             db_path,
             options,
-            temp_dir,
         }
     }
 
@@ -55,21 +53,25 @@ impl RocksDbAccessor {
         let mut options = Options::default();
         options.create_if_missing(true);
 
-        Self::init(db_path, options, Some(Arc::new(temp_dir)))
+        Self::init(db_path, options).with_temp_dir(temp_dir)
     }
 
-    pub fn guarded_db(&self) -> Arc<RwLock<DB>> {
+    pub fn with_temp_dir(mut self, temp_dir: TempDir) -> Self {
+        let mut db = Arc::get_mut(&mut self.db).unwrap();
+        db.1 = Some(temp_dir);
+        self
+    }
+    
+    pub fn guarded_db(&self) -> DbArc {
         Arc::clone(&self.db)
     }
 
-    pub fn db_read_lock(guarded_db: &Arc<RwLock<DB>>) -> DbResult<std::sync::RwLockReadGuard<DB>> {
-        guarded_db.read().map_err(|_| DbError::CanNotLockDbMutex)
+    pub fn db_read_lock(guarded_db: &DbArc) -> DbResult<std::sync::RwLockReadGuard<DB>> {
+        guarded_db.0.read().map_err(|_| DbError::CanNotLockDbMutex)
     }
 
-    pub fn db_write_lock(
-        guarded_db: &Arc<RwLock<DB>>,
-    ) -> DbResult<std::sync::RwLockWriteGuard<DB>> {
-        guarded_db.write().map_err(|_| DbError::CanNotLockDbMutex)
+    pub fn db_write_lock(guarded_db: &DbArc) -> DbResult<std::sync::RwLockWriteGuard<DB>> {
+        guarded_db.0.write().map_err(|_| DbError::CanNotLockDbMutex)
     }
 
     pub fn get_version(&self) -> Version {
@@ -97,11 +99,9 @@ pub(crate) struct DbReadLockGuardWrapper<'a> {
     pub(crate) guard: RwLockReadGuard<'a, DB>,
 }
 
-// In the same module where DbReadLockGuardWrapper is defined
-
 impl<'a> DbReadLockGuardWrapper<'a> {
     pub(crate) fn new(
-        guarded_db: &'a Arc<RwLock<DB>>,
+        guarded_db: &'a DbArc,
     ) -> Result<DbReadLockGuardWrapper<'a>, DbError> {
         let guard = RocksDbAccessor::db_read_lock(guarded_db)?;
         Ok(DbReadLockGuardWrapper { guard })
@@ -116,7 +116,8 @@ mod tests {
     fn test_in_memory() {
         let db_accessor = RocksDbAccessor::in_memory();
 
-        assert!(db_accessor.db.read().is_ok());
-        assert!(db_accessor.temp_dir.is_some());
+        assert!(RocksDbAccessor::db_read_lock(&db_accessor.db).is_ok());
+        assert!(db_accessor.db.0.read().is_ok());
+        assert!(db_accessor.db.as_ref().1.is_some());
     }
 }
