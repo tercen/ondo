@@ -1,10 +1,10 @@
 //index.rs
-use crate::db::entity::ondo_key::OndoKey;
+use crate::db::entity::OndoKey;
 use serde::{Deserialize, Serialize};
 
 mod key_value;
 
-use super::reference::IndexReference;
+use crate::db::reference::IndexReference;
 pub(crate) use key_value::*;
 
 pub(crate) const DEFAULT_ID_FIELD: &str = "_id";
@@ -95,8 +95,8 @@ pub(self) fn get_nested_property(doc: &IndexValue, field: &str) -> serde_json::V
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::entity::reference::DomainReference;
-    use crate::db::entity::reference::TableReference;
+    use crate::db::reference::DomainReference;
+    use crate::db::reference::TableReference;
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use serde::{Deserialize, Serialize};

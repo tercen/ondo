@@ -1,9 +1,9 @@
 use super::ondo_serializer::OndoSerializer;
-use crate::db::db_error::DbError::CfNotFound;
 use crate::db::db_error::{DbError, DbResult};
-use crate::db::entity::reference::column_value_reference::ColumnValue;
-use crate::db::entity::reference::requests::column_value_requests::ColumnValueRequests;
+use crate::db::reference::requests::ColumnValueRequests;
+use crate::db::reference::ColumnValue;
 use crate::db::server::rocks_db_accessor::RocksDbAccessor;
+use crate::db::DbError::CfNotFound;
 use serde_json::Value;
 
 impl ColumnValueRequests for RocksDbAccessor {

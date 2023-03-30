@@ -3,10 +3,13 @@ use super::db_error_to_status::DbErrorToStatus;
 use super::domain_server_trait::DomainServerTrait;
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
-use crate::db::entity::domain::Domain;
-use crate::db::entity::reference::domain_reference::DomainReference;
-use crate::db::entity::reference::domain_reference::DomainReferenceTrait;
-use crate::ondo_remote::*;
+use crate::{
+    db::{
+        entity::domain::Domain,
+        reference::domain_reference::{DomainReference, DomainReferenceTrait},
+    },
+    ondo_remote::*,
+};
 use tonic::{Request, Response, Status};
 
 impl<'a> Into<DomainReference> for &'a DomainReferenceMessage {

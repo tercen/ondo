@@ -1,7 +1,7 @@
 use super::OndoSerializer;
 use crate::db::constants::BINARY_KEY_DELIMITER;
-use crate::db::db_error::DbResult;
-use crate::db::entity::ondo_key::OndoKey;
+use crate::db::DbResult;
+use crate::db::entity::OndoKey;
 use rmp_serde::{from_slice, to_vec};
 
 impl OndoSerializer<OndoKey> for OndoKey {

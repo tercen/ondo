@@ -1,4 +1,4 @@
-use crate::db::db_error::DbResult;
+use crate::db::DbResult;
 
 pub(super) mod column_value;
 pub(super) mod database_server;
@@ -11,7 +11,6 @@ pub(super) mod string;
 pub(super) mod table;
 pub(super) mod table_value;
 pub(super) mod unit;
-pub(super) mod vec_serde_value;
 
 pub(crate) trait OndoSerializer<T> {
     fn ondo_serialize(&self) -> DbResult<Vec<u8>>;

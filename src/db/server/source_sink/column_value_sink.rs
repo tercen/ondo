@@ -1,6 +1,6 @@
 use super::ondo_serializer::OndoSerializer;
-use crate::db::db_error::DbError;
-use crate::db::entity::reference::effect::column_value_effect::ColumnValueEffect;
+use crate::db::DbError;
+use crate::db::reference::effect::ColumnValueEffect;
 use crate::db::server::rocks_db_accessor::RocksDbAccessor;
 use serde_json::Value;
 

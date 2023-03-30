@@ -1,5 +1,5 @@
 //key_value.rs
-use crate::db::entity::ondo_key::OndoKey;
+use crate::db::entity::OndoKey;
 pub(crate) type IndexValue = serde_json::Value;
 pub(crate) type IndexKey = OndoKey;
 

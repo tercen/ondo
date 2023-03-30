@@ -1,5 +1,5 @@
-use crate::db::db_error::DbError;
-use crate::db::db_error::DbResult;
+use crate::db::DbError;
+use crate::db::DbResult;
 use rocksdb::{Options, DB};
 use std::sync::{Arc, RwLock, RwLockReadGuard};
 use tempfile::TempDir;
@@ -61,7 +61,7 @@ impl RocksDbAccessor {
         db.1 = Some(temp_dir);
         self
     }
-    
+
     pub fn guarded_db(&self) -> DbArc {
         Arc::clone(&self.db)
     }
@@ -100,9 +100,7 @@ pub(crate) struct DbReadLockGuardWrapper<'a> {
 }
 
 impl<'a> DbReadLockGuardWrapper<'a> {
-    pub(crate) fn new(
-        guarded_db: &'a DbArc,
-    ) -> Result<DbReadLockGuardWrapper<'a>, DbError> {
+    pub(crate) fn new(guarded_db: &'a DbArc) -> Result<DbReadLockGuardWrapper<'a>, DbError> {
         let guard = RocksDbAccessor::db_read_lock(guarded_db)?;
         Ok(DbReadLockGuardWrapper { guard })
     }

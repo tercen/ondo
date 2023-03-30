@@ -1,10 +1,10 @@
-use crate::db::db_error::DbError::CfNotFound;
 use crate::db::db_error::{DbError, DbResult};
-use crate::db::entity::domain::DomainStored;
-use crate::db::entity::reference::domain_reference::DomainName;
-use crate::db::entity::reference::requests::domain_stored_requests::DomainStoredRequests;
+use crate::db::entity::DomainStored;
+use crate::db::reference::DomainName;
+use crate::db::reference::requests::DomainStoredRequests;
 use crate::db::server::rocks_db_accessor::RocksDbAccessor;
 use crate::db::server::source_sink::ondo_serializer::OndoSerializer;
+use crate::db::DbError::CfNotFound;
 
 impl DomainStoredRequests for RocksDbAccessor {
     fn get_domain_stored(&self, cf_name: &str, key: &DomainName) -> DbResult<Option<DomainStored>> {

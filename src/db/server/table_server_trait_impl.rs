@@ -4,14 +4,14 @@ use super::rocks_db_accessor::DbReadLockGuardWrapper;
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
 use super::table_server_trait::TableServerTrait;
-use crate::db::db_error::DbError;
-use crate::db::entity::ondo_key::OndoKey;
-use crate::db::entity::reference::table_reference::TableReference;
-use crate::db::entity::reference::table_reference::TableReferenceTrait;
-use crate::db::entity::reference::table_value_reference::TableValueReference;
-use crate::db::entity::reference::table_value_reference::TableValueReferenceTrait;
-use crate::db::entity::table::Table;
-use crate::db::entity::table_value::TableValue;
+use crate::db::{
+    entity::{table::Table, OndoKey, TableValue},
+    reference::{
+        table_reference::TableReference, TableReferenceTrait, TableValueReference,
+        TableValueReferenceTrait,
+    },
+    DbError,
+};
 use crate::ondo_remote;
 use ondo_remote::*;
 use tonic::{Request, Response, Status};
@@ -220,8 +220,8 @@ impl TableServerTrait for RocksDbAccessor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::entity::reference::domain_reference::DomainReference;
-    use crate::db::entity::reference::table_reference::TableReference;
+    use crate::db::reference::domain_reference::DomainReference;
+    use crate::db::reference::table_reference::TableReference;
 
     #[test]
     fn test_table_reference_message_into_table_reference() {

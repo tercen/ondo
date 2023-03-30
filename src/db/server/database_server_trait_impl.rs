@@ -3,9 +3,10 @@ use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
-use crate::db::entity::database_server::DatabaseServer;
-use crate::db::entity::reference::database_server_reference::DatabaseServerReference;
-use crate::db::entity::reference::database_server_reference::DatabaseServerReferenceTrait;
+use crate::db::{
+    entity::DatabaseServer,
+    reference::database_server_reference::{DatabaseServerReference, DatabaseServerReferenceTrait},
+};
 use crate::ondo_remote::{
     ArrayOfStringResponse, DatabaseServerMessage, DatabaseServerReferenceMessage, EmptyMessage,
     VersionResponse,

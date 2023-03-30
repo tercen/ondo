@@ -1,5 +1,5 @@
 //domain.rs
-use super::reference::DomainReference;
+use crate::db::reference::DomainReference;
 use ::std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 

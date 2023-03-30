@@ -4,12 +4,11 @@ use super::index_server_trait::IndexServerTrait;
 use super::rocks_db_accessor::DbReadLockGuardWrapper;
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
-use crate::db::db_error::DbError;
-use crate::db::entity::index::Index;
-use crate::db::entity::ondo_key::OndoKey;
-use crate::db::entity::reference::index_reference::IndexReference;
-use crate::db::entity::reference::index_reference::IndexReferenceTrait;
-use crate::db::entity::table_value::TableValue;
+use crate::db::{
+    entity::{index::Index, OndoKey, TableValue},
+    reference::index_reference::{IndexReference, IndexReferenceTrait},
+    DbError,
+};
 use crate::ondo_remote;
 use ondo_remote::*;
 use tonic::{Request, Response, Status};

@@ -3,10 +3,10 @@ use super::db_error_to_status::DbErrorToStatus;
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
 use super::table_value_server_trait::TableValueServerTrait;
-use crate::db::entity::reference::table_value_reference::CreateTableValueReference;
-use crate::db::entity::reference::table_value_reference::CreateTableValueReferenceTrait;
-use crate::db::entity::reference::table_value_reference::TableValueReference;
-use crate::db::entity::reference::table_value_reference::TableValueReferenceTrait;
+use crate::db::reference::{
+    table_value_reference::{CreateTableValueReference, CreateTableValueReferenceTrait},
+    TableValueReference, TableValueReferenceTrait,
+};
 use crate::ondo_remote;
 use ondo_remote::*;
 use serde_json::Value;

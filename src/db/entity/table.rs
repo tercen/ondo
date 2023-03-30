@@ -1,6 +1,6 @@
 //table.rs
-use super::index::Index;
-use super::reference::TableReference;
+use crate::db::entity::Index;
+use crate::db::reference::TableReference;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

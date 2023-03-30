@@ -1,9 +1,9 @@
 use super::ondo_serializer::OndoSerializer;
-use crate::db::db_error::DbError;
-use crate::db::entity::domain::DomainStored;
-use crate::db::entity::reference::domain_reference::DomainName;
-use crate::db::entity::reference::effect::domain_stored_effect::DomainStoredEffect;
+use crate::db::entity::DomainStored;
+use crate::db::reference::DomainName;
+use crate::db::reference::effect::domain_stored_effect::DomainStoredEffect;
 use crate::db::server::rocks_db_accessor::RocksDbAccessor;
+use crate::db::DbError;
 
 pub(super) fn apply_effect(
     ra: &RocksDbAccessor,

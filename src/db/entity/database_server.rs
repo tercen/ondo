@@ -1,5 +1,5 @@
 //database_server.rs
-use crate::db::entity::reference::database_server_reference::DatabaseServerReference;
+use crate::db::reference::DatabaseServerReference;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

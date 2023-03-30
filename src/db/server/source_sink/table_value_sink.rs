@@ -1,8 +1,8 @@
 use super::ondo_serializer::OndoSerializer;
-use crate::db::db_error::DbError;
-use crate::db::entity::ondo_key::OndoKey;
-use crate::db::entity::reference::effect::table_value_effect::TableValueEffect;
+use crate::db::entity::OndoKey;
+use crate::db::reference::effect::TableValueEffect;
 use crate::db::server::rocks_db_accessor::RocksDbAccessor;
+use crate::db::DbError;
 use serde_json::Value;
 
 pub(super) fn apply_effect(ra: &RocksDbAccessor, effect: &TableValueEffect) -> Result<(), DbError> {

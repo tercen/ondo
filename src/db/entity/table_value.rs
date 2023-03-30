@@ -1,9 +1,7 @@
 //table_value.rs
-use crate::db::db_error::DbResult;
-use crate::db::entity::index::Index;
-use crate::db::entity::reference::effect::Effects;
-use crate::db::entity::reference::index_value_reference::IndexValueReference;
-use crate::db::entity::reference::index_value_reference::IndexValueReferenceTrait;
+use crate::db::entity::Index;
+use crate::db::reference::{Effects, IndexValueReference, IndexValueReferenceTrait};
+use crate::db::DbResult;
 
 pub(crate) type TableValue = serde_json::Value;
 
