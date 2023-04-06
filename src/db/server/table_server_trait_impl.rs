@@ -4,6 +4,7 @@ use super::rocks_db_accessor::DbReadLockGuardWrapper;
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
 use super::table_server_trait::TableServerTrait;
+use crate::db::enums::TableStoredIteratorRequestsFactoryEnum;
 use crate::db::{
     entity::{table::Table, OndoKey, TableValue},
     reference::{
@@ -140,9 +141,15 @@ impl TableServerTrait for RocksDbAccessor {
         r: Request<TableReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
         let guarded_db = self.guarded_db();
-        let db_wrapper = DbReadLockGuardWrapper::new(&guarded_db).map_db_err_to_status()?;
+        let factory_enum_db_arc = TableStoredIteratorRequestsFactoryEnum::new_db_arc(guarded_db);
+        let table_stored_iterator_requests_enum = factory_enum_db_arc
+            .create_read_locked_requests()
+            .map_db_err_to_status()?;
+        let table_stored_iterator_requests = table_stored_iterator_requests_enum.as_trait();
         let reference: TableReference = r.get_ref().into();
-        let iterator = reference.all_values(&db_wrapper).map_db_err_to_status()?;
+        let iterator = reference
+            .all_values(table_stored_iterator_requests)
+            .map_db_err_to_status()?;
         let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
         let values = values_result.map_db_err_to_status()?;
         let json = serde_json::to_string(&values).map_err(|e| Status::internal(e.to_string()))?;

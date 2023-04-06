@@ -1,13 +1,11 @@
 //index_reference.rs
 //TODO: validate index name
 use crate::db::entity::table_value::do_index_table_value;
+use crate::db::enums::TableStoredIteratorRequestsFactoryEnum;
 use crate::db::{
     entity::{Index, OndoKey, TableValue},
     reference::{
-        requests::{
-            IndexIteratorRequests, TableStoredIteratorRequests, TableStoredRequests,
-            TableValueRequests,
-        },
+        requests::{IndexIteratorRequests, TableStoredRequests, TableValueRequests},
         table_reference::stored::TableStoredReferenceTrait,
         CfNameMaker, DomainReference, Effect, Effects, TableReference, TableReferenceTrait,
         TableValueReference, TableValueReferenceTrait,
@@ -20,15 +18,17 @@ pub(crate) trait IndexReferenceTrait {
     fn value_cf_name(&self) -> String;
     fn required_cf_names(&self) -> Vec<String>;
     fn get_index(&self, parent_requests: &dyn TableStoredRequests) -> DbResult<Option<Index>>;
-    fn put_index(
+    fn put_index<'a>(
         &self,
         index: &Index,
         parent_requests: &dyn TableStoredRequests,
+        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
     ) -> DbResult<Effects>;
-    fn post_index(
+    fn post_index<'a>(
         &self,
         index: &Index,
         parent_requests: &dyn TableStoredRequests,
+        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
     ) -> DbResult<Effects>;
     fn delete_index(&self, parent_requests: &dyn TableStoredRequests) -> DbResult<Effects>;
 
@@ -65,14 +65,20 @@ pub struct IndexReference {
 }
 
 impl IndexReference {
-    pub fn new(domain_name: &str, table_name: &str, index_name: &str) -> Self {
+    pub fn build(domain_name: &str, table_name: &str, index_name: &str) -> Self {
         IndexReference {
             table_reference: TableReference {
-                domain_reference: DomainReference::new(domain_name),
-                table_name: table_name.to_string(),
+                domain_reference: DomainReference::build(domain_name),
+                table_name: table_name.to_owned(),
             },
 
-            index_name: index_name.to_string(),
+            index_name: index_name.to_owned(),
+        }
+    }
+    pub fn new(table_reference: TableReference, index_name: &str) -> Self {
+        IndexReference {
+            table_reference,
+            index_name: index_name.to_owned(),
         }
     }
 
@@ -85,8 +91,8 @@ trait IndexReferencePrivateTrait<'a> {
     fn recreate_index_values_cf(&self) -> Effects;
     fn index_related_table_values(
         &self,
-        table_requests: &dyn TableStoredRequests,
-        table_stored_iterator_requests: &'a dyn TableStoredIteratorRequests<'a>,
+        the_index: &Index,
+        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
     ) -> DbResult<Effects>;
     fn create_required_cfs(&self) -> Effects;
     fn delete_required_cfs(&self) -> Effects;
@@ -101,27 +107,29 @@ impl<'a> IndexReferencePrivateTrait<'a> for IndexReference {
 
     fn index_related_table_values(
         &self,
-        table_stored_requests: &dyn TableStoredRequests,
-        table_stored_iterator_requests: &'a dyn TableStoredIteratorRequests<'a>,
+        the_index: &Index,
+        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
     ) -> DbResult<Effects> {
-        let table_reference = self.to_table_reference();
-        let the_index = self
-            .get_index(table_stored_requests)?
-            .ok_or(DbError::IndexNotInitialized)?;
-        let all_values = table_reference.all_values(table_stored_iterator_requests);
-        let nested_effects = all_values?.try_fold(vec![], |mut acc, r_value| {
-            let value = r_value?;
-            let r_index_value_effects = do_index_table_value(&value, &the_index);
-            match r_index_value_effects {
-                Ok(index_value_effect) => {
-                    acc.push(index_value_effect);
-                    Ok(acc)
+        let table_stored_iterator_requests_enum =
+            table_stored_iterator_requests_factory.create_read_locked_requests()?;
+        let table_stored_iterator_requests = table_stored_iterator_requests_enum.as_trait();
+        {
+            let table_reference = self.to_table_reference();
+            let all_values = table_reference.all_values(table_stored_iterator_requests);
+            let nested_effects = all_values?.try_fold(vec![], |mut acc, r_value| {
+                let value = r_value?;
+                let r_index_value_effects = do_index_table_value(&value, &the_index);
+                match r_index_value_effects {
+                    Ok(index_value_effect) => {
+                        acc.push(index_value_effect);
+                        Ok(acc)
+                    }
+                    Err(e) => Err(e),
                 }
-                Err(e) => Err(e),
-            }
-        })?;
-        let effects = nested_effects.into_iter().flatten().collect::<Vec<_>>();
-        Ok(effects)
+            })?;
+            let effects = nested_effects.into_iter().flatten().collect::<Vec<_>>();
+            Ok(effects)
+        }
     }
 
     fn create_required_cfs(&self) -> Effects {
@@ -158,10 +166,11 @@ impl IndexReferenceTrait for IndexReference {
         Ok(table_stored.indexes.get(&self.index_name).cloned())
     }
 
-    fn put_index(
+    fn put_index<'a>(
         &self,
         index: &Index,
         parent_requests: &dyn TableStoredRequests,
+        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
     ) -> DbResult<Effects> {
         let table_stored_opt = self.table_reference.get_table_stored(parent_requests)?;
         let mut table_stored = table_stored_opt.ok_or(DbError::TableNotInitialized)?;
@@ -171,15 +180,21 @@ impl IndexReferenceTrait for IndexReference {
         if result == None {
             Err(DbError::IndexNotInitialized)
         } else {
-            self.recreate_index_values_cf();
-            self.table_reference.put_table_stored(&table_stored)
+            let mut effects: Vec<Effect> = Vec::new();
+            effects.extend(self.table_reference.put_table_stored(&table_stored)?);
+            effects.extend(self.recreate_index_values_cf());
+            let index_related_table_values_effects =
+                self.index_related_table_values(index, table_stored_iterator_requests_factory)?;
+            effects.extend(index_related_table_values_effects);
+            Ok(effects)
         }
     }
 
-    fn post_index(
+    fn post_index<'a>(
         &self,
         index: &Index,
         parent_requests: &dyn TableStoredRequests,
+        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
     ) -> DbResult<Effects> {
         let table_stored_opt = self.table_reference.get_table_stored(parent_requests)?;
         let mut table_stored = table_stored_opt.ok_or(DbError::TableNotInitialized)?;
@@ -187,9 +202,13 @@ impl IndexReferenceTrait for IndexReference {
             .indexes
             .insert(self.index_name.clone(), index.clone());
         if result == None {
+            // new index
             let mut effects = self.create_required_cfs();
             let put_effects = self.table_reference.put_table_stored(&table_stored)?;
             effects.extend(put_effects);
+            let index_related_table_values_effects =
+                self.index_related_table_values(index, table_stored_iterator_requests_factory)?;
+            effects.extend(index_related_table_values_effects);
             Ok(effects)
         } else {
             Err(DbError::AlreadyExists)
@@ -234,13 +253,7 @@ impl IndexReferenceTrait for IndexReference {
         let index_iterator =
             requests.all_values_with_key_prefix(&self.value_cf_name(), key_prefix)?;
         let index_value_iterator = index_iterator.map(move |index_value_result| {
-            let index_value = index_value_result?;
-            let ondo_key = serde_json::from_value::<OndoKey>(index_value).map_err(|e| {
-                DbError::Other(format!(
-                    "Failed to deserialize OndoKey from index value: {}",
-                    e
-                ))
-            })?;
+            let ondo_key = index_value_result?;
             Ok(ondo_key)
         });
         Ok(Box::new(index_value_iterator))
@@ -281,13 +294,7 @@ impl IndexReferenceTrait for IndexReference {
             end_key_prefix,
         )?;
         let index_value_iterator = index_iterator.map(move |index_value_result| {
-            let index_value = index_value_result?;
-            let ondo_key = serde_json::from_value::<OndoKey>(index_value).map_err(|e| {
-                DbError::Other(format!(
-                    "Failed to deserialize OndoKey from index value: {}",
-                    e
-                ))
-            })?;
+            let ondo_key = index_value_result?;
             Ok(ondo_key)
         });
         Ok(Box::new(index_value_iterator))
@@ -304,7 +311,7 @@ mod tests {
     };
 
     fn create_index_ref() -> IndexReference {
-        IndexReference::new("sample_domain", "sample_table", "sample_index")
+        IndexReference::build("sample_domain", "sample_table", "sample_index")
     }
 
     fn create_index() -> Index {
@@ -325,12 +332,11 @@ mod tests {
 
     mod index_reference_trait_tests {
         use super::*;
-
         #[test]
         fn test_get_index() {
             let mut mock = MockTableStoredTestRequests::new();
             let index_reference =
-                IndexReference::new("sample_domain", "sample_table", "sample_index");
+                IndexReference::build("sample_domain", "sample_table", "sample_index");
             let index = create_index();
             let index_clone = index.clone();
 
@@ -346,7 +352,7 @@ mod tests {
         fn test_get_index_failure() {
             let mut mock = MockTableStoredTestRequests::new();
             let index_reference =
-                IndexReference::new("sample_domain", "sample_table", "sample_index");
+                IndexReference::build("sample_domain", "sample_table", "sample_index");
 
             mock.expect_get_table_stored()
                 .returning(move |_, _| Ok(Some(create_table_stored())));
@@ -359,84 +365,24 @@ mod tests {
         #[test]
         fn test_put_index() {
             let mut parent_mock = MockTableStoredTestRequests::new();
+            let iterator_mock_factory = TableStoredIteratorRequestsFactoryEnum::new_mock();
             let index_reference =
-                IndexReference::new("sample_domain", "sample_table", "sample_index");
+                IndexReference::build("sample_domain", "sample_table", "sample_index");
             let index = create_index();
             let table_stored = create_table_stored_with_index(&index);
             parent_mock
                 .expect_get_table_stored()
                 .returning(move |_, _| Ok(Some(table_stored.clone())));
 
-            let effects = index_reference.put_index(&index, &parent_mock);
-            assert!(effects.is_ok());
-            let expected_effects = vec![Effect::TableStoredEffect(TableStoredEffect::Put(
-                "/domains/sample_domain/tables".to_owned(),
-                "sample_table".to_owned(),
-                TableStored {
-                    table: Table {
-                        reference: TableReference {
-                            domain_reference: DomainReference::new("sample_domain"),
-                            table_name: "sample_table".to_owned(),
-                        },
-                    },
-                    indexes: [(
-                        "sample_index".to_owned(),
-                        Index {
-                            reference: IndexReference {
-                                index_name: "sample_index".to_owned(),
-                                table_reference: TableReference {
-                                    domain_reference: DomainReference::new("sample_domain"),
-                                    table_name: "sample_table".to_owned(),
-                                },
-                            },
-                            fields: vec!["sample_field".to_owned()],
-                        },
-                    )]
-                    .into_iter()
-                    .collect(),
-                },
-            ))];
-            assert_eq!(effects.unwrap(), expected_effects);
-        }
-
-        #[test]
-        fn test_put_index_failure() {
-            let mut parent_mock = MockTableStoredTestRequests::new();
-            let index_reference =
-                IndexReference::new("sample_domain", "sample_table", "sample_index");
-            let index = create_index();
-            let table_stored = create_table_stored();
-            parent_mock
-                .expect_get_table_stored()
-                .returning(move |_, _| Ok(Some(table_stored.clone())));
-
-            let effects = index_reference.put_index(&index, &parent_mock);
-            assert!(effects.is_err());
-
-            assert_eq!(effects.unwrap_err(), DbError::IndexNotInitialized);
-        }
-        #[test]
-        fn test_post_index() {
-            let mut parent_mock = MockTableStoredTestRequests::new();
-            let index_reference =
-                IndexReference::new("sample_domain", "sample_table", "sample_index");
-            let index = create_index();
-            let table_stored = create_table_stored();
-            parent_mock
-                .expect_get_table_stored()
-                .returning(move |_, _| Ok(Some(table_stored.clone())));
-
-            let effects = index_reference.post_index(&index, &parent_mock);
-            assert!(effects.is_ok());
+            let effects = index_reference.put_index(&index, &parent_mock, &iterator_mock_factory);
             let expected_effects = vec![
-                Effect::CreateCf("sample_domain::/sample_table/indexes/sample_index".to_owned()),
                 Effect::TableStoredEffect(TableStoredEffect::Put(
                     "/domains/sample_domain/tables".to_owned(),
                     "sample_table".to_owned(),
                     TableStored {
                         table: Table {
                             reference: TableReference {
-                                domain_reference: DomainReference::new("sample_domain"),
+                                domain_reference: DomainReference::build("sample_domain"),
                                 table_name: "sample_table".to_owned(),
                             },
                         },
@@ -446,7 +392,83 @@ mod tests {
                                 reference: IndexReference {
                                     index_name: "sample_index".to_owned(),
                                     table_reference: TableReference {
-                                        domain_reference: DomainReference::new("sample_domain"),
+                                        domain_reference: DomainReference::build("sample_domain"),
+                                        table_name: "sample_table".to_owned(),
+                                    },
+                                },
+                                fields: vec!["sample_field".to_owned()],
+                            },
+                        )]
+                        .into_iter()
+                        .collect(),
+                    },
+                )),
+                Effect::DeleteCf("sample_domain::/sample_table/indexes/sample_index".to_owned()),
+                Effect::CreateCf("sample_domain::/sample_table/indexes/sample_index".to_owned()),
+            ];
+            assert_eq!(effects.unwrap(), expected_effects);
+        }
+
+        #[test]
+        fn test_put_index_failure() {
+            let mut parent_mock = MockTableStoredTestRequests::new();
+            let iterator_mock_factory = TableStoredIteratorRequestsFactoryEnum::new_mock();
+            let index_reference =
+                IndexReference::build("sample_domain", "sample_table", "sample_index");
+            let index = create_index();
+            let table_stored = create_table_stored();
+            parent_mock
+                .expect_get_table_stored()
+                .returning(move |_, _| Ok(Some(table_stored.clone())));
+
+            let effects = index_reference.put_index(&index, &parent_mock, &iterator_mock_factory);
+            assert!(effects.is_err());
+
+            assert_eq!(effects.unwrap_err(), DbError::IndexNotInitialized);
+        }
+        #[test]
+        fn test_post_index() {
+            let mut parent_mock = MockTableStoredTestRequests::new();
+            let iterator_mock_factory = TableStoredIteratorRequestsFactoryEnum::new_mock();
+
+            let index_reference =
+                IndexReference::build("sample_domain", "sample_table", "sample_index");
+            let index = create_index();
+            let table_stored = create_table_stored();
+            let mut expected_table_stored = table_stored.clone();
+            expected_table_stored
+                .indexes
+                .insert(index_reference.index_name.clone(), index.clone());
+            parent_mock
+                .expect_get_table_stored()
+                .times(1) // First call
+                .returning(move |_, _| Ok(Some(table_stored.clone())));
+            // parent_mock
+            //     .expect_get_table_stored()
+            //     .times(1) // Second call
+            //     .returning(move |_, _| Ok(Some(expected_table_stored.clone())));
+
+            let effects = index_reference.post_index(&index, &parent_mock, &iterator_mock_factory);
+            // assert!(effects.is_ok());
+            let expected_effects = vec![
+                Effect::CreateCf("sample_domain::/sample_table/indexes/sample_index".to_owned()),
+                Effect::TableStoredEffect(TableStoredEffect::Put(
+                    "/domains/sample_domain/tables".to_owned(),
+                    "sample_table".to_owned(),
+                    TableStored {
+                        table: Table {
+                            reference: TableReference {
+                                domain_reference: DomainReference::build("sample_domain"),
+                                table_name: "sample_table".to_owned(),
+                            },
+                        },
+                        indexes: [(
+                            "sample_index".to_owned(),
+                            Index {
+                                reference: IndexReference {
+                                    index_name: "sample_index".to_owned(),
+                                    table_reference: TableReference {
+                                        domain_reference: DomainReference::build("sample_domain"),
                                         table_name: "sample_table".to_owned(),
                                     },
                                 },
@@ -464,15 +486,16 @@ mod tests {
         #[test]
         fn test_post_index_failure() {
             let mut parent_mock = MockTableStoredTestRequests::new();
+            let iterator_mock_factory = TableStoredIteratorRequestsFactoryEnum::new_mock();
             let index_reference =
-                IndexReference::new("sample_domain", "sample_table", "sample_index");
+                IndexReference::build("sample_domain", "sample_table", "sample_index");
             let index = create_index();
             let table_stored = create_table_stored_with_index(&index);
             parent_mock
                 .expect_get_table_stored()
                 .returning(move |_, _| Ok(Some(table_stored.clone())));
 
-            let effects = index_reference.post_index(&index, &parent_mock);
+            let effects = index_reference.post_index(&index, &parent_mock, &iterator_mock_factory);
             assert!(effects.is_err());
 
             assert_eq!(effects.unwrap_err(), DbError::AlreadyExists);
@@ -481,7 +504,7 @@ mod tests {
         fn test_delete_index() {
             let mut parent_mock = MockTableStoredTestRequests::new();
             let index_reference =
-                IndexReference::new("sample_domain", "sample_table", "sample_index");
+                IndexReference::build("sample_domain", "sample_table", "sample_index");
             let index = create_index();
             let table_stored = create_table_stored_with_index(&index);
             parent_mock

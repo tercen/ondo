@@ -3,7 +3,6 @@ use crate::db::entity::OndoKey;
 use crate::db::reference::IndexValueEffect;
 use crate::db::server::rocks_db_accessor::RocksDbAccessor;
 use crate::db::DbError;
-use serde_json::Value;
 
 pub(super) fn apply_effect(ra: &RocksDbAccessor, effect: &IndexValueEffect) -> Result<(), DbError> {
     let guarded_db = ra.guarded_db();
@@ -11,7 +10,7 @@ pub(super) fn apply_effect(ra: &RocksDbAccessor, effect: &IndexValueEffect) -> R
     match effect {
         IndexValueEffect::Put(cf_name, key, index_value) => {
             let ondo_key = OndoKey::ondo_serialize(&key)?;
-            let ondo_value = Value::ondo_serialize(&index_value)?;
+            let ondo_value = OndoKey::ondo_serialize(&index_value)?;
             let cf = db.cf_handle(&cf_name).ok_or(DbError::CfNotFound)?;
             db.put_cf(&cf, ondo_key, ondo_value)
                 .map_err(|err| DbError::RocksDbError(err))

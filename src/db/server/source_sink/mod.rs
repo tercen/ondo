@@ -5,6 +5,7 @@ pub(super) mod database_server_source;
 pub(super) mod domain_sink;
 pub(super) mod domain_source;
 pub(super) mod effects_sink;
+pub(super) use effects_sink::EffectsSink;
 pub(super) mod index_source;
 pub(super) mod index_value_sink;
 pub(super) mod index_value_source;

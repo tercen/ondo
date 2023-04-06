@@ -1,4 +1,6 @@
 //index.rs
+use crate::db::entity::table_value::get_key_from_table_value;
+use crate::db::entity::table_value::TableValue;
 use crate::db::entity::OndoKey;
 use serde::{Deserialize, Serialize};
 
@@ -13,15 +15,13 @@ pub(crate) const DEFAULT_ID_FIELD: &str = "_id";
 pub(crate) struct Index {
     pub reference: IndexReference,
     pub fields: Vec<String>,
-    //TODO: Return not the end key but the following key to start next time when there is limit
 }
 
 pub(crate) type IndexStored = Index;
 
 impl Index {
     pub fn get_fields(&self) -> Vec<String> {
-        let mut my_fields = self.fields.clone();
-        my_fields.push(DEFAULT_ID_FIELD.to_owned());
+        let my_fields = self.fields.clone();
         my_fields
     }
 
@@ -52,27 +52,30 @@ impl Index {
     /// "property2", this function will navigate the nested structure to obtain
     /// the values "value1a" and "value2" respectively. These values are combined
     /// into an `OndoKey` object, which is then returned as the index key.
-    pub fn key_of(&self, doc: &IndexValue) -> IndexKey {
+    pub fn key_of(&self, doc: &TableValue) -> IndexKey {
         let fields = self.get_fields();
 
-        let values: Vec<serde_json::Value> = fields
+        let mut values: Vec<serde_json::Value> = fields
             .iter()
             .map(|f: &String| {
                 let item = get_nested_property(doc, f);
                 item
             })
             .collect();
+        let ondo_key_of_doc = get_key_from_table_value(doc);
+        values.extend(ondo_key_of_doc.values);
+
         OndoKey { values }
     }
 
-    pub(crate) fn key_value_of(&self, doc: &IndexValue) -> KeyValue {
+    pub(crate) fn key_value_of(&self, doc: &TableValue) -> KeyValue {
         let key = self.key_of(doc);
-        let value = doc[DEFAULT_ID_FIELD].clone();
+        let value = get_key_from_table_value(doc);
         KeyValue::new(key, value)
     }
 }
 
-pub(self) fn get_nested_property(doc: &IndexValue, field: &str) -> serde_json::Value {
+pub(self) fn get_nested_property(doc: &TableValue, field: &str) -> serde_json::Value {
     let mut current_value = doc;
     let field_parts = field.split('.').collect::<Vec<&str>>();
 
@@ -99,12 +102,13 @@ mod tests {
     use crate::db::reference::TableReference;
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use crate::db::entity::table_value::insert_key_into_table_value;
     use serde::{Deserialize, Serialize};
     use serde_json::json;
 
     #[derive(Serialize, Deserialize)]
     struct SampleDocument {
-        _id: u64,
+        _id: OndoKey, // _id cannot be any type other than OndoKey
         name: String,
         age: u32,
         city: String,
@@ -112,14 +116,16 @@ mod tests {
 
     fn sample_document() -> SampleDocument {
         return SampleDocument {
-            _id: 1,
+            _id: OndoKey {
+                values: vec![json!(1),],
+            },
             name: "John".to_owned(),
             age: 30,
             city: "New York".to_owned(),
         };
     }
 
-    fn sample_document_json() -> IndexValue {
+    fn sample_document_json() -> TableValue {
         return json!(&sample_document());
     }
 
@@ -127,13 +133,52 @@ mod tests {
         Index {
             reference: IndexReference {
                 table_reference: TableReference {
-                    domain_reference: DomainReference::new("sample_domain"),
+                    domain_reference: DomainReference::build("sample_domain"),
                     table_name: "sample_table".to_owned(),
                 },
                 index_name: "sample_index".to_owned(),
             },
             fields: vec!["city".to_owned(), "age".to_owned()],
         }
+    }
+
+    #[test]
+    fn test_key_with_a_document() {
+        let index = sample_index();
+        let mut doc = sample_document_json();
+        let new_ondo_key: OndoKey = 99u64.into();
+        insert_key_into_table_value(&mut doc, &new_ondo_key);
+
+        let key = index.key_of(&doc);
+        assert_eq!(
+            key,
+            OndoKey {
+                values: vec![json!("New York"), json!(30), json!(99),],
+            }
+        );
+    }
+    #[test]
+    fn test_key_value_with_a_document() {
+        let index = sample_index();
+        let mut doc = sample_document_json();
+        let new_ondo_key: OndoKey = 99u64.into();
+        insert_key_into_table_value(&mut doc, &new_ondo_key);
+
+        let key_value = index.key_value_of(&doc);
+        let key = key_value.key;
+        let value = key_value.value;
+        assert_eq!(
+            key,
+            OndoKey {
+                values: vec![json!("New York"), json!(30), json!(99),],
+            }
+        );
+        assert_eq!(
+            value,
+            OndoKey {
+                values: vec![json!(99),],
+            }
+        );
     }
 
     #[test]
@@ -144,7 +189,6 @@ mod tests {
             vec![
                 "city".to_owned(),
                 "age".to_owned(),
-                DEFAULT_ID_FIELD.to_string(),
             ]
         );
     }
@@ -153,12 +197,13 @@ mod tests {
     fn test_key_of() {
         let index = sample_index();
         let doc = sample_document_json();
-
+        let existing_key = index.key_of(&doc);
         let expected_key = OndoKey {
-            values: vec![json!("New York"), json!(30), json!(1),],
+            values: vec![json!("New York"), json!(30), json!(1)],
         };
 
-        assert_eq!(index.key_of(&doc), expected_key);
+
+        assert_eq!(existing_key, expected_key);
     }
 
     #[test]

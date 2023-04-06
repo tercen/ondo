@@ -1,4 +1,6 @@
 //column_value_reference.rs
+use crate::db::entity::index::IndexKey;
+use crate::db::entity::table_value::TableValue;
 use crate::db::reference::{Effect, Effects};
 use crate::db::{
     entity::IndexValue,
@@ -8,11 +10,11 @@ use crate::db::{
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-pub(crate) type ColumnKey = IndexValue;
-pub(crate) type ColumnValue = IndexValue;
+pub(crate) type ColumnKey = IndexKey;
+pub(crate) type ColumnValue = TableValue;
 
 pub(crate) trait ColumnValueReferenceTrait {
-    fn get_column_value(&self, request: &dyn ColumnValueRequests) -> DbResult<Option<IndexValue>>;
+    fn get_column_value(&self, request: &dyn ColumnValueRequests) -> DbResult<Option<ColumnValue>>;
     fn put_column_value(&self, value: &ColumnValue) -> DbResult<Effects>;
     fn delete_column_value(&self) -> DbResult<Effects>;
     fn increment_column_value(&self, request: &dyn ColumnValueRequests)
@@ -20,7 +22,7 @@ pub(crate) trait ColumnValueReferenceTrait {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct ColumnValueReference {
+pub(crate) struct ColumnValueReference {
     pub column_reference: String,
     pub id: ColumnKey,
 }
@@ -80,11 +82,10 @@ mod tests {
     use super::*;
     use mockall::*;
     use serde_json::json;
-    use serde_json::value::Number;
-    use serde_json::Value;
+    use crate::db::entity::ondo_key::OndoKey;
 
     mock! {
-        pub ColumnValueTestRequests {}
+        pub(crate) ColumnValueTestRequests {}
         impl ColumnValueRequests for ColumnValueTestRequests {
             fn get_column_value(
                 &self,
@@ -94,7 +95,7 @@ mod tests {
         }
     }
 
-    pub fn create_column_value_ref(column_name: &str, key: ColumnKey) -> ColumnValueReference {
+    pub(crate) fn create_column_value_ref(column_name: &str, key: ColumnKey) -> ColumnValueReference {
         ColumnValueReference::new(column_name, key)
     }
 
@@ -108,7 +109,8 @@ mod tests {
     }
 
     fn create_column_key() -> ColumnKey {
-        Value::Number(Number::from(1))
+        let ondo_key: OndoKey = 1u64.into();
+        ondo_key
     }
 
     mod column_value_reference_trait_tests {

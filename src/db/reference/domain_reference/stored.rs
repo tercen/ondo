@@ -172,7 +172,7 @@ pub(crate) mod tests {
     }
 
     pub(crate) fn create_domain_ref() -> DomainReference {
-        DomainReference::new("sample_domain")
+        DomainReference::build("sample_domain")
     }
 
     pub(crate) fn create_domain() -> Domain {
@@ -284,7 +284,7 @@ pub(crate) mod tests {
 
         #[test]
         fn test_delete_domain_stored() {
-            let ref_trait = DomainReference::new("sample_domain");
+            let ref_trait = DomainReference::build("sample_domain");
 
             let expected_effects = vec![
                 Effect::DatabaseServerStoredEffect(DatabaseServerStoredEffect::Put(

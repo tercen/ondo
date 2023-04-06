@@ -24,3 +24,4 @@ pub(crate) trait TableStoredIteratorRequests<'a> {
         end_key: OndoKey,
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>>;
 }
+

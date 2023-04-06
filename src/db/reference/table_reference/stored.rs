@@ -14,6 +14,42 @@ use crate::db::{
     DbResult,
 };
 
+pub(crate) struct MockTableStoredIteratorRequestsFactory {
+}
+
+pub(crate) struct MockTableStoredIteratorTestRequests {}
+impl<'a> TableStoredIteratorRequests<'a> for MockTableStoredIteratorTestRequests {
+    fn all_values(
+        &'a self,
+        _value_cf_name: &str,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
+        // You need to provide an implementation for this method
+        // For example, you can return an empty iterator:
+        Ok(Box::new(std::iter::empty()))
+    }
+
+    fn all_values_with_key_prefix(
+        &'a self,
+        _value_cf_name: &str,
+        _key_prefix: OndoKey,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
+        // You need to provide an implementation for this method
+        // For example, you can return an empty iterator:
+        Ok(Box::new(std::iter::empty()))
+    }
+
+    fn all_values_with_key_range(
+        &'a self,
+        _value_cf_name: &str,
+        _start_key: OndoKey,
+        _end_key: OndoKey,
+    ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
+        // You need to provide an implementation for this method
+        // For example, you can return an empty iterator:
+        Ok(Box::new(std::iter::empty()))
+    }
+}
+
 pub(crate) trait TableStoredReferenceTrait {
     fn container_cf_name(&self) -> String;
     fn required_cf_names(&self) -> Vec<String>;
@@ -200,8 +236,9 @@ pub mod tests {
         }
     }
 
+
     pub(crate) fn create_table_ref() -> TableReference {
-        TableReference::new("sample_domain", "sample_table")
+        TableReference::build("sample_domain", "sample_table")
     }
 
     pub(crate) fn create_table() -> Table {
@@ -259,7 +296,7 @@ pub mod tests {
                 TableStored {
                     table: Table {
                         reference: TableReference {
-                            domain_reference: DomainReference::new("sample_domain"),
+                            domain_reference: DomainReference::build("sample_domain"),
                             table_name: "sample_table".to_owned(),
                         },
                     },
@@ -300,7 +337,7 @@ pub mod tests {
                         table: Table {
                             reference: TableReference {
                                 table_name: "sample_table".to_owned(),
-                                domain_reference: DomainReference::new("sample_domain"),
+                                domain_reference: DomainReference::build("sample_domain"),
                             },
                         },
                         indexes: HashMap::new(),
@@ -321,7 +358,7 @@ pub mod tests {
 
         #[test]
         fn test_delete_table_stored() {
-            let ref_trait = TableReference::new("sample_domain", "sample_table");
+            let ref_trait = TableReference::build("sample_domain", "sample_table");
 
             let expected_effects = vec![
                 Effect::DomainStoredEffect(DomainStoredEffect::Put(

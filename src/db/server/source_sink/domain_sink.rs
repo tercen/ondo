@@ -1,7 +1,7 @@
 use super::ondo_serializer::OndoSerializer;
 use crate::db::entity::DomainStored;
-use crate::db::reference::DomainName;
 use crate::db::reference::effect::domain_stored_effect::DomainStoredEffect;
+use crate::db::reference::DomainName;
 use crate::db::server::rocks_db_accessor::RocksDbAccessor;
 use crate::db::DbError;
 

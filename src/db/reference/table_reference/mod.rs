@@ -52,10 +52,16 @@ pub struct TableReference {
 }
 
 impl TableReference {
-    pub fn new(domain_name: &str, table_name: &str) -> Self {
+    pub fn build(domain_name: &str, table_name: &str) -> Self {
         TableReference {
-            domain_reference: DomainReference::new(domain_name),
+            domain_reference: DomainReference::build(domain_name),
             table_name: table_name.to_string(),
+        }
+    }
+    pub fn new(domain_reference: DomainReference, table_name: &str) -> Self {
+        TableReference {
+            domain_reference: domain_reference,
+            table_name: table_name.to_owned(),
         }
     }
 

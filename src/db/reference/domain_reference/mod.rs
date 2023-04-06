@@ -36,9 +36,14 @@ pub struct DomainReference {
 }
 
 impl DomainReference {
-    pub fn new(domain_name: &str) -> Self {
+    pub fn build(domain_name: &str) -> Self {
         DomainReference {
-            domain_name: domain_name.to_string(),
+            domain_name: domain_name.to_owned(),
+        }
+    }
+    pub fn new(_database_server_reference: DatabaseServerReference, domain_name: &str) -> Self {
+        DomainReference {
+            domain_name: domain_name.to_owned(),
         }
     }
 

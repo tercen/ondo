@@ -21,9 +21,15 @@ pub(crate) struct IndexValueReference {
 }
 
 impl IndexValueReference {
-    pub fn new(domain_name: &str, table_name: &str, index_name: &str, key: IndexKey) -> Self {
+    pub fn build(domain_name: &str, table_name: &str, index_name: &str, key: IndexKey) -> Self {
         IndexValueReference {
-            index_reference: IndexReference::new(domain_name, table_name, index_name),
+            index_reference: IndexReference::build(domain_name, table_name, index_name),
+            key,
+        }
+    }
+    pub fn new(index_reference: IndexReference, key: IndexKey) -> Self {
+        IndexValueReference {
+            index_reference,
             key,
         }
     }
@@ -62,7 +68,6 @@ mod tests {
     use super::*;
     use crate::db::entity::OndoKey;
     use mockall::*;
-    use serde_json::value::Number;
     use serde_json::Value;
 
     mock! {
@@ -81,11 +86,11 @@ mod tests {
         index_name: &str,
         key: IndexKey,
     ) -> IndexValueReference {
-        IndexValueReference::new(domain_name, table_name, index_name, key)
+        IndexValueReference::build(domain_name, table_name, index_name, key)
     }
 
     fn create_index_value() -> IndexValue {
-        Value::Number(Number::from(1))
+        1u64.into()
     }
 
     fn create_index_key() -> IndexKey {

@@ -1,7 +1,6 @@
 //table_value_reference.rs
 //TODO!XXX: find by index
-use crate::db::entity::index::DEFAULT_ID_FIELD;
-use crate::db::entity::table_value::{do_deindex_table_value, do_index_table_value};
+use crate::db::entity::table_value::{do_deindex_table_value, do_index_table_value, insert_key_into_table_value};
 use crate::db::{
     entity::{ondo_key::OptionalOndoKey, OndoKey, TableValue},
     reference::{
@@ -14,7 +13,6 @@ use crate::db::{
     DbResult,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 pub(crate) trait TableValueReferenceTrait {
     fn container_cf_name(&self) -> String;
@@ -57,11 +55,14 @@ pub(crate) struct CreateTableValueReference {
 }
 
 impl TableValueReference {
-    pub fn new(domain_name: &str, table_name: &str, id: OndoKey) -> Self {
+    pub fn build(domain_name: &str, table_name: &str, id: OndoKey) -> Self {
         TableValueReference {
-            table_reference: TableReference::new(domain_name, table_name),
+            table_reference: TableReference::build(domain_name, table_name),
             id,
         }
+    }
+    pub fn new(table_reference: TableReference, id: OndoKey) -> Self {
+        TableValueReference { table_reference, id }
     }
 
     pub fn to_table_reference(&self) -> TableReference {
@@ -110,14 +111,6 @@ fn do_deindexing(
     Ok(effects)
 }
 
-impl Into<OndoKey> for u64 {
-    fn into(self) -> OndoKey {
-        let value = Value::Number(self.into());
-        let values = vec![value];
-        OndoKey { values }
-    }
-}
-
 impl CreateTableValueReferenceTrait for CreateTableValueReference {
     fn container_cf_name(&self) -> String {
         CfNameMaker::for_table_values(&self.table_reference)
@@ -137,19 +130,14 @@ impl CreateTableValueReferenceTrait for CreateTableValueReference {
                 let domain_reference = self.table_reference.to_domain_reference();
                 let table_counter_reference = ColumnValueReference {
                     column_reference: domain_reference.cf_name_for_table_counters(),
-                    id: serde_json::json!(self.table_reference.table_name),
+                    id: self.table_reference.table_name.clone().into(),
                 };
                 let (new_id_int, counter_effects) =
                     table_counter_reference.increment_column_value(column_value_requests)?;
                 effects.extend(counter_effects);
 
                 let new_ondo_key: OndoKey = new_id_int.into();
-                if let Some(obj) = value.as_object_mut() {
-                    obj.insert(
-                        DEFAULT_ID_FIELD.to_owned(),
-                        serde_json::to_value(&new_ondo_key).unwrap(),
-                    );
-                }
+                insert_key_into_table_value(value, &new_ondo_key);
                 new_ondo_key
             }
             Some(user_key) => user_key,
@@ -158,17 +146,19 @@ impl CreateTableValueReferenceTrait for CreateTableValueReference {
             table_reference: self.table_reference.clone(),
             id: id_used.clone(),
         };
-        let index_effects = do_indexing(&new_reference, value, table_stored_requests)?;
-        effects.extend(index_effects);
         let put_effect = Effect::TableValueEffect(TableValueEffect::Put(
             self.container_cf_name(),
             new_reference.id.clone(),
             value.clone(),
         ));
         effects.push(put_effect);
+        let index_effects = do_indexing(&new_reference, value, table_stored_requests)?;
+        effects.extend(index_effects);
         Ok((id_used, effects))
     }
 }
+
+
 
 impl TableValueReferenceTrait for TableValueReference {
     fn container_cf_name(&self) -> String {
@@ -189,16 +179,16 @@ impl TableValueReferenceTrait for TableValueReference {
         let old_value = self
             .get_table_value(table_value_requests)?
             .ok_or(crate::db::DbError::NotFound)?;
-        let deindex_effects = do_deindexing(self, &old_value, table_stored_requests)?;
-        let index_effects = do_indexing(self, value, table_stored_requests)?;
-        effects.extend(deindex_effects);
-        effects.extend(index_effects);
         let put_effect = Effect::TableValueEffect(TableValueEffect::Put(
             self.container_cf_name(),
             self.id.clone(),
             value.clone(),
         ));
         effects.push(put_effect);
+        let deindex_effects = do_deindexing(self, &old_value, table_stored_requests)?;
+        let index_effects = do_indexing(self, value, table_stored_requests)?;
+        effects.extend(deindex_effects);
+        effects.extend(index_effects);
         Ok(effects)
     }
 
@@ -247,7 +237,7 @@ mod tests {
         table_name: &str,
         key: TableKey,
     ) -> TableValueReference {
-        TableValueReference::new(domain_name, table_name, key)
+        TableValueReference::build(domain_name, table_name, key)
     }
 
     pub fn create_table_value() -> TableValue {

@@ -5,13 +5,14 @@ use crate::db::reference::ColumnValue;
 use crate::db::server::rocks_db_accessor::RocksDbAccessor;
 use crate::db::DbError::CfNotFound;
 use serde_json::Value;
+use crate::db::entity::ondo_key::OndoKey;
 
 impl ColumnValueRequests for RocksDbAccessor {
-    fn get_column_value(&self, cf_name: &str, key: &Value) -> DbResult<Option<ColumnValue>> {
+    fn get_column_value(&self, cf_name: &str, key: &OndoKey) -> DbResult<Option<ColumnValue>> {
         let guarded_db = self.guarded_db();
         let db = RocksDbAccessor::db_read_lock(&guarded_db)?;
         let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
-        let ondo_key = Value::ondo_serialize(key)?;
+        let ondo_key = OndoKey::ondo_serialize(key)?;
         let answer = db
             .get_cf(cf, &ondo_key)
             .map_err(|err| DbError::RocksDbError(err))?;

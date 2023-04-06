@@ -1,10 +1,10 @@
 use crate::db::DbError;
 use crate::db::DbResult;
 use rocksdb::{Options, DB};
-use std::sync::{Arc, RwLock, RwLockReadGuard};
+use std::sync::{Arc, RwLock, RwLockReadGuard, };
 use tempfile::TempDir;
 
-type DbArc = Arc<(RwLock<DB>, Option<TempDir>)>;
+pub(crate) type DbArc = Arc<(RwLock<DB>, Option<TempDir>)>;
 
 #[derive(Clone)]
 pub struct RocksDbAccessor {
@@ -105,6 +105,7 @@ impl<'a> DbReadLockGuardWrapper<'a> {
         Ok(DbReadLockGuardWrapper { guard })
     }
 }
+
 
 #[cfg(test)]
 mod tests {
