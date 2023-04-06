@@ -1,7 +1,8 @@
 //index_reference.rs
 //TODO: validate index name
 use crate::db::entity::table_value::do_index_table_value;
-use crate::db::enums::TableStoredIteratorRequestsFactoryEnum;
+use crate::db::enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum;
+use crate::db::enums::index_iterator_requests_factory::IndexIteratorRequestsFactoryEnum;
 use crate::db::{
     entity::{Index, OndoKey, TableValue},
     reference::{
@@ -56,6 +57,31 @@ pub(crate) trait IndexReferenceTrait {
         end_key_prefix: OndoKey,
         requests: &'a dyn IndexIteratorRequests<'a>,
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<OndoKey>> + 'a>>;
+
+    fn all_values_with_key_prefix_vec<'a>(
+        &self,
+        key_prefix: OndoKey,
+        table_value_requests: &'a dyn TableValueRequests,
+        index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
+    ) -> DbResult<Vec<DbResult<TableValue>>>;
+    fn all_index_values_with_key_prefix_vec<'a>(
+        &self,
+        key_prefix: OndoKey,
+        index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
+    ) -> DbResult<Vec<DbResult<OndoKey>>>;
+    fn all_values_with_key_range_vec<'a>(
+        &self,
+        start_key_prefix: OndoKey,
+        end_key_prefix: OndoKey,
+        table_value_requests: &'a dyn TableValueRequests,
+        index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
+    ) -> DbResult<Vec<DbResult<TableValue>>>;
+    fn all_index_values_with_key_range_vec<'a>(
+        &self,
+        start_key_prefix: OndoKey,
+        end_key_prefix: OndoKey,
+        index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
+    ) -> DbResult<Vec<DbResult<OndoKey>>>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -298,6 +324,76 @@ impl IndexReferenceTrait for IndexReference {
             Ok(ondo_key)
         });
         Ok(Box::new(index_value_iterator))
+    }
+
+    fn all_values_with_key_prefix_vec<'a>(
+        &self,
+        key_prefix: OndoKey,
+        table_value_requests: &'a dyn TableValueRequests,
+        index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
+    ) -> DbResult<Vec<DbResult<TableValue>>> {
+        let index_iterator_requests_enum =
+            index_iterator_requests_factory.create_read_locked_requests()?;
+        let index_iterator_requests = index_iterator_requests_enum.as_trait();
+
+        let iterator = self.all_values_with_key_prefix(
+            key_prefix,
+            table_value_requests,
+            index_iterator_requests,
+        )?;
+        Ok(iterator.collect())
+    }
+
+    fn all_index_values_with_key_prefix_vec<'a>(
+        &self,
+        key_prefix: OndoKey,
+        index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
+    ) -> DbResult<Vec<DbResult<OndoKey>>> {
+        let index_iterator_requests_enum =
+            index_iterator_requests_factory.create_read_locked_requests()?;
+        let index_iterator_requests = index_iterator_requests_enum.as_trait();
+
+        let iterator =
+            self.all_index_values_with_key_prefix(key_prefix, index_iterator_requests)?;
+        Ok(iterator.collect())
+    }
+
+    fn all_values_with_key_range_vec<'a>(
+        &self,
+        start_key_prefix: OndoKey,
+        end_key_prefix: OndoKey,
+        table_value_requests: &'a dyn TableValueRequests,
+        index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
+    ) -> DbResult<Vec<DbResult<TableValue>>> {
+        let index_iterator_requests_enum =
+            index_iterator_requests_factory.create_read_locked_requests()?;
+        let index_iterator_requests = index_iterator_requests_enum.as_trait();
+
+        let iterator = self.all_values_with_key_range(
+            start_key_prefix,
+            end_key_prefix,
+            table_value_requests,
+            index_iterator_requests,
+        )?;
+        Ok(iterator.collect())
+    }
+
+    fn all_index_values_with_key_range_vec<'a>(
+        &self,
+        start_key_prefix: OndoKey,
+        end_key_prefix: OndoKey,
+        index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
+    ) -> DbResult<Vec<DbResult<OndoKey>>> {
+        let index_iterator_requests_enum =
+            index_iterator_requests_factory.create_read_locked_requests()?;
+        let index_iterator_requests = index_iterator_requests_enum.as_trait();
+
+        let iterator = self.all_index_values_with_key_range(
+            start_key_prefix,
+            end_key_prefix,
+            index_iterator_requests,
+        )?;
+        Ok(iterator.collect())
     }
 }
 

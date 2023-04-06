@@ -4,7 +4,7 @@ use super::{
     rocks_db_accessor::{DbReadLockGuardWrapper, RocksDbAccessor},
     source_sink::EffectsSink,
 };
-use crate::db::enums::TableStoredIteratorRequestsFactoryEnum;
+use crate::db::enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum;
 use crate::db::{
     entity::{index::Index, OndoKey, TableValue},
     reference::{IndexReference, IndexReferenceTrait},
@@ -166,14 +166,13 @@ impl IndexServerTrait for RocksDbAccessor {
 
 #[cfg(test)]
 mod tests {
-    use crate::db::entity::{table::Table, DatabaseServer, Domain, Index, ondo_key::OndoKey};
-    use crate::db::enums::TableStoredIteratorRequestsFactoryEnum;
-    use crate::db::reference::TableValueReference;
-    use crate::db::reference::TableValueReferenceTrait;
+    use crate::db::entity::{table::Table, table_value::TableValue, DatabaseServer, Domain, Index, ondo_key::OndoKey};
+    use crate::db::enums::{table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum, index_iterator_requests_factory::IndexIteratorRequestsFactoryEnum};
+        use crate::db::reference::Effects;
     use crate::db::reference::{
         CreateTableValueReference, CreateTableValueReferenceTrait, DatabaseServerReference,
         DatabaseServerReferenceTrait, DomainReference, DomainReferenceTrait, IndexReference,
-        IndexReferenceTrait, TableReference, TableReferenceTrait,
+        IndexReferenceTrait, TableReference, TableReferenceTrait, TableValueReference, TableValueReferenceTrait
     };
     use crate::db::server::{rocks_db_accessor::RocksDbAccessor, source_sink::EffectsSink};
     use serde::{Deserialize, Serialize};
@@ -285,62 +284,71 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_get() {
-        let test_data = setup();
+    fn create_and_apply_index(test_data: &TestData) -> (Index, Effects) {
         let ra = &test_data.rocks_db_accessor;
-
-        let table_reference = test_data.table_reference;
-
-        let create_table_value_reference = create_table_value_reference(&table_reference);
+        let guarded_db = ra.guarded_db();
+    
+        let index = create_index_entity(&test_data.table_reference);
+        let index_reference = &index.reference;
+        let factory_enum_db_arc = TableStoredIteratorRequestsFactoryEnum::new_db_arc(guarded_db);
+    
+        let index_effects = index_reference
+            .post_index(&index, ra, &factory_enum_db_arc)
+            .unwrap();
+        index_effects.apply_effects(ra).unwrap();
+    
+        (index, index_effects)
+    }
+    
+    fn create_and_apply_record(test_data: &TestData) -> (OndoKey, TableValue, Effects) {
+        let ra = &test_data.rocks_db_accessor;
+    
+        let create_table_value_reference = create_table_value_reference(&test_data.table_reference);
         let record1 = create_test_record1();
-        let mut value1 = serde_json::to_value(record1.clone()).unwrap();
+        let mut value1 = serde_json::to_value(record1).unwrap();
         let (value1_key, value1_effects) = create_table_value_reference
             .post_table_value(&mut value1, ra, ra, ra)
             .unwrap();
         value1_effects.apply_effects(ra).unwrap();
-        println!("TestRecord: {:?}", record1);
-        println!("value1_key: {:?}", value1_key);
+    
+        (value1_key, value1, value1_effects)
+    }
+    
+    #[test]
+    fn test_get() {
+        let test_data = setup();
+
+        let (value1_key, _value1, _value1_effects) = create_and_apply_record(&test_data);
+
+        let table_reference = test_data.table_reference;
+        let ra = &test_data.rocks_db_accessor;
         let table_value_reference = TableValueReference {
             table_reference: table_reference.clone(),
             id: value1_key,
         };
         let value1_retrieved = table_value_reference.get_table_value(ra).unwrap().unwrap();
-        println!("value1_result: {:?}", value1_retrieved);
-        assert_eq!(value1, value1_retrieved)
+
+        assert_eq!(
+            value1_retrieved,
+            serde_json::json!({
+                "_id": {"values": [1]},
+                "name": "John",
+                "age": 30,
+                "city": "New York"
+            })
+        );
     }
 
     #[test]
     fn test_index_then_populate() {
         let test_data = setup();
-        let ra = &test_data.rocks_db_accessor;
-        let guarded_db = ra.guarded_db();
-
-        let table_reference = test_data.table_reference;
-
-        // create an index on unpopulated table
-        let index = create_index_entity(&table_reference);
-        let index_reference = &index.reference;
-        let factory_enum_db_arc = TableStoredIteratorRequestsFactoryEnum::new_db_arc(guarded_db);
-        let index_effects = index_reference
-            .post_index(&index, ra, &factory_enum_db_arc)
-            .unwrap();
-        println!("---- Creating index on populated table----");
-        println!("index_effects: {:?}", index_effects);
-        index_effects.apply_effects(ra).unwrap();
-
-        // create a record
-        let create_table_value_reference = create_table_value_reference(&table_reference);
-        let record1 = create_test_record1();
-        let mut value1 = serde_json::to_value(record1).unwrap();
-        let (_value1_key, value1_effects) = create_table_value_reference
-            .post_table_value(&mut value1, ra, ra, ra)
-            .unwrap();
-        // println!("value1_effects: {:?}", value1_effects);
-        value1_effects.apply_effects(ra).unwrap();
+    
+        let (_index, _index_effects) = create_and_apply_index(&test_data);
+        let (_value1_key, _value1, value1_effects) = create_and_apply_record(&test_data);
+    
         let expected_value1_effects_str =
             "[ColumnValueEffect(Put('/domains/test_domain/counters', \
-                    OndoKey { values: [String('test_table')] }, Number(1))), \
+                OndoKey { values: [String('test_table')] }, Number(1))), \
             TableValueEffect(Put('test_domain::/test_table', \
             OndoKey { values: [Number(1)] }, \
             Object {'_id': Object {'values': Array [Number(1)]}, \
@@ -352,40 +360,22 @@ mod tests {
                     OndoKey { values: [Number(1)] }))]"
                 .to_owned()
                 .replace('\'', "\"");
-        let value1_effects_str = format! {"{:?}", value1_effects};
+        let value1_effects_str = format!("{:?}", value1_effects);
         assert_eq!(value1_effects_str, expected_value1_effects_str);
     }
-
+    
     #[test]
     fn test_index_populated_table() {
         let test_data = setup();
-        let ra = &test_data.rocks_db_accessor;
-        let guarded_db = ra.guarded_db();
-
-        let table_reference = test_data.table_reference;
-
-        // create a record
-        let create_table_value_reference = create_table_value_reference(&table_reference);
-        let record1 = create_test_record1();
-        let mut value1 = serde_json::to_value(record1).unwrap();
-        let (_value1_key, value1_effects) = create_table_value_reference
-            .post_table_value(&mut value1, ra, ra, ra)
-            .unwrap();
-        // println!("value1_effects: {:?}", value1_effects);
-        value1_effects.apply_effects(ra).unwrap();
-        // create an index on populated table
-        let index = create_index_entity(&table_reference);
-        let index_reference = &index.reference;
-        let factory_enum_db_arc = TableStoredIteratorRequestsFactoryEnum::new_db_arc(guarded_db);
-        let index_effects = index_reference
-            .post_index(&index, ra, &factory_enum_db_arc)
-            .unwrap();
-        index_effects.apply_effects(ra).unwrap();
+    
+        let (_value1_key, _value1, _value1_effects) = create_and_apply_record(&test_data);
+        let (_index, index_effects) = create_and_apply_index(&test_data);
+    
         let index_effects_str = format!("{:?}", index_effects);
         let expected_index_effects_str = 
         "[CreateCf('test_domain::/test_table/indexes/test_index'), \
-            TableStoredEffect(Put('/domains/test_domain/tables', 'test_table', \
-                TableStored { table: Table { reference: TableReference { \
+          TableStoredEffect(Put('/domains/test_domain/tables', 'test_table', \
+          TableStored { table: Table { reference: TableReference { \
                         domain_reference: DomainReference { domain_name: 'test_domain' }, \
                         table_name: 'test_table' } }, \
                         indexes: {'test_index': Index { reference: IndexReference { \
@@ -395,41 +385,45 @@ mod tests {
                                   index_name: 'test_index' }, \
                                   fields: ['city'] }} })), \
           IndexValueEffect(Put('test_domain::/test_table/indexes/test_index', \
-            OndoKey { values: [String('New York'), Number(1)] }, \
-            OndoKey { values: [Number(1)] }))]"
+          OndoKey { values: [String('New York'), Number(1)] }, \
+          OndoKey { values: [Number(1)] }))]"
         .to_owned()
         .replace('\'', "\"");
-            assert_eq!(index_effects_str, expected_index_effects_str);
+        assert_eq!(index_effects_str, expected_index_effects_str);
     }
-
-    // #[ignore]
-    // #[test]
-    // fn test_find_by_index() {
-    //     let test_data = setup();
-    //     let ra = &test_data.rocks_db_accessor;
-    //     let guarded_db = ra.guarded_db();
-
-    //     let table_reference = test_data.table_reference;
-
-    //     // create an index on unpopulated table
-    //     let index = create_index_entity(&table_reference);
-    //     let index_reference = &index.reference;
-    //     let factory_enum_db_arc = TableStoredIteratorRequestsFactoryEnum::new_db_arc(guarded_db);
-    //     let index_effects = index_reference
-    //         .post_index(&index, ra, &factory_enum_db_arc)
-    //         .unwrap();
-    //     index_effects.apply_effects(ra).unwrap();
-
-    //     // create a record
-    //     let create_table_value_reference = create_table_value_reference(&table_reference);
-    //     let record1 = create_test_record1();
-    //     let mut value1 = serde_json::to_value(record1).unwrap();
-    //     let (_value1_key, value1_effects) = create_table_value_reference
-    //         .post_table_value(&mut value1, ra, ra, ra)
-    //         .unwrap();
-    //     value1_effects.apply_effects(ra).unwrap();
-    //     let key_prefix: OndoKey = "New York".into();
-    //     index_reference.all_values_with_key_prefix(key_prefix, ra, factory_enum_db_arc).unwrap();
-    // }
-
+                              
+    #[test]
+    fn test_all_values_with_key_prefix_vec() {
+        let test_data = setup();
+    
+        let (_value1_key, _value1, _value1_effects) = create_and_apply_record(&test_data);
+        let (index, _index_effects) = create_and_apply_index(&test_data);
+    
+        let index_reference = index.reference;
+        let ra = &test_data.rocks_db_accessor;
+        let index_iterator_factory = IndexIteratorRequestsFactoryEnum::new_db_arc(ra.guarded_db());
+    
+        let key_prefix: OndoKey = "New York".into();
+        let retrieved_all_values = index_reference
+            .all_values_with_key_prefix_vec(key_prefix, ra, &index_iterator_factory)
+            .unwrap();
+    
+        assert_eq!(
+            retrieved_all_values,
+            vec![Ok(serde_json::json!({
+                "_id": {"values": [1]},
+                "name": "John",
+                "age": 30,
+                "city": "New York"
+            }))]
+        );
+    
+        let key_prefix_fail: OndoKey = "Llanfairpwll".into();
+        let retrieved_all_values_fail = index_reference
+            .all_values_with_key_prefix_vec(key_prefix_fail, ra, &index_iterator_factory)
+            .unwrap();
+    
+        assert_eq!(retrieved_all_values_fail, vec![]);
+    }
+                              
 }

@@ -1,9 +1,9 @@
 use super::OndoSerializer;
 
+use crate::db::entity::TableStored;
+use crate::db::reference::TableReference;
 use crate::db::DbError;
 use crate::db::DbResult;
-use crate::db::reference::TableReference;
-use crate::db::entity::TableStored;
 use rmp_serde::{from_slice, to_vec};
 use serde_json::{json, Value};
 

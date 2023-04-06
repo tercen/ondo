@@ -43,6 +43,7 @@ pub(crate) trait TableReferenceTrait {
         requests: &'a dyn TableStoredIteratorRequests<'a>,
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>>;
 }
+// FIXME use factory instead of iterator requests.
 
 pub type TableName = String;
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

@@ -4,7 +4,7 @@ use super::rocks_db_accessor::DbReadLockGuardWrapper;
 use super::rocks_db_accessor::RocksDbAccessor;
 use super::source_sink::effects_sink::EffectsSink;
 use super::table_server_trait::TableServerTrait;
-use crate::db::enums::TableStoredIteratorRequestsFactoryEnum;
+use crate::db::enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum;
 use crate::db::{
     entity::{table::Table, OndoKey, TableValue},
     reference::{
