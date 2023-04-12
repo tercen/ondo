@@ -6,3 +6,4 @@ mod entity;
 pub(crate) mod enums;
 pub mod reference;
 pub mod server;
+pub mod tasks;
