@@ -1,7 +1,6 @@
 use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
-use super::rocks_db_accessor::DbReadLockGuardWrapper;
-use super::rocks_db_accessor::RocksDbAccessor;
+use super::lockable_db::LockableDb;
 use super::source_sink::effects_sink::EffectsSink;
 use super::table_server_trait::TableServerTrait;
 use crate::db::enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum;
@@ -85,7 +84,7 @@ impl<'a> Into<TableIdListReference> for &'a TableIdListReferenceMessage {
     }
 }
 
-impl TableServerTrait for RocksDbAccessor {
+impl TableServerTrait for LockableDb {
     fn create_table(&self, r: Request<TableMessage>) -> Result<Response<EmptyMessage>, Status> {
         let entity: Table = r.get_ref().into();
         entity
@@ -140,8 +139,7 @@ impl TableServerTrait for RocksDbAccessor {
         &self,
         r: Request<TableReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let guarded_db = self.guarded_db();
-        let factory_enum_db_arc = TableStoredIteratorRequestsFactoryEnum::new_db_arc(guarded_db);
+        let factory_enum_db_arc = TableStoredIteratorRequestsFactoryEnum::new_lockable_db(self);
         let table_stored_iterator_requests_enum = factory_enum_db_arc
             .create_read_locked_requests()
             .map_db_err_to_status()?;
@@ -161,8 +159,7 @@ impl TableServerTrait for RocksDbAccessor {
         &self,
         r: Request<TableValueReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let guarded_db = self.guarded_db();
-        let db_wrapper = DbReadLockGuardWrapper::new(&guarded_db).map_db_err_to_status()?;
+        let db_wrapper = self.read();
         let value_reference: TableValueReference = r.get_ref().into();
         let reference = value_reference.table_reference;
         let key_prefix = value_reference.id; // Assuming 'id' is the key_prefix field in TableValueReference
@@ -180,8 +177,7 @@ impl TableServerTrait for RocksDbAccessor {
         &self,
         r: Request<TableIdRangeReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let guarded_db = self.guarded_db();
-        let db_wrapper = DbReadLockGuardWrapper::new(&guarded_db).map_db_err_to_status()?;
+        let db_wrapper = self.read();
         let range_reference: TableIdRangeReference = r.get_ref().into();
         let reference = range_reference.table_reference;
         let start_key = range_reference.start_key;

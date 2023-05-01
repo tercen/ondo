@@ -18,3 +18,5 @@ pub(crate) use table_value::*;
 
 pub(crate) mod ondo_key;
 pub(crate) use ondo_key::*;
+
+pub(crate) mod text_index;

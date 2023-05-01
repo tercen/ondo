@@ -1,18 +1,19 @@
 use crate::db::reference::requests::TableStoredIteratorRequests;
 use crate::db::reference::table_reference::stored::MockTableStoredIteratorRequestsFactory;
 use crate::db::reference::table_reference::stored::MockTableStoredIteratorTestRequests;
-use crate::db::server::rocks_db_accessor::DbArc;
-use crate::db::server::rocks_db_accessor::DbReadLockGuardWrapper;
+use crate::db::server::lockable_db::db_read_lock_guard_wrapper::DbReadLockGuardWrapper;
+use crate::db::server::lockable_db::LockableDb;
 use crate::db::DbResult;
 
 pub(crate) enum TableStoredIteratorRequestsFactoryEnum {
-    DbArc(DbArc),
+    LockableDb(LockableDb),
     Mock(MockTableStoredIteratorRequestsFactory),
 }
 
 impl TableStoredIteratorRequestsFactoryEnum {
-    pub(crate) fn new_db_arc(db_arc: DbArc) -> Self {
-        TableStoredIteratorRequestsFactoryEnum::DbArc(db_arc)
+    pub(crate) fn new_lockable_db(lockable_db: &LockableDb) -> Self {
+        let the_clone = lockable_db.clone();
+        TableStoredIteratorRequestsFactoryEnum::LockableDb(the_clone)
     }
 
     pub(crate) fn new_mock() -> Self {
@@ -22,8 +23,8 @@ impl TableStoredIteratorRequestsFactoryEnum {
         &'a self,
     ) -> DbResult<TableStoredIteratorRequestsEnum<'a>> {
         match self {
-            TableStoredIteratorRequestsFactoryEnum::DbArc(db_arc) => {
-                let db_wrapper = DbReadLockGuardWrapper::new(db_arc)?;
+            TableStoredIteratorRequestsFactoryEnum::LockableDb(lockable_db) => {
+                let db_wrapper = lockable_db.read();
                 Ok(TableStoredIteratorRequestsEnum::DbWrapper(db_wrapper))
             }
             TableStoredIteratorRequestsFactoryEnum::Mock(_) => {

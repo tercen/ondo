@@ -2,7 +2,8 @@
 use ondo::db::server::{
     database_server_trait::DatabaseServerTrait,
     domain_server_trait::DomainServerTrait,
-    rocks_db_accessor::RocksDbAccessor,
+    lockable_db::LockableDb,
+    lockable_db::LOCKABLE_DB,
     table_server_trait::TableServerTrait,
     table_value_server_trait::TableValueServerTrait,
 };
@@ -11,11 +12,11 @@ use serde::{Deserialize, Serialize};
 use tonic::Request;
 
 fn main() {
-    let rda = RocksDbAccessor::default();
+    let rda = LOCKABLE_DB.clone();
     database_server_example(&rda);
 }
 
-fn database_server_example(rda: &RocksDbAccessor) {
+fn database_server_example(rda: &LockableDb) {
     let database_server_reference_msg = DatabaseServerReferenceMessage {};
     let database_server_msg = DatabaseServerMessage {};
     let version = rda.version(Request::new(EmptyMessage {}));
@@ -33,7 +34,7 @@ fn database_server_example(rda: &RocksDbAccessor) {
     println!("Deleted Database: {:?}", answer);
 }
 
-fn domain_server_example(rda: &RocksDbAccessor) {
+fn domain_server_example(rda: &LockableDb) {
     let domain_name = "test_domain";
     let domain_reference_msg = DomainReferenceMessage {
         domain_name: domain_name.to_owned(),
@@ -54,7 +55,7 @@ fn domain_server_example(rda: &RocksDbAccessor) {
     println!("Deleted Domain: {:?}", answer);
 }
 
-fn table_server_example(rda: &RocksDbAccessor, domain_reference_msg: &DomainReferenceMessage) {
+fn table_server_example(rda: &LockableDb, domain_reference_msg: &DomainReferenceMessage) {
     let table_name = "test_table";
     let table_reference_msg = TableReferenceMessage {
         domain_reference: Some(domain_reference_msg.clone()),
@@ -78,7 +79,7 @@ fn table_server_example(rda: &RocksDbAccessor, domain_reference_msg: &DomainRefe
 }
 
 fn table_value_server_example(
-    rda: &RocksDbAccessor,
+    rda: &LockableDb,
     table_reference_msg: &TableReferenceMessage,
 ) {
     println!("!!! Table Value Server Example !!!");

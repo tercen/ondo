@@ -1,7 +1,7 @@
 use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
-use super::rocks_db_accessor::RocksDbAccessor;
-use super::source_sink::effects_sink::EffectsSink;
+use super::lockable_db::LockableDb;
+use super::source_sink::effects_sink::EffectsTasksSink;
 use super::table_value_server_trait::TableValueServerTrait;
 use crate::db::reference::{
     table_value_reference::{CreateTableValueReference, CreateTableValueReferenceTrait},
@@ -57,7 +57,7 @@ impl<'a> Into<CreateTableValuePayload> for &'a CreateTableValueMessage {
     }
 }
 
-impl TableValueServerTrait for RocksDbAccessor {
+impl TableValueServerTrait for LockableDb {
     fn create_value(
         &self,
         r: Request<CreateTableValueMessage>,
@@ -65,10 +65,10 @@ impl TableValueServerTrait for RocksDbAccessor {
         let payload: CreateTableValuePayload = r.get_ref().into();
         let reference = payload.create_table_reference;
         let mut entity = payload.value;
-        let (new_id, effects) = reference
+        let (new_id, effects, tasks) = reference
             .post_table_value(&mut entity, self, self, self)
             .map_db_err_to_status()?;
-        effects.apply_effects(self)?;
+        (effects, tasks).apply_effects_queue_tasks(self)?;
         Ok(Response::new(new_id.into()))
     }
 
@@ -80,7 +80,7 @@ impl TableValueServerTrait for RocksDbAccessor {
         reference
             .delete_table_value(self, self)
             .map_db_err_to_status()?
-            .apply_effects(self)
+            .apply_effects_queue_tasks(self)
     }
 
     fn get_value(
@@ -104,7 +104,7 @@ impl TableValueServerTrait for RocksDbAccessor {
         reference
             .put_table_value(&entity, self, self)
             .map_db_err_to_status()?
-            .apply_effects(self)
+            .apply_effects_queue_tasks(self)
     }
 }
 

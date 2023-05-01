@@ -99,6 +99,22 @@ rpc UpdateValue(TableValueMessage) returns (EmptyMessage) {}
 
 /// Note: When creating a table value, the CreateTableValueMessage can have an optional key.
 /// If the key is not provided, the database server will generate a key, which is a 64-bit integer.
+
+/// Text Index Operations
+
+/// CreateTextIndex creates a new text index with the given configuration.
+rpc CreateTextIndex(TextIndexMessage) returns (EmptyMessage) {}
+/// DeleteTextIndex removes an existing text index identified by the given reference.
+rpc DeleteTextIndex(TextIndexReferenceMessage) returns (EmptyMessage) {}
+/// GetTextIndex retrieves the configuration of an existing text index identified by the given reference.
+rpc GetTextIndex(TextIndexReferenceMessage) returns (TextIndexMessage) {}
+/// UpdateTextIndex updates the configuration of an existing text index with the given data.
+rpc UpdateTextIndex(TextIndexMessage) returns (EmptyMessage) {}
+
+/// Text Indexed Value operations
+
+/// SearchValues performs a key prefix search on the specified index and returns the matching values.
+rpc SearchTextIndex(TantivyQueryMessage) returns (JsonMessage) {}
 }
 
 message EmptyMessage {}
@@ -205,4 +221,23 @@ message OndoKeyMessage {
 
 message OptionalOndoKeyMessage {
     OndoKeyMessage ondo_key = 1;  /// Maps to Option by default
+}
+
+// Text Index
+
+message TextIndexReferenceMessage {
+    TableReferenceMessage table_reference = 1;
+    string index_name = 2;
+}
+
+message TextIndexMessage {
+    TextIndexReferenceMessage text_index_reference = 1;
+    repeated string fields = 2;
+}
+
+message TantivyQueryMessage {
+    TextIndexReferenceMessage text_index_reference = 1;
+    string query = 2;
+    google.protobuf.UInt64Value optional_page_size = 3;
+    google.protobuf.UInt64Value optional_page_number = 4;
 }

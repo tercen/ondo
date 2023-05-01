@@ -23,7 +23,10 @@ semver = "1.0"
 tempfile = "3.3.0"
 chrono = "0.4.23"
 async-trait = "0.1.58"
-futures = "0.3.28"
+futures = "0.3.25"
+tantivy = "0.18.1"
+log = "0.4.17"
+lazy_static = "1.4.0"
 
 [dependencies.uuid]
 version = "1.2.2"

@@ -222,7 +222,6 @@ pub mod tests {
         create_domain_stored, MockDomainStoredTestRequests,
     };
     use mockall::*;
-    use std::collections::HashMap;
 
     mock! {
         pub(crate) TableStoredTestRequests {}
@@ -250,7 +249,8 @@ pub mod tests {
     pub(crate) fn create_table_stored() -> TableStored {
         TableStored {
             table: create_table(),
-            indexes: HashMap::new(),
+            indexes: Default::default(),
+            text_indexes: Default::default(),
         }
     }
 
@@ -300,7 +300,8 @@ pub mod tests {
                             table_name: "sample_table".to_owned(),
                         },
                     },
-                    indexes: HashMap::new(),
+                    indexes: Default::default(),
+                    text_indexes: Default::default(),
                 },
             ))];
 
@@ -340,7 +341,8 @@ pub mod tests {
                                 domain_reference: DomainReference::build("sample_domain"),
                             },
                         },
-                        indexes: HashMap::new(),
+                        indexes: Default::default(),
+                        text_indexes: Default::default(),
                     },
                 )),
             ];
@@ -370,7 +372,7 @@ pub mod tests {
                                 domain_name: "sample_domain".to_owned(),
                             },
                         },
-                        tables: HashMap::new(),
+                        tables: Default::default(),
                     },
                 )),
                 Effect::TableStoredEffect(TableStoredEffect::Delete(

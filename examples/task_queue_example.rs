@@ -1,5 +1,5 @@
 // main.rs
-use ondo::db::tasks::task::{Task, TaskType};
+use ondo::db::tasks::task::{Task};
 use ondo::db::tasks::task_queue::TaskQueue;
 
 #[tokio::main]
@@ -14,12 +14,11 @@ async fn main() {
 
     // Add tasks to the queue
     for i in 1..=10 {
-        let task_type = if i % 2 == 0 {
-            TaskType::TypeA
+        let task = if i % 2 == 0 {
+            Task::new_type_a(format!("Task {}", i), "worker1".to_string()) 
         } else {
-            TaskType::TypeB
+            Task::new_type_b(format!("Task {}", i), "worker2".to_string())
         };
-        let task = Task::new(task_type, format!("Task {}", i));
         queue.enqueue(task).await;
     }
 

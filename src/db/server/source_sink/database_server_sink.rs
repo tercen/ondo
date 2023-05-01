@@ -2,15 +2,14 @@ use super::ondo_serializer::OndoSerializer;
 use crate::db::entity::DatabaseServerStored;
 use crate::db::reference::database_server_reference::DatabaseServerName;
 use crate::db::reference::effect::database_server_stored_effect::DatabaseServerStoredEffect;
-use crate::db::server::rocks_db_accessor::RocksDbAccessor;
+use crate::db::server::lockable_db::LockableDb;
 use crate::db::DbError;
 
 pub(super) fn apply_effect(
-    ra: &RocksDbAccessor,
+    ra: &LockableDb,
     effect: &DatabaseServerStoredEffect,
 ) -> Result<(), DbError> {
-    let guarded_db = ra.guarded_db();
-    let db = RocksDbAccessor::db_read_lock(&guarded_db)?;
+    let db = ra.read();
     match effect {
         DatabaseServerStoredEffect::Put(cf_name, key, database_server_stored) => {
             let ondo_key = DatabaseServerName::ondo_serialize(&key)?;

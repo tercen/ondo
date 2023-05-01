@@ -1,3 +1,4 @@
+// table_source.rs
 use super::rocks_trait::RocksTrait;
 use crate::db::db_error::{DbError, DbResult};
 use crate::db::entity::OndoKey;
@@ -6,16 +7,15 @@ use crate::db::entity::TableValue;
 use crate::db::reference::requests::TableStoredIteratorRequests;
 use crate::db::reference::requests::TableStoredRequests;
 use crate::db::reference::TableName;
-use crate::db::server::rocks_db_accessor::DbReadLockGuardWrapper;
-use crate::db::server::rocks_db_accessor::RocksDbAccessor;
+use crate::db::server::lockable_db::db_read_lock_guard_wrapper::DbReadLockGuardWrapper;
+use crate::db::server::lockable_db::LockableDb;
 use crate::db::server::source_sink::ondo_serializer::OndoSerializer;
 use crate::db::DbError::CfNotFound;
 use serde_json::Value;
 
-impl TableStoredRequests for RocksDbAccessor {
+impl TableStoredRequests for LockableDb {
     fn get_table_stored(&self, cf_name: &str, key: &TableName) -> DbResult<Option<TableStored>> {
-        let guarded_db = self.guarded_db();
-        let db = RocksDbAccessor::db_read_lock(&guarded_db)?;
+        let db = self.read();
         let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
         let ondo_key = TableName::ondo_serialize(key)?;
         let answer = db

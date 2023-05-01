@@ -1,4 +1,5 @@
 //table.rs
+use crate::db::entity::text_index::TextIndex;
 use crate::db::entity::Index;
 use crate::db::reference::TableReference;
 use serde::{Deserialize, Serialize};
@@ -13,4 +14,5 @@ pub(crate) struct Table {
 pub(crate) struct TableStored {
     pub table: Table,
     pub indexes: HashMap<String, Index>,
+    pub text_indexes: HashMap<String, TextIndex>,
 }

@@ -1,14 +1,17 @@
 //index.rs
-use crate::db::entity::table_value::get_key_from_table_value;
-use crate::db::entity::table_value::TableValue;
-use crate::db::entity::OndoKey;
+use crate::db::enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum;
+use crate::db::{
+    entity::{table_value::get_key_from_table_value, OndoKey, TableValue},
+    reference::{
+        index_reference::IndexReferenceTrait, Effect, Effects, IndexReference, IndexValueReference,
+        IndexValueReferenceTrait, TableReferenceTrait,
+    },
+    DbResult,
+};
 use serde::{Deserialize, Serialize};
 
 mod key_value;
-
-use crate::db::reference::IndexReference;
 pub(crate) use key_value::*;
-
 pub(crate) const DEFAULT_ID_FIELD: &str = "_id";
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -20,7 +23,7 @@ pub(crate) struct Index {
 pub(crate) type IndexStored = Index;
 
 impl Index {
-    pub fn get_fields(&self) -> Vec<String> {
+    fn get_fields(&self) -> Vec<String> {
         let my_fields = self.fields.clone();
         my_fields
     }
@@ -52,7 +55,7 @@ impl Index {
     /// "property2", this function will navigate the nested structure to obtain
     /// the values "value1a" and "value2" respectively. These values are combined
     /// into an `OndoKey` object, which is then returned as the index key.
-    pub fn key_of(&self, doc: &TableValue) -> IndexKey {
+    fn key_of(&self, doc: &TableValue) -> IndexKey {
         let fields = self.get_fields();
 
         let mut values: Vec<serde_json::Value> = fields
@@ -68,14 +71,67 @@ impl Index {
         OndoKey { values }
     }
 
-    pub(crate) fn key_value_of(&self, doc: &TableValue) -> KeyValue {
+    fn key_value_of(&self, doc: &TableValue) -> KeyValue {
         let key = self.key_of(doc);
         let value = get_key_from_table_value(doc);
         KeyValue::new(key, value)
     }
+
+    pub(crate) fn index_related_table_values(
+        &self,
+        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
+    ) -> DbResult<Effects> {
+        let table_stored_iterator_requests_enum =
+            table_stored_iterator_requests_factory.create_read_locked_requests()?;
+        let table_stored_iterator_requests = table_stored_iterator_requests_enum.as_trait();
+        {
+            let table_reference = self.reference.to_table_reference();
+            let all_values = table_reference.all_values(table_stored_iterator_requests);
+            let nested_effects = all_values?.try_fold(vec![], |mut acc, r_value| {
+                let value = r_value?;
+                let r_index_value_effects = self.do_index_table_value(&value);
+                match r_index_value_effects {
+                    Ok(index_value_effect) => {
+                        acc.push(index_value_effect);
+                        Ok(acc)
+                    }
+                    Err(e) => Err(e),
+                }
+            })?;
+            let effects = nested_effects.into_iter().flatten().collect::<Vec<_>>();
+            Ok(effects)
+        }
+    }
+
+    pub(crate) fn deindex_related_table_values(&self) -> Effects {
+        let delete_effect = Effect::DeleteCf(self.reference.value_cf_name());
+        let create_effect = Effect::CreateCf(self.reference.value_cf_name());
+        vec![delete_effect, create_effect]
+    }
+
+    pub(crate) fn do_index_table_value(&self, value: &TableValue) -> DbResult<Effects> {
+        let key_value = self.key_value_of(&value);
+        let index_value_reference = IndexValueReference {
+            index_reference: self.reference.clone(),
+            key: key_value.key,
+        };
+        let r_index_value_effects = index_value_reference.put_index_value(&key_value.value);
+        r_index_value_effects
+    }
+
+    pub(crate) fn do_deindex_table_value(&self, value: &TableValue) -> DbResult<Effects> {
+        let key_value = self.key_value_of(&value);
+        let index_value_reference = IndexValueReference {
+            index_reference: self.reference.clone(),
+            key: key_value.key,
+        };
+        let r_index_value_effects = index_value_reference.delete_index_value();
+        r_index_value_effects
+    }
 }
 
-pub(self) fn get_nested_property(doc: &TableValue, field: &str) -> serde_json::Value {
+// index/mod.rs
+pub(crate) fn get_nested_property(doc: &TableValue, field: &str) -> serde_json::Value {
     let mut current_value = doc;
     let field_parts = field.split('.').collect::<Vec<&str>>();
 
@@ -117,7 +173,7 @@ mod tests {
     fn sample_document() -> SampleDocument {
         return SampleDocument {
             _id: OndoKey {
-                values: vec![json!(1),],
+                values: vec![json!(1)],
             },
             name: "John".to_owned(),
             age: 30,
@@ -186,10 +242,7 @@ mod tests {
         let index = sample_index();
         assert_eq!(
             *index.get_fields(),
-            vec![
-                "city".to_owned(),
-                "age".to_owned(),
-            ]
+            vec!["city".to_owned(), "age".to_owned(),]
         );
     }
 
@@ -201,7 +254,6 @@ mod tests {
         let expected_key = OndoKey {
             values: vec![json!("New York"), json!(30), json!(1)],
         };
-
 
         assert_eq!(existing_key, expected_key);
     }

@@ -1,3 +1,5 @@
+use ondo::db::server::lockable_db::LockableDb;
+use ondo::db::server::lockable_db::LOCKABLE_DB;
 use tonic::transport::Server;
 use tonic::{Request, Response, Status};
 
@@ -7,20 +9,26 @@ use ondo_remote::*;
 
 use ondo::db::server::{
     database_server_trait::DatabaseServerTrait, domain_server_trait::DomainServerTrait,
-    index_server_trait::IndexServerTrait, rocks_db_accessor::RocksDbAccessor,
-    table_server_trait::TableServerTrait, table_value_server_trait::TableValueServerTrait,
+    index_server_trait::IndexServerTrait, table_server_trait::TableServerTrait,
+    table_value_server_trait::TableValueServerTrait, text_index_server_trait::TextIndexServerTrait,
 };
 
-#[derive(Default)]
 pub struct MyServer {
-    rocks_db_accessor: RocksDbAccessor,
+    lockable_db: LockableDb,
+}
+impl Default for MyServer {
+    fn default() -> Self {
+        MyServer {
+            lockable_db: LOCKABLE_DB.clone(),
+        }
+    }
 }
 
 #[tonic::async_trait]
 impl OndoRemote for MyServer {
     /// Returns the version of the server.
     async fn version(&self, r: Request<EmptyMessage>) -> Result<Response<VersionResponse>, Status> {
-        self.rocks_db_accessor.version(r)
+        self.lockable_db.version(r)
     }
 
     /// Creates a new database server with the given configuration.
@@ -28,7 +36,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<DatabaseServerMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.create_database_server(r)
+        self.lockable_db.create_database_server(r)
     }
 
     /// Deletes an existing database server identified by the given reference.
@@ -36,7 +44,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<DatabaseServerReferenceMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.delete_database_server(r)
+        self.lockable_db.delete_database_server(r)
     }
 
     /// Retrieves the configuration of an existing database server identified by the given reference.
@@ -44,7 +52,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<DatabaseServerReferenceMessage>,
     ) -> Result<Response<DatabaseServerMessage>, Status> {
-        self.rocks_db_accessor.get_database_server(r)
+        self.lockable_db.get_database_server(r)
     }
 
     /// Updates the configuration of an existing database server with the given data.
@@ -52,7 +60,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<DatabaseServerMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.update_database_server(r)
+        self.lockable_db.update_database_server(r)
     }
 
     /// Lists the domains associated with the specified database server.
@@ -60,7 +68,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<DatabaseServerReferenceMessage>,
     ) -> Result<Response<ArrayOfStringResponse>, Status> {
-        self.rocks_db_accessor.list_domains(r)
+        self.lockable_db.list_domains(r)
     }
 
     /// Creates a new domain with the given configuration.
@@ -68,7 +76,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<DomainMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.create_domain(r)
+        self.lockable_db.create_domain(r)
     }
 
     /// Deletes an existing domain identified by the given reference.
@@ -76,7 +84,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<DomainReferenceMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.delete_domain(r)
+        self.lockable_db.delete_domain(r)
     }
 
     /// Retrieves the configuration of an existing domain identified by the given reference.
@@ -84,7 +92,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<DomainReferenceMessage>,
     ) -> Result<Response<DomainMessage>, Status> {
-        self.rocks_db_accessor.get_domain(r)
+        self.lockable_db.get_domain(r)
     }
 
     /// Updates the configuration of an existing domain with the given data.
@@ -92,7 +100,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<DomainMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.update_domain(r)
+        self.lockable_db.update_domain(r)
     }
 
     /// Lists the tables associated with the specified domain.
@@ -100,7 +108,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<DomainReferenceMessage>,
     ) -> Result<Response<ArrayOfStringResponse>, Status> {
-        self.rocks_db_accessor.list_tables(r)
+        self.lockable_db.list_tables(r)
     }
 
     /// Creates a new table with the given configuration.
@@ -108,7 +116,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<TableMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.create_table(r)
+        self.lockable_db.create_table(r)
     }
 
     /// Deletes an existing table identified by the given reference.
@@ -116,7 +124,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<TableReferenceMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.delete_table(r)
+        self.lockable_db.delete_table(r)
     }
 
     /// Retrieves the configuration of an existing table identified by the given reference.
@@ -124,7 +132,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<TableReferenceMessage>,
     ) -> Result<Response<TableMessage>, Status> {
-        self.rocks_db_accessor.get_table(r)
+        self.lockable_db.get_table(r)
     }
 
     /// Updates the configuration of an existing table with the given data.
@@ -132,7 +140,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<TableMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.update_table(r)
+        self.lockable_db.update_table(r)
     }
 
     /// Lists the indexes associated with the specified table.
@@ -140,7 +148,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<TableReferenceMessage>,
     ) -> Result<Response<ArrayOfStringResponse>, Status> {
-        self.rocks_db_accessor.list_indexes(r)
+        self.lockable_db.list_indexes(r)
     }
 
     /// Lists the values in the specified table.
@@ -148,7 +156,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<TableReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        self.rocks_db_accessor.list_values(r)
+        self.lockable_db.list_values(r)
     }
 
     /// Lists the values in the specified table with the given key prefix.
@@ -156,7 +164,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<TableValueReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        self.rocks_db_accessor.list_values_by_key_prefix(r)
+        self.lockable_db.list_values_by_key_prefix(r)
     }
 
     /// Lists the values in the specified table within the given ID range.
@@ -164,7 +172,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<TableIdRangeReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        self.rocks_db_accessor.list_values_by_id_range(r)
+        self.lockable_db.list_values_by_id_range(r)
     }
 
     /// Lists the values in the specified table with the given list of IDs.
@@ -172,7 +180,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<TableIdListReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        self.rocks_db_accessor.list_values_by_id_list(r)
+        self.lockable_db.list_values_by_id_list(r)
     }
 
     /// Creates a new index with the given configuration.
@@ -180,7 +188,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<IndexMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.create_index(r)
+        self.lockable_db.create_index(r)
     }
 
     /// Deletes an existing index identified by the given reference.
@@ -188,7 +196,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<IndexReferenceMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.delete_index(r)
+        self.lockable_db.delete_index(r)
     }
 
     /// Retrieves the configuration of an existing index identified by the given reference.
@@ -196,7 +204,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<IndexReferenceMessage>,
     ) -> Result<Response<IndexMessage>, Status> {
-        self.rocks_db_accessor.get_index(r)
+        self.lockable_db.get_index(r)
     }
 
     /// Updates the configuration of an existing index with the given data.
@@ -204,7 +212,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<IndexMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.update_index(r)
+        self.lockable_db.update_index(r)
     }
 
     /// Creates a new value in the specified table with the given configuration.
@@ -212,7 +220,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<CreateTableValueMessage>,
     ) -> Result<Response<OndoKeyMessage>, Status> {
-        self.rocks_db_accessor.create_value(r)
+        self.lockable_db.create_value(r)
     }
 
     /// Deletes an existing value identified by the given reference from the specified table.
@@ -220,7 +228,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<TableValueReferenceMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.delete_value(r)
+        self.lockable_db.delete_value(r)
     }
 
     /// Retrieves the value in the specified table identified by the given reference.
@@ -228,7 +236,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<TableValueReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        self.rocks_db_accessor.get_value(r)
+        self.lockable_db.get_value(r)
     }
 
     /// Updates an existing value in the specified table with the given data.
@@ -236,7 +244,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<TableValueMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
-        self.rocks_db_accessor.update_value(r)
+        self.lockable_db.update_value(r)
     }
 
     /// Finds values in the specified table based on the given indexed value reference.
@@ -244,7 +252,7 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<IndexedValueReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        self.rocks_db_accessor.find_values(r)
+        self.lockable_db.find_values(r)
     }
 
     /// Finds values in the specified table based on the given indexed value range reference.
@@ -252,7 +260,42 @@ impl OndoRemote for MyServer {
         &self,
         r: Request<IndexedValueRangeReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        self.rocks_db_accessor.find_values_by_range(r)
+        self.lockable_db.find_values_by_range(r)
+    }
+
+    async fn create_text_index(
+        &self,
+        r: Request<TextIndexMessage>,
+    ) -> Result<Response<EmptyMessage>, Status> {
+        self.lockable_db.create_text_index(r)
+    }
+
+    async fn delete_text_index(
+        &self,
+        r: Request<TextIndexReferenceMessage>,
+    ) -> Result<Response<EmptyMessage>, Status> {
+        self.lockable_db.delete_text_index(r)
+    }
+
+    async fn get_text_index(
+        &self,
+        r: Request<TextIndexReferenceMessage>,
+    ) -> Result<Response<TextIndexMessage>, Status> {
+        self.lockable_db.get_text_index(r)
+    }
+
+    async fn update_text_index(
+        &self,
+        r: Request<TextIndexMessage>,
+    ) -> Result<Response<EmptyMessage>, Status> {
+        self.lockable_db.update_text_index(r)
+    }
+
+    async fn search_text_index(
+        &self,
+        r: Request<TantivyQueryMessage>,
+    ) -> Result<Response<JsonMessage>, Status> {
+        self.lockable_db.search_text_index(r)
     }
 }
 

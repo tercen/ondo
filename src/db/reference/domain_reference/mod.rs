@@ -1,4 +1,4 @@
-//domain_reference.rs
+// domain_reference.rs
 use super::{CfNameMaker, DatabaseServerReference, Effect, Effects};
 use crate::db::entity::{Domain, DomainStored};
 use crate::db::reference::requests::{

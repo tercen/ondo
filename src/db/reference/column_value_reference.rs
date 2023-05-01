@@ -80,9 +80,9 @@ impl ColumnValueReferenceTrait for ColumnValueReference {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db::entity::ondo_key::OndoKey;
     use mockall::*;
     use serde_json::json;
-    use crate::db::entity::ondo_key::OndoKey;
 
     mock! {
         pub(crate) ColumnValueTestRequests {}
@@ -95,7 +95,10 @@ mod tests {
         }
     }
 
-    pub(crate) fn create_column_value_ref(column_name: &str, key: ColumnKey) -> ColumnValueReference {
+    pub(crate) fn create_column_value_ref(
+        column_name: &str,
+        key: ColumnKey,
+    ) -> ColumnValueReference {
         ColumnValueReference::new(column_name, key)
     }
 

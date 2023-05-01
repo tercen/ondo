@@ -1,4 +1,4 @@
-//table_reference.rs
+// table_reference.rs
 use super::{CfNameMaker, DomainReference, Effect, Effects};
 use crate::db::reference::requests::{
     DomainStoredRequests, TableStoredIteratorRequests, TableStoredRequests,
@@ -123,6 +123,7 @@ impl TableReferenceTrait for TableReference {
                 let new_stored = TableStored {
                     table: (*table).clone(),
                     indexes: Default::default(),
+                    text_indexes: Default::default(),
                 };
                 self.post_table_stored(&new_stored, parent_requests)
             }

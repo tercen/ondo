@@ -1,15 +1,14 @@
 //index_reference.rs
 //TODO: validate index name
-use crate::db::entity::table_value::do_index_table_value;
-use crate::db::enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum;
 use crate::db::enums::index_iterator_requests_factory::IndexIteratorRequestsFactoryEnum;
 use crate::db::{
     entity::{Index, OndoKey, TableValue},
+    enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum,
     reference::{
         requests::{IndexIteratorRequests, TableStoredRequests, TableValueRequests},
         table_reference::stored::TableStoredReferenceTrait,
-        CfNameMaker, DomainReference, Effect, Effects, TableReference, TableReferenceTrait,
-        TableValueReference, TableValueReferenceTrait,
+        CfNameMaker, DomainReference, Effect, Effects, TableReference, TableValueReference,
+        TableValueReferenceTrait,
     },
     DbError, DbResult,
 };
@@ -114,50 +113,11 @@ impl IndexReference {
 }
 
 trait IndexReferencePrivateTrait<'a> {
-    fn recreate_index_values_cf(&self) -> Effects;
-    fn index_related_table_values(
-        &self,
-        the_index: &Index,
-        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
-    ) -> DbResult<Effects>;
     fn create_required_cfs(&self) -> Effects;
     fn delete_required_cfs(&self) -> Effects;
 }
 
 impl<'a> IndexReferencePrivateTrait<'a> for IndexReference {
-    fn recreate_index_values_cf(&self) -> Effects {
-        let delete_effect = Effect::DeleteCf(self.value_cf_name());
-        let create_effect = Effect::CreateCf(self.value_cf_name());
-        vec![delete_effect, create_effect]
-    }
-
-    fn index_related_table_values(
-        &self,
-        the_index: &Index,
-        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
-    ) -> DbResult<Effects> {
-        let table_stored_iterator_requests_enum =
-            table_stored_iterator_requests_factory.create_read_locked_requests()?;
-        let table_stored_iterator_requests = table_stored_iterator_requests_enum.as_trait();
-        {
-            let table_reference = self.to_table_reference();
-            let all_values = table_reference.all_values(table_stored_iterator_requests);
-            let nested_effects = all_values?.try_fold(vec![], |mut acc, r_value| {
-                let value = r_value?;
-                let r_index_value_effects = do_index_table_value(&value, &the_index);
-                match r_index_value_effects {
-                    Ok(index_value_effect) => {
-                        acc.push(index_value_effect);
-                        Ok(acc)
-                    }
-                    Err(e) => Err(e),
-                }
-            })?;
-            let effects = nested_effects.into_iter().flatten().collect::<Vec<_>>();
-            Ok(effects)
-        }
-    }
-
     fn create_required_cfs(&self) -> Effects {
         let effects = self
             .required_cf_names()
@@ -208,9 +168,9 @@ impl IndexReferenceTrait for IndexReference {
         } else {
             let mut effects: Vec<Effect> = Vec::new();
             effects.extend(self.table_reference.put_table_stored(&table_stored)?);
-            effects.extend(self.recreate_index_values_cf());
+            effects.extend(index.deindex_related_table_values());
             let index_related_table_values_effects =
-                self.index_related_table_values(index, table_stored_iterator_requests_factory)?;
+                index.index_related_table_values(table_stored_iterator_requests_factory)?;
             effects.extend(index_related_table_values_effects);
             Ok(effects)
         }
@@ -233,7 +193,7 @@ impl IndexReferenceTrait for IndexReference {
             let put_effects = self.table_reference.put_table_stored(&table_stored)?;
             effects.extend(put_effects);
             let index_related_table_values_effects =
-                self.index_related_table_values(index, table_stored_iterator_requests_factory)?;
+                index.index_related_table_values(table_stored_iterator_requests_factory)?;
             effects.extend(index_related_table_values_effects);
             Ok(effects)
         } else {
@@ -400,10 +360,14 @@ impl IndexReferenceTrait for IndexReference {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::entity::{Table, TableStored};
-    use crate::db::reference::effect::table_stored_effect::TableStoredEffect;
-    use crate::db::reference::table_reference::stored::tests::{
-        create_table, create_table_stored, MockTableStoredTestRequests,
+    use crate::db::{
+        entity::{Table, TableStored},
+        reference::{
+            effect::table_stored_effect::TableStoredEffect,
+            table_reference::stored::tests::{
+                create_table, create_table_stored, MockTableStoredTestRequests,
+            },
+        },
     };
 
     fn create_index_ref() -> IndexReference {
@@ -423,6 +387,8 @@ mod tests {
             indexes: vec![("sample_index".to_owned(), index.clone())]
                 .into_iter()
                 .collect(),
+
+            text_indexes: Default::default(),
         }
     }
 
@@ -497,6 +463,7 @@ mod tests {
                         )]
                         .into_iter()
                         .collect(),
+                        text_indexes: Default::default(),
                     },
                 )),
                 Effect::DeleteCf("sample_domain::/sample_table/indexes/sample_index".to_owned()),
@@ -573,6 +540,7 @@ mod tests {
                         )]
                         .into_iter()
                         .collect(),
+                        text_indexes: Default::default(),
                     },
                 )),
             ];

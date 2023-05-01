@@ -146,7 +146,6 @@ pub(crate) mod tests {
         create_table_stored, MockTableStoredTestRequests,
     };
     use mockall::*;
-    use std::collections::HashMap;
 
     mock! {
         pub(crate) DatabaseServerStoredTestRequests {}
@@ -170,7 +169,7 @@ pub(crate) mod tests {
         DatabaseServerStored {
             meta_revision: 0,
             database_server: create_database_server(),
-            domains: HashMap::new(),
+            domains: Default::default(),
         }
     }
 

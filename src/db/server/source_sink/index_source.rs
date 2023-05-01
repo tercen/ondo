@@ -3,7 +3,7 @@ use super::rocks_trait::RocksTrait;
 use crate::db::entity::IndexValue;
 use crate::db::entity::OndoKey;
 use crate::db::reference::requests::IndexIteratorRequests;
-use crate::db::server::rocks_db_accessor::DbReadLockGuardWrapper;
+use crate::db::server::lockable_db::db_read_lock_guard_wrapper::DbReadLockGuardWrapper;
 use crate::db::server::source_sink::ondo_serializer::OndoSerializer;
 use crate::db::DbResult;
 

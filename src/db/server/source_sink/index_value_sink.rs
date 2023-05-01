@@ -1,12 +1,11 @@
 use super::ondo_serializer::OndoSerializer;
 use crate::db::entity::OndoKey;
 use crate::db::reference::IndexValueEffect;
-use crate::db::server::rocks_db_accessor::RocksDbAccessor;
+use crate::db::server::lockable_db::LockableDb;
 use crate::db::DbError;
 
-pub(super) fn apply_effect(ra: &RocksDbAccessor, effect: &IndexValueEffect) -> Result<(), DbError> {
-    let guarded_db = ra.guarded_db();
-    let db = RocksDbAccessor::db_read_lock(&guarded_db)?;
+pub(super) fn apply_effect(ra: &LockableDb, effect: &IndexValueEffect) -> Result<(), DbError> {
+    let db = ra.read();
     match effect {
         IndexValueEffect::Put(cf_name, key, index_value) => {
             let ondo_key = OndoKey::ondo_serialize(&key)?;

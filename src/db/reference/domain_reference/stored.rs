@@ -159,7 +159,6 @@ pub(crate) mod tests {
         create_table_stored, MockTableStoredTestRequests,
     };
     use mockall::*;
-    use std::collections::HashMap;
 
     mock! {
         pub(crate) DomainStoredTestRequests {}
@@ -184,7 +183,7 @@ pub(crate) mod tests {
     pub(crate) fn create_domain_stored() -> DomainStored {
         DomainStored {
             domain: create_domain(),
-            tables: HashMap::new(),
+            tables: Default::default(),
         }
     }
 
@@ -266,7 +265,7 @@ pub(crate) mod tests {
                                 domain_name: "sample_domain".to_owned(),
                             },
                         },
-                        tables: HashMap::new(),
+                        tables: Default::default(),
                     },
                 )),
             ];
@@ -293,7 +292,7 @@ pub(crate) mod tests {
                     DatabaseServerStored {
                         meta_revision: 0,
                         database_server: DatabaseServer::default(),
-                        domains: HashMap::new(),
+                        domains: Default::default(),
                     },
                 )),
                 Effect::DomainStoredEffect(DomainStoredEffect::Delete(

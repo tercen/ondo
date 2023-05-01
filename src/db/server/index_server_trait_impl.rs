@@ -1,8 +1,9 @@
+// index_server_trait_impl.rs
 use super::{
     db_error_to_status::{DbErrorOptionToStatus, DbErrorToStatus},
     index_server_trait::IndexServerTrait,
-    rocks_db_accessor::{DbReadLockGuardWrapper, RocksDbAccessor},
-    source_sink::EffectsSink,
+    lockable_db::{LockableDb},
+    source_sink::effects_sink::EffectsSink,
 };
 use crate::db::enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum;
 use crate::db::{
@@ -51,6 +52,7 @@ impl Into<IndexMessage> for Index {
     }
 }
 
+// index_server_trait_impl.rs continued continued
 struct IndexedValueReference {
     index_reference: IndexReference,
     key: OndoKey,
@@ -64,6 +66,7 @@ impl<'a> Into<IndexedValueReference> for &'a IndexedValueReferenceMessage {
     }
 }
 
+// index_server_trait_impl.rs continued continued
 struct IndexedValueRangeReference {
     index_reference: IndexReference,
     start_key: OndoKey,
@@ -79,14 +82,14 @@ impl<'a> Into<IndexedValueRangeReference> for &'a IndexedValueRangeReferenceMess
     }
 }
 
-impl IndexServerTrait for RocksDbAccessor {
+// index_server_trait_impl.rs continued continued
+impl IndexServerTrait for LockableDb {
     fn create_index(&self, r: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status> {
-        let guarded_db = self.guarded_db();
-        let factory_enum_db_arc = TableStoredIteratorRequestsFactoryEnum::new_db_arc(guarded_db);
+        let factory_enum_lockable_db = TableStoredIteratorRequestsFactoryEnum::new_lockable_db(self);
         let entity: Index = r.get_ref().into();
         entity
             .reference
-            .post_index(&entity, self, &factory_enum_db_arc)
+            .post_index(&entity, self, &factory_enum_lockable_db)
             .map_db_err_to_status()?
             .apply_effects(self)
     }
@@ -114,12 +117,11 @@ impl IndexServerTrait for RocksDbAccessor {
     }
 
     fn update_index(&self, r: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status> {
-        let guarded_db = self.guarded_db();
-        let factory_enum_db_arc = TableStoredIteratorRequestsFactoryEnum::new_db_arc(guarded_db);
+        let factory_enum_lockable_db = TableStoredIteratorRequestsFactoryEnum::new_lockable_db(self);
         let entity: Index = r.get_ref().into();
         entity
             .reference
-            .put_index(&entity, self, &factory_enum_db_arc)
+            .put_index(&entity, self, &factory_enum_lockable_db)
             .map_db_err_to_status()?
             .apply_effects(self)
     }
@@ -128,8 +130,7 @@ impl IndexServerTrait for RocksDbAccessor {
         &self,
         r: Request<IndexedValueReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let guarded_db = self.guarded_db();
-        let db_wrapper = DbReadLockGuardWrapper::new(&guarded_db).map_db_err_to_status()?;
+        let db_wrapper = self.read();
         let indexed_value_reference: IndexedValueReference = r.get_ref().into();
         let reference = indexed_value_reference.index_reference;
         let key_prefix = indexed_value_reference.key;
@@ -147,8 +148,7 @@ impl IndexServerTrait for RocksDbAccessor {
         &self,
         r: Request<IndexedValueRangeReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let guarded_db = self.guarded_db();
-        let db_wrapper = DbReadLockGuardWrapper::new(&guarded_db).map_db_err_to_status()?;
+        let db_wrapper =self.read();
         let indexed_value_range_reference: IndexedValueRangeReference = r.get_ref().into();
         let reference = indexed_value_range_reference.index_reference;
         let start_key_prefix = indexed_value_range_reference.start_key;
@@ -164,6 +164,7 @@ impl IndexServerTrait for RocksDbAccessor {
     }
 }
 
+// index_server_trait_impl.rs continued
 #[cfg(test)]
 mod tests {
     use crate::db::entity::{table::Table, table_value::TableValue, DatabaseServer, Domain, Index, ondo_key::OndoKey};
@@ -174,20 +175,21 @@ mod tests {
         DatabaseServerReferenceTrait, DomainReference, DomainReferenceTrait, IndexReference,
         IndexReferenceTrait, TableReference, TableReferenceTrait, TableValueReference, TableValueReferenceTrait
     };
-    use crate::db::server::{rocks_db_accessor::RocksDbAccessor, source_sink::EffectsSink};
+    use crate::db::server::{lockable_db::LockableDb, source_sink::effects_sink::EffectsTasksSink};
     use serde::{Deserialize, Serialize};
+    use crate::db::server::source_sink::effects_sink::EffectsSink;
 
-    fn create_database_server_entity() -> DatabaseServer {
+    pub(crate) fn create_database_server_entity() -> DatabaseServer {
         DatabaseServer::default()
     }
 
-    fn create_domain_entity(database_server_reference: &DatabaseServerReference) -> Domain {
+    pub(crate) fn create_domain_entity(database_server_reference: &DatabaseServerReference) -> Domain {
         Domain {
             reference: DomainReference::new(database_server_reference.clone(), "test_domain"),
         }
     }
 
-    fn create_table_entity(domain_reference: &DomainReference) -> Table {
+    pub(crate) fn create_table_entity(domain_reference: &DomainReference) -> Table {
         Table {
             reference: TableReference::new(domain_reference.clone(), "test_table"),
         }
@@ -200,7 +202,7 @@ mod tests {
         }
     }
 
-    fn create_table_value_reference(table_reference: &TableReference) -> CreateTableValueReference {
+    pub(crate) fn create_table_value_reference(table_reference: &TableReference) -> CreateTableValueReference {
         CreateTableValueReference {
             table_reference: table_reference.clone(),
             id: None,
@@ -208,19 +210,19 @@ mod tests {
     }
 
     #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-    struct TestRecord {
+    pub(crate) struct TestRecord {
         name: String,
         age: u8,
         city: String,
     }
-    fn create_test_record1() -> TestRecord {
+    pub(crate) fn create_test_record1() -> TestRecord {
         TestRecord {
             name: "John".to_owned(),
             age: 30,
             city: "New York".to_owned(),
         }
     }
-    fn create_test_record2() -> TestRecord {
+    pub(crate) fn create_test_record2() -> TestRecord {
         TestRecord {
             name: "Mary".to_owned(),
             age: 20,
@@ -228,8 +230,8 @@ mod tests {
         }
     }
 
-    struct TestData {
-        rocks_db_accessor: RocksDbAccessor,
+    pub(crate) struct TestData {
+        lockable_db: LockableDb,
         database_server_reference: DatabaseServerReference,
         domain_reference: DomainReference,
         table_reference: TableReference,
@@ -240,8 +242,8 @@ mod tests {
         // index: Index,
     }
 
-    fn setup() -> TestData {
-        let ra = RocksDbAccessor::in_memory();
+    pub(crate) fn setup_test_data() -> TestData {
+        let ra = LockableDb::in_memory();
 
         let database_server = create_database_server_entity();
         let database_server_reference = database_server.reference.clone();
@@ -272,7 +274,7 @@ mod tests {
             .unwrap();
 
         TestData {
-            rocks_db_accessor: ra,
+            lockable_db: ra,
             database_server_reference,
             domain_reference,
             table_reference,
@@ -285,15 +287,14 @@ mod tests {
     }
 
     fn create_and_apply_index(test_data: &TestData) -> (Index, Effects) {
-        let ra = &test_data.rocks_db_accessor;
-        let guarded_db = ra.guarded_db();
+        let ra = &test_data.lockable_db;
     
         let index = create_index_entity(&test_data.table_reference);
         let index_reference = &index.reference;
-        let factory_enum_db_arc = TableStoredIteratorRequestsFactoryEnum::new_db_arc(guarded_db);
+        let factory_enum_lockable_db = TableStoredIteratorRequestsFactoryEnum::new_lockable_db(ra);
     
         let index_effects = index_reference
-            .post_index(&index, ra, &factory_enum_db_arc)
+            .post_index(&index, ra, &factory_enum_lockable_db)
             .unwrap();
         index_effects.apply_effects(ra).unwrap();
     
@@ -301,27 +302,27 @@ mod tests {
     }
     
     fn create_and_apply_record(test_data: &TestData) -> (OndoKey, TableValue, Effects) {
-        let ra = &test_data.rocks_db_accessor;
+        let ra = &test_data.lockable_db;
     
         let create_table_value_reference = create_table_value_reference(&test_data.table_reference);
         let record1 = create_test_record1();
         let mut value1 = serde_json::to_value(record1).unwrap();
-        let (value1_key, value1_effects) = create_table_value_reference
+        let (value1_key, value1_effects, value_tasks) = create_table_value_reference
             .post_table_value(&mut value1, ra, ra, ra)
             .unwrap();
-        value1_effects.apply_effects(ra).unwrap();
+        (value1_effects.clone(), value_tasks).apply_effects_queue_tasks(ra).unwrap();
     
         (value1_key, value1, value1_effects)
     }
     
     #[test]
     fn test_get() {
-        let test_data = setup();
+        let test_data = setup_test_data();
 
         let (value1_key, _value1, _value1_effects) = create_and_apply_record(&test_data);
 
         let table_reference = test_data.table_reference;
-        let ra = &test_data.rocks_db_accessor;
+        let ra = &test_data.lockable_db;
         let table_value_reference = TableValueReference {
             table_reference: table_reference.clone(),
             id: value1_key,
@@ -341,7 +342,7 @@ mod tests {
 
     #[test]
     fn test_index_then_populate() {
-        let test_data = setup();
+        let test_data = setup_test_data();
     
         let (_index, _index_effects) = create_and_apply_index(&test_data);
         let (_value1_key, _value1, value1_effects) = create_and_apply_record(&test_data);
@@ -366,7 +367,7 @@ mod tests {
     
     #[test]
     fn test_index_populated_table() {
-        let test_data = setup();
+        let test_data = setup_test_data();
     
         let (_value1_key, _value1, _value1_effects) = create_and_apply_record(&test_data);
         let (_index, index_effects) = create_and_apply_index(&test_data);
@@ -383,10 +384,11 @@ mod tests {
                                   domain_reference: DomainReference { domain_name: 'test_domain' }, \
                                   table_name: 'test_table' }, \
                                   index_name: 'test_index' }, \
-                                  fields: ['city'] }} })), \
+                                  fields: ['city'] }}, \
+                        text_indexes: {} })), \
           IndexValueEffect(Put('test_domain::/test_table/indexes/test_index', \
-          OndoKey { values: [String('New York'), Number(1)] }, \
-          OndoKey { values: [Number(1)] }))]"
+            OndoKey { values: [String('New York'), Number(1)] }, \
+            OndoKey { values: [Number(1)] }))]"
         .to_owned()
         .replace('\'', "\"");
         assert_eq!(index_effects_str, expected_index_effects_str);
@@ -394,14 +396,14 @@ mod tests {
                               
     #[test]
     fn test_all_values_with_key_prefix_vec() {
-        let test_data = setup();
+        let test_data = setup_test_data();
     
         let (_value1_key, _value1, _value1_effects) = create_and_apply_record(&test_data);
         let (index, _index_effects) = create_and_apply_index(&test_data);
     
         let index_reference = index.reference;
-        let ra = &test_data.rocks_db_accessor;
-        let index_iterator_factory = IndexIteratorRequestsFactoryEnum::new_db_arc(ra.guarded_db());
+        let ra = &test_data.lockable_db;
+        let index_iterator_factory = IndexIteratorRequestsFactoryEnum::new_lockable_db(ra);
     
         let key_prefix: OndoKey = "New York".into();
         let retrieved_all_values = index_reference
