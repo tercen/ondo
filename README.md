@@ -1,5 +1,5 @@
 # ondo
-RockDB extentions
+RockDB extensions
 
 # dev env
 
@@ -20,3 +20,16 @@ docker build --target release \
       --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
       -t tercen/ondo .
 ```
+
+# todo
+- [ ] Transaction API
+- [ ] TTL
+- [ ] Revision number
+- [ ] Named workers in task queue to keep the order for index operations (they are not queued for now)
+- [ ] Text Index tests
+- [ ] Name validation for all metadata
+- [ ] Bring paging params of Index and TableValue to API
+- [ ] Make task queue, ondo persistent
+- [ ] ?Table Value API: Do not pluck OndoKey from the record. Get it explicitly?
+- [ ] Remove unnecessary traits
+
