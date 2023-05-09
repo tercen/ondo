@@ -1,22 +1,28 @@
 // lockable_db/mod.rs
+pub(crate) mod db_arc;
 pub(crate) mod db_read_lock_guard_wrapper;
 pub(crate) mod db_write_lock_guard_wrapper;
-mod rocks_db_accessor;
+pub(crate) mod rocks_db_accessor;
+pub(crate) mod transaction_maker;
+pub(crate) mod transaction_or_db;
+pub(crate) mod transaction_or_db_guard;
+pub(crate) mod mutex_guard_wrapper;
 pub mod version;
 
+use db_arc::DbArc;
 use db_read_lock_guard_wrapper::DbReadLockGuardWrapper;
 use db_write_lock_guard_wrapper::DbWriteLockGuardWrapper;
 use lazy_static::lazy_static;
-use rocks_db_accessor::DbArc;
 use rocks_db_accessor::RocksDbAccessor;
+use rocksdb::TransactionDB;
 use version::Version;
 
 lazy_static! {
     pub static ref LOCKABLE_DB: LockableDb = LockableDb::default();
 }
 
-#[derive(Clone, Debug)]
-pub struct LockableDb {
+#[derive(Clone)]
+pub struct LockableDb { //FIXME: Should not be public
     db_arc: DbArc,
 }
 
@@ -25,60 +31,35 @@ impl LockableDb {
         Self { db_arc }
     }
 
-    pub fn default() -> Self {
+    pub(super) fn default() -> Self {
         let accessor = RocksDbAccessor::default();
         Self::new(accessor.db_arc.clone())
     }
 
-    pub fn in_memory() -> Self {
+    pub(crate) fn in_memory() -> Self {
         let accessor = RocksDbAccessor::in_memory();
         Self::new(accessor.db_arc.clone())
     }
 
-    pub fn read(&self) -> DbReadLockGuardWrapper {
-        let rw_lock = &self.db_arc.0; // Access the RwLock inside the Arc
-        let guard = rw_lock.read().unwrap(); // Call the read method on the RwLock
-        let temp_dir = &self.db_arc.1;
-        let db_path = &self.db_arc.2;
-        DbReadLockGuardWrapper::new((guard, temp_dir, db_path)) // Construct the wrapper
+    pub(self) fn read(&self) -> DbReadLockGuardWrapper<'_, TransactionDB> {
+        let guard = self.db_arc.db_lock.db.read().unwrap();
+        let db_path = &self.db_arc.db_lock.db_path;
+        DbReadLockGuardWrapper::new(guard, db_path)
     }
 
-    pub fn write(&self) -> DbWriteLockGuardWrapper {
-        let rw_lock = &self.db_arc.0; // Access the RwLock inside the Arc
-        let guard = rw_lock.write().unwrap(); // Call the write method on the RwLock
-        let temp_dir = &self.db_arc.1;
-        let db_path = &self.db_arc.2;
-        DbWriteLockGuardWrapper::new((guard, temp_dir, db_path)) // Construct the wrapper
+    pub(self) fn write(&self) -> DbWriteLockGuardWrapper<'_, TransactionDB> {
+        let guard = self.db_arc.db_lock.db.write().unwrap();
+        let db_path = &self.db_arc.db_lock.db_path;
+        DbWriteLockGuardWrapper::new(guard, db_path)
     }
 
     pub fn db_path(&self) -> &str {
-        let db_path = &self.db_arc.2;
-        db_path
+        &self.db_arc.db_lock.db_path
     }
 
     pub fn get_version(&self) -> Version {
-        let ver = match semver::Version::parse(option_env!("VERSION").unwrap_or("0.0.0")) {
-            Ok(ver) => ver,
-            Err(_) => semver::Version::parse("0.0.0").unwrap(),
-        };
-
-        Version {
-            major: ver.major,
-            minor: ver.minor,
-            patch: ver.patch,
-            commit: option_env!("COMMIT_NUMBER")
-                .map(|env| env.to_string())
-                .unwrap_or("".to_string()),
-            date: option_env!("BUILD_DATE")
-                .map(|env| env.to_string())
-                .unwrap_or("".to_string()),
-            features: "".to_string(),
-        }
+        Version::new()
     }
 }
 
-impl Default for LockableDb {
-    fn default() -> Self {
-        Self::default()
-    }
-}
+//TODO:XXX: Replace other read()/write() subjects with transaction_maker 

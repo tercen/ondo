@@ -1,7 +1,7 @@
 use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
 use super::domain_server_trait::DomainServerTrait;
-use super::lockable_db::LockableDb;
+use super::lockable_db::transaction_maker::TransactionMaker;
 use super::source_sink::effects_sink::EffectsSink;
 use crate::{
     db::{
@@ -45,7 +45,7 @@ impl Into<DomainMessage> for Domain {
     }
 }
 
-impl DomainServerTrait for LockableDb {
+impl<'a> DomainServerTrait for TransactionMaker<'a> {
     fn create_domain(&self, r: Request<DomainMessage>) -> Result<Response<EmptyMessage>, Status> {
         let entity: Domain = r.get_ref().into();
         entity

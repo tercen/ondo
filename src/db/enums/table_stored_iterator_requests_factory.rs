@@ -1,17 +1,17 @@
 use crate::db::reference::requests::TableStoredIteratorRequests;
 use crate::db::reference::table_reference::stored::MockTableStoredIteratorRequestsFactory;
 use crate::db::reference::table_reference::stored::MockTableStoredIteratorTestRequests;
-use crate::db::server::lockable_db::db_read_lock_guard_wrapper::DbReadLockGuardWrapper;
-use crate::db::server::lockable_db::LockableDb;
+use crate::db::server::lockable_db::transaction_or_db_guard::TransactionOrDbReadGuard;
+use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 use crate::db::DbResult;
 
-pub(crate) enum TableStoredIteratorRequestsFactoryEnum {
-    LockableDb(LockableDb),
+pub(crate) enum TableStoredIteratorRequestsFactoryEnum<'a> {
+    LockableDb(TransactionMaker<'a>),
     Mock(MockTableStoredIteratorRequestsFactory),
 }
 
-impl TableStoredIteratorRequestsFactoryEnum {
-    pub(crate) fn new_lockable_db(lockable_db: &LockableDb) -> Self {
+impl<'a> TableStoredIteratorRequestsFactoryEnum<'a> {
+    pub(crate) fn new_lockable_db(lockable_db: &TransactionMaker<'a>) -> Self {
         let the_clone = lockable_db.clone();
         TableStoredIteratorRequestsFactoryEnum::LockableDb(the_clone)
     }
@@ -19,9 +19,8 @@ impl TableStoredIteratorRequestsFactoryEnum {
     pub(crate) fn new_mock() -> Self {
         TableStoredIteratorRequestsFactoryEnum::Mock(MockTableStoredIteratorRequestsFactory {})
     }
-    pub(crate) fn create_read_locked_requests<'a>(
-        &'a self,
-    ) -> DbResult<TableStoredIteratorRequestsEnum<'a>> {
+
+    pub(crate) fn create_read_locked_requests(&'a self) -> DbResult<TableStoredIteratorRequestsEnum<'a>> {
         match self {
             TableStoredIteratorRequestsFactoryEnum::LockableDb(lockable_db) => {
                 let db_wrapper = lockable_db.read();
@@ -36,7 +35,7 @@ impl TableStoredIteratorRequestsFactoryEnum {
 }
 
 pub(crate) enum TableStoredIteratorRequestsEnum<'a> {
-    DbWrapper(DbReadLockGuardWrapper<'a>),
+    DbWrapper(TransactionOrDbReadGuard<'a>),
     MockWrapper(MockTableStoredIteratorTestRequests),
 }
 

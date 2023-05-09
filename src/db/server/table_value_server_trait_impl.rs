@@ -1,6 +1,6 @@
 use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
-use super::lockable_db::LockableDb;
+use super::lockable_db::transaction_maker::TransactionMaker;
 use super::source_sink::effects_sink::EffectsTasksSink;
 use super::table_value_server_trait::TableValueServerTrait;
 use crate::db::reference::{
@@ -57,7 +57,7 @@ impl<'a> Into<CreateTableValuePayload> for &'a CreateTableValueMessage {
     }
 }
 
-impl TableValueServerTrait for LockableDb {
+impl<'a> TableValueServerTrait for TransactionMaker<'a> {
     fn create_value(
         &self,
         r: Request<CreateTableValueMessage>,

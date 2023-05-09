@@ -15,7 +15,8 @@ pub enum DbError {
     SerializationError(String),
     CfNotFound,
     RocksDbError(rocksdb::Error),
-    TantivyError(String)
+    TantivyError(String),
+    TransactionError(rocksdb::Error)
 }
 
 impl fmt::Display for DbError {
@@ -34,6 +35,7 @@ impl fmt::Display for DbError {
             DbError::CfNotFound => write!(f, "Column family not found"),
             DbError::RocksDbError(err) => write!(f, "RocksDbError: {}", err),
             DbError::TantivyError(msg) => write!(f, "TantivyError: {}", msg),
+            DbError::TransactionError(err) => write!(f, "RocksDbError: {}", err),
         }
     }
 }
@@ -56,6 +58,7 @@ impl From<DbError> for u32 {
             DbError::CfNotFound => 10,
             DbError::RocksDbError(_) => 11,
             DbError::TantivyError(_) => 12,
+            DbError::TransactionError(_) => 13,
         }
     }
 }

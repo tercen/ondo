@@ -10,7 +10,7 @@ rust-version = "1.68.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rocksdb = "0.19.0"
+rocksdb = "0.21.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 #tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread", "signal"] }
@@ -27,6 +27,7 @@ futures = "0.3.25"
 tantivy = "0.18.1"
 log = "0.4.17"
 lazy_static = "1.4.0"
+tokio-stream = "0.1.14"
 
 [dependencies.uuid]
 version = "1.2.2"

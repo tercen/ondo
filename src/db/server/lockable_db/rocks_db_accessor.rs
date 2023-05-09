@@ -1,11 +1,7 @@
-// rocks_db_accessor/mod.rs
-
-use super::LockableDb;
-use rocksdb::{Options, DB};
-use std::sync::{Arc, RwLock};
+// rocks_db_accessor.rs
+use super::db_arc::DbArc;
+use rocksdb::{Options, TransactionDB, TransactionDBOptions};
 use tempfile::TempDir;
-
-pub(crate) type DbArc = Arc<(RwLock<DB>, Option<TempDir>, String)>;
 
 #[derive(Clone)]
 pub(super) struct RocksDbAccessor {
@@ -26,14 +22,11 @@ impl Default for RocksDbAccessor {
 
 impl RocksDbAccessor {
     fn init(db_path: String, temp_dir: Option<TempDir>, options: Options) -> Self {
-        let cf_names = DB::list_cf(&options, &db_path).unwrap_or(Vec::new());
-        let raw_db = DB::open_cf(&options, &db_path, cf_names).unwrap();
-        let db = Arc::new((RwLock::new(raw_db), temp_dir, db_path));
+        let txn_db_options = TransactionDBOptions::default();
+        let db = TransactionDB::open(&options, &txn_db_options, &db_path).unwrap();
+        let db_arc: DbArc = DbArc::new(db, temp_dir, db_path);
 
-        RocksDbAccessor {
-            db_arc: db,
-            options,
-        }
+        RocksDbAccessor { db_arc, options }
     }
 
     pub fn in_memory() -> Self {
@@ -44,9 +37,5 @@ impl RocksDbAccessor {
         options.create_if_missing(true);
 
         Self::init(db_path, Some(temp_dir), options)
-    }
-
-    pub(crate) fn lockable_db(&self) -> LockableDb {
-        LockableDb::new(self.db_arc.clone())
     }
 }

@@ -3,12 +3,12 @@ use crate::db::entity::OndoKey;
 use crate::db::entity::TableValue;
 use crate::db::reference::requests::TableValueRequests;
 use crate::db::reference::TableValueReference;
-use crate::db::server::lockable_db::LockableDb;
+use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 use crate::db::server::source_sink::ondo_serializer::OndoSerializer;
 use crate::db::DbError::CfNotFound;
 use serde_json::Value;
 
-impl TableValueRequests for LockableDb {
+impl<'a> TableValueRequests for TransactionMaker<'a> {
     fn get_table_value(
         &self,
         cf_name: &str,

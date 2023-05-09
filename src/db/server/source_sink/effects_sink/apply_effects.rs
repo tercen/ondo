@@ -1,12 +1,12 @@
 use crate::db::reference::effect::{Effect, Effects};
 use crate::db::server::db_error_to_status::DbErrorToStatus;
-use crate::db::server::lockable_db::LockableDb;
+use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 use crate::db::DbError;
 use crate::ondo_remote::EmptyMessage;
 use tonic::{Response, Status};
 
 pub(crate) fn apply_effects(
-    ra: &LockableDb,
+    ra: &TransactionMaker,
     effects: &Effects,
 ) -> Result<Response<EmptyMessage>, Status> {
     let cf_opts = rocksdb::Options::default();

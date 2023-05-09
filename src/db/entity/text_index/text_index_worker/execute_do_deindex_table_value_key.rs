@@ -5,7 +5,7 @@ use crate::db::entity::ondo_key::OndoKey;
 use tantivy::schema::Term;
 use tantivy::IndexWriter;
 
-impl TextIndexWorker {
+impl<'a> TextIndexWorker<'a> {
     pub(crate) fn execute_do_deindex_table_value_key(&self, key: &OndoKey) -> Result<(), String> {
         let mut writer = self
             .tantivy_index

@@ -1,15 +1,15 @@
 use crate::db::reference::requests::IndexIteratorRequests;
-use crate::db::server::lockable_db::db_read_lock_guard_wrapper::DbReadLockGuardWrapper;
-use crate::db::server::lockable_db::LockableDb;
+use crate::db::server::lockable_db::transaction_or_db_guard::TransactionOrDbReadGuard;
+use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 use crate::db::DbResult;
 
-pub(crate) enum IndexIteratorRequestsFactoryEnum {
-    LockableDb(LockableDb),
+pub(crate) enum IndexIteratorRequestsFactoryEnum<'a> {
+    LockableDb(TransactionMaker<'a>),
     Mock, // todo!{}: Replace with the actual mock type when it's available
 }
 
-impl IndexIteratorRequestsFactoryEnum {
-    pub(crate) fn new_lockable_db(lockable_db: &LockableDb) -> Self {
+impl<'a> IndexIteratorRequestsFactoryEnum<'a> {
+    pub(crate) fn new_lockable_db(lockable_db: &TransactionMaker<'a>) -> Self {
         let the_clone = lockable_db.clone();
         IndexIteratorRequestsFactoryEnum::LockableDb(the_clone)
     }
@@ -17,9 +17,8 @@ impl IndexIteratorRequestsFactoryEnum {
     pub(crate) fn new_mock() -> Self {
         IndexIteratorRequestsFactoryEnum::Mock
     }
-    pub(crate) fn create_read_locked_requests<'a>(
-        &'a self,
-    ) -> DbResult<IndexIteratorRequestsEnum<'a>> {
+
+    pub(crate) fn create_read_locked_requests(&'a self) -> DbResult<IndexIteratorRequestsEnum<'a>> {
         match self {
             IndexIteratorRequestsFactoryEnum::LockableDb(lockable_db) => {
                 let db_wrapper = lockable_db.read();
@@ -33,7 +32,7 @@ impl IndexIteratorRequestsFactoryEnum {
 }
 
 pub(crate) enum IndexIteratorRequestsEnum<'a> {
-    DbWrapper(DbReadLockGuardWrapper<'a>),
+    DbWrapper(TransactionOrDbReadGuard<'a>),
     MockWrapper, // todo!: Replace with the actual mock type when it's available
 }
 

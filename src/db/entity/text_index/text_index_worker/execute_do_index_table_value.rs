@@ -4,7 +4,7 @@ use crate::db::entity::index::{get_nested_property, DEFAULT_ID_FIELD};
 use crate::db::entity::table_value::TableValue;
 use tantivy::{Document, IndexWriter};
 
-impl TextIndexWorker {
+impl<'a> TextIndexWorker<'a> {
     pub(crate) fn execute_do_index_table_value(&self, value: &TableValue) -> Result<(), String> {
         let mut writer = self
             .tantivy_index

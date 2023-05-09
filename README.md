@@ -22,14 +22,27 @@ docker build --target release \
 ```
 
 # todo
-- [ ] Transaction API
-- [ ] TTL
-- [ ] Revision number
+- [ ] Feature: Transaction API
+    - [ ] Cancelled due to lack of time
+      - [ ] - [ ] Parametric types
+        - [ ] DbBasic
+        - [ ] DbTransaction
+        - [ ] DbTransactionFactory
+        - [ ] DbMeta
+    - [ ] Check: Transansactions are using reentrant mutex
+    - [ ] Check: Meta operations exclude all other operations (RWLock)
+    - [ ] UMUR departs here...
+  - [ ] Fix Transaction lifetime problems
+  - [ ] Fix TransactionDB::drop_cf
+- [ ] Listing functions need to put into client stream directly instead of collecting a vector
+- [ ] Feature: TTL
+- [ ] Feature: Revision number
 - [ ] Named workers in task queue to keep the order for index operations (they are not queued for now)
 - [ ] Text Index tests
 - [ ] Name validation for all metadata
-- [ ] Bring paging params of Index and TableValue to API
+- [ ] Bring paging params of Index and TableValue to API. Implementation has them.
 - [ ] Make task queue, ondo persistent
 - [ ] ?Table Value API: Do not pluck OndoKey from the record. Get it explicitly?
 - [ ] Remove unnecessary traits
+- [ ] Optimize 7-Bit conversion
 

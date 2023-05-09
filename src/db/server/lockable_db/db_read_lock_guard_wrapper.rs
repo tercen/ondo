@@ -1,26 +1,22 @@
-use rocksdb::DB;
 use std::ops::Deref;
 use std::sync::RwLockReadGuard;
-use tempfile::TempDir;
 
-pub struct DbReadLockGuardWrapper<'a> {
-    pub guard: RwLockReadGuard<'a, DB>,
-    pub db_path: &'a String,
+pub struct DbReadLockGuardWrapper<'a, T> {
+    guard: RwLockReadGuard<'a, T>,
+    db_path: &'a String,
 }
 
-impl<'a> DbReadLockGuardWrapper<'a> {
-    pub(crate) fn new(tuple: (RwLockReadGuard<'a, DB>, &'a Option<TempDir>, &'a String)) -> Self {
-        Self {
-            guard: tuple.0,
-            db_path: tuple.2,
-        }
+impl<'a, T> DbReadLockGuardWrapper<'a, T> {
+    pub(super) fn new(guard: RwLockReadGuard<'a, T>, db_path: &'a String) -> Self {
+        Self { guard, db_path }
     }
 }
 
-impl<'a> Deref for DbReadLockGuardWrapper<'a> {
-    type Target = DB;
+impl<'a, T> Deref for DbReadLockGuardWrapper<'a, T> {
+    type Target = T;
 
     fn deref(&self) -> &Self::Target {
-        &(self.guard)
+        &self.guard
     }
 }
+//TODO:XXX: Replace references to other guards with TransactionOrDbReadGuard

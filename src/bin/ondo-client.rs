@@ -7,12 +7,13 @@ use ondo_remote::*; // request and response messages
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = Endpoint::from_static("https://127.0.0.1:50051");
+    todo!()
+    // let addr = Endpoint::from_static("https://127.0.0.1:50051");
 
-    let mut client = OndoRemoteClient::connect(addr).await?;
-    let request = Request::new(EmptyMessage {});
-    let response = client.version(request).await?;
-    println!("response: {:?}", response.into_inner());
+    // let mut client = OndoRemoteClient::connect(addr).await?;
+    // let request = Request::new(EmptyMessage {});
+    // let response = client.version(request).await?;
+    // println!("response: {:?}", response.into_inner());
 
-    Ok(())
+    // Ok(())
 }

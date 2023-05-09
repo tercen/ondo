@@ -2,13 +2,13 @@
 use super::get_tantivy_index_path::get_tantivy_index_path;
 use super::TextIndex;
 use crate::db::entity::DEFAULT_ID_FIELD;
-use crate::db::server::lockable_db::LockableDb;
+use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 use std::path::Path;
 use tantivy::{schema::*, Result as TantivyResult};
 
 pub(super) fn create_tantivy_index(
     text_index: &TextIndex,
-    lockable_db: &LockableDb,
+    lockable_db: &TransactionMaker,
 ) -> TantivyResult<tantivy::Index> {
     let mut schema_builder = Schema::builder();
 

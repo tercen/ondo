@@ -3,20 +3,21 @@ use super::rocks_trait::RocksTrait;
 use crate::db::entity::IndexValue;
 use crate::db::entity::OndoKey;
 use crate::db::reference::requests::IndexIteratorRequests;
-use crate::db::server::lockable_db::db_read_lock_guard_wrapper::DbReadLockGuardWrapper;
+use crate::db::server::lockable_db::transaction_or_db_guard::TransactionOrDbReadGuard;
 use crate::db::server::source_sink::ondo_serializer::OndoSerializer;
 use crate::db::DbResult;
 
-// Implement IndexIteratorRequests for DbReadLockGuardWrapper
-impl<'a> IndexIteratorRequests<'a> for DbReadLockGuardWrapper<'a> {
+// Implement IndexIteratorRequests for TransactionOrDbReadGuard
+impl<'a> IndexIteratorRequests<'a> for TransactionOrDbReadGuard<'a> {
     fn all_values_with_key_prefix(
         &'a self,
         value_cf_name: &str,
         key_prefix: OndoKey,
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<IndexValue>> + 'a>> {
         let serialized_key_prefix = key_prefix.ondo_serialize()?;
-        let raw_iterator = self
-            .guard
+        let guarded = **self;
+        let raw_iterator = guarded
+            // .guard
             .get_records_in_cf_with_key_prefix_old(value_cf_name, serialized_key_prefix)?;
 
         let all_iterator = raw_iterator.map(|result| {
@@ -35,7 +36,8 @@ impl<'a> IndexIteratorRequests<'a> for DbReadLockGuardWrapper<'a> {
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<IndexValue>> + 'a>> {
         let serialized_start_key_prefix = start_key_prefix.ondo_serialize()?;
         let serialized_end_key_prefix = end_key_prefix.ondo_serialize()?;
-        let raw_iterator = self.guard.get_records_in_cf_with_key_range_old(
+        let guarded = **self;
+        let raw_iterator = self.get_records_in_cf_with_key_range_old(
             value_cf_name,
             serialized_start_key_prefix,
             serialized_end_key_prefix,

@@ -1,7 +1,7 @@
-use super::database_server_trait::DatabaseServerTrait;
 use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
-use super::lockable_db::LockableDb;
+use super::database_server_trait::DatabaseServerTrait;
+use super::lockable_db::transaction_maker::TransactionMaker;
 use super::source_sink::effects_sink::EffectsSink;
 use crate::db::{
     entity::DatabaseServer,
@@ -31,7 +31,7 @@ impl Into<DatabaseServerMessage> for DatabaseServer {
     }
 }
 
-impl DatabaseServerTrait for LockableDb {
+impl<'a> DatabaseServerTrait for TransactionMaker<'a> {
     fn version(&self, _: Request<EmptyMessage>) -> Result<Response<VersionResponse>, Status> {
         let version = self.get_version();
         let response = VersionResponse {

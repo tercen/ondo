@@ -1,4 +1,3 @@
-//text_index/search_table_value
 use super::load_tantivy_index::load_tantivy_index;
 
 use tantivy::collector::TopDocs;
@@ -10,15 +9,15 @@ use crate::db::entity::index::DEFAULT_ID_FIELD;
 use crate::db::entity::ondo_key::OndoKey;
 use crate::db::entity::table_value::TableValue;
 use crate::db::reference::table_value_reference::{TableValueReference, TableValueReferenceTrait};
-use crate::db::server::lockable_db::LockableDb;
+use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 
 impl TextIndex {
-    pub(crate) fn search_vec(
+    pub(crate) fn search_vec<'a>(
         &self,
         query_string: &str,
         page_size: Option<usize>,
         page_number: Option<usize>,
-        lockable_db: &LockableDb,
+        lockable_db: &TransactionMaker<'a>,
     ) -> Result<Vec<TableValue>, DbError> {
         self.search_iterator(query_string, page_size, page_number, lockable_db)
             .map(|results| results.collect())
@@ -26,10 +25,10 @@ impl TextIndex {
 
     pub(crate) fn search_iterator<'a>(
         &'a self,
-        query_string: &str,
+        query_string: &'a str,
         page_size: Option<usize>,
         page_number: Option<usize>,
-        lockable_db: &'a LockableDb,
+        lockable_db: &'a TransactionMaker<'a>,
     ) -> Result<impl Iterator<Item = TableValue> + 'a, DbError> {
         let index = load_tantivy_index(&self, lockable_db)
             .map_err(|e| DbError::TantivyError(e.to_string()))?;

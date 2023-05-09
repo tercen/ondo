@@ -2,11 +2,11 @@ use super::ondo_serializer::OndoSerializer;
 use crate::db::entity::TableStored;
 use crate::db::reference::effect::TableStoredEffect;
 use crate::db::reference::TableName;
-use crate::db::server::lockable_db::LockableDb;
+use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 use crate::db::DbError;
 
 pub(super) fn apply_effect(
-    ra: &LockableDb,
+    ra: &TransactionMaker,
     effect: &TableStoredEffect,
 ) -> Result<(), DbError> {
     let db = ra.read();
