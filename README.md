@@ -34,6 +34,7 @@ docker build --target release \
     - [x] Add getWithLock operation
     - [ ] Check: Transansactions are using reentrant mutex
     - [ ] Check: Meta operations exclude all other operations (RWLock)
+    - [ ] Transactions should not have query iterators
     - [ ] Startup: Start Queue Manager
     - [ ] UMUR departs here...
   - [ ] Fix Transaction lifetime problems
