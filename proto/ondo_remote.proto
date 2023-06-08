@@ -80,6 +80,7 @@ message TableValueOps {
         TableValueReferenceMessage delete_request = 2;
         TableValueReferenceMessage get_request = 3;
         TableValueMessage update_request = 4;
+        TableValueReferenceMessage get_for_update_request = 5;
     }
 }
 

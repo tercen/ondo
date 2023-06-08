@@ -106,6 +106,18 @@ impl<'a> TableValueServerTrait for TransactionMaker<'a> {
             .map_db_err_to_status()?
             .apply_effects_queue_tasks(self)
     }
+
+    fn get_value_for_update(
+        &self,
+        r: Request<TableValueReferenceMessage>,
+    ) -> Result<Response<JsonMessage>, Status> {
+        let reference: TableValueReference = r.get_ref().into();
+        reference
+            .get_table_value_for_update(self)
+            .map_db_err_option_to_status()
+            .map(|entity| Response::new(entity.into()))
+    }
+
 }
 
 #[cfg(test)]

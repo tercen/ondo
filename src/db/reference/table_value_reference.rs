@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 pub(crate) trait TableValueReferenceTrait {
     fn container_cf_name(&self) -> String;
     fn get_table_value(&self, request: &dyn TableValueRequests) -> DbResult<Option<TableValue>>;
+    fn get_table_value_for_update(&self, request: &dyn TableValueRequests) -> DbResult<Option<TableValue>>;
     fn put_table_value(
         &self,
         value: &TableValue,
@@ -207,6 +208,10 @@ impl TableValueReferenceTrait for TableValueReference {
         request.get_table_value(&self.container_cf_name(), &self)
     }
 
+    fn get_table_value_for_update(&self, request: &dyn TableValueRequests) -> DbResult<Option<TableValue>> {
+        request.get_table_value_for_update(&self.container_cf_name(), &self)
+    }
+
     fn put_table_value(
         &self,
         value: &TableValue,
@@ -267,6 +272,11 @@ mod tests {
         pub(crate) TableValueTestRequests {}
         impl TableValueRequests for TableValueTestRequests {
             fn get_table_value(
+                &self,
+                cf_name: &str,
+                key: &TableValueReference,
+            ) -> DbResult<Option<TableValue>>;
+            fn get_table_value_for_update(
                 &self,
                 cf_name: &str,
                 key: &TableValueReference,

@@ -31,6 +31,9 @@ impl<'a> TableValueOpsSubServer<'a> {
             RequestType::UpdateRequest(update_request) => {
                 self.update_table_value(tx, update_request).await;
             }
+            RequestType::GetForUpdateRequest(get_request) => {
+                self.get_table_value_for_update(tx, get_request).await;
+            }
         }
     }
 
@@ -65,7 +68,6 @@ impl<'a> TableValueOpsSubServer<'a> {
     }
 
     async fn get_table_value(
-        //FIXME get_table_value needs a lock argument for the transaction
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         get_request: TableValueReferenceMessage,
@@ -92,4 +94,18 @@ impl<'a> TableValueOpsSubServer<'a> {
         };
         send_response(tx, response_type).await;
     }
+
+    async fn get_table_value_for_update(
+        &self,
+        tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
+        get_request: TableValueReferenceMessage,
+    ) {
+        let result = self.lockable_db.get_value_for_update(tonic::Request::new(get_request));
+        let response_type = match result {
+            Ok(response) => ResponseType::JsonMessage(response.into_inner()),
+            Err(status) => ResponseType::ErrorResponse(status),
+        };
+        send_response(tx, response_type).await;
+    }
+
 }

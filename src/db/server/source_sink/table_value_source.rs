@@ -25,4 +25,20 @@ impl<'a> TableValueRequests for TransactionMaker<'a> {
             .map(|bytes| Value::ondo_deserialize(&bytes))
             .transpose()
     }
+    fn get_table_value_for_update(
+        &self,
+        cf_name: &str,
+        key: &TableValueReference,
+    ) -> DbResult<Option<TableValue>> {
+        let db = self.read();
+        let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
+        let ondo_key = OndoKey::ondo_serialize(&key.id)?;
+        // println!("DEBUG: Fetching table value with key: {:?}", ondo_key);
+        let answer = db
+            .get_for_update_cf(cf, &ondo_key)
+            .map_err(|err| DbError::RocksDbError(err))?;
+        answer
+            .map(|bytes| Value::ondo_deserialize(&bytes))
+            .transpose()
+    }
 }

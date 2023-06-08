@@ -29,6 +29,12 @@ impl<'a> TransactionOrDb<'a> {
             TransactionOrDb::Db(db) => db.get_cf(cf, key),
         }
     }
+    pub(crate) fn get_for_update_cf(&self, cf: &rocksdb::ColumnFamily, key: &Vec<u8>) -> Result<Option<Vec<u8>>, rocksdb::Error> {
+        match self {
+            TransactionOrDb::Transaction(transaction) => transaction.get_for_update_cf(cf, key, true),
+            TransactionOrDb::Db(db) => db.get_cf(cf, key),
+        }
+    }
     pub(crate) fn put_cf(&self, cf: &rocksdb::ColumnFamily, key: Vec<u8>, value: Vec<u8>) -> Result<(), rocksdb::Error> {
         match self {
             TransactionOrDb::Transaction(transaction) => transaction.put_cf(cf, key, value),
