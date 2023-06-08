@@ -31,7 +31,7 @@ docker build --target release \
         - [ ] DbMeta
 # todo
 - [ ] Feature: Transaction API
-    - [ ] Add getWithLock operation
+    - [x] Add getWithLock operation
     - [ ] Check: Transansactions are using reentrant mutex
     - [ ] Check: Meta operations exclude all other operations (RWLock)
     - [ ] Startup: Start Queue Manager
