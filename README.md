@@ -21,7 +21,7 @@ docker build --target release \
       -t tercen/ondo .
 ```
 
-# todo
+# delayed todo
 - [ ] Feature: Transaction API
     - [ ] Cancelled due to lack of time
       - [ ] - [ ] Parametric types
@@ -29,8 +29,12 @@ docker build --target release \
         - [ ] DbTransaction
         - [ ] DbTransactionFactory
         - [ ] DbMeta
+# todo
+- [ ] Feature: Transaction API
+    - [ ] Add getWithLock operation
     - [ ] Check: Transansactions are using reentrant mutex
     - [ ] Check: Meta operations exclude all other operations (RWLock)
+    - [ ] Startup: Start Queue Manager
     - [ ] UMUR departs here...
   - [ ] Fix Transaction lifetime problems
   - [ ] Fix TransactionDB::drop_cf
