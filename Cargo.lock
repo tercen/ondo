@@ -1116,6 +1116,7 @@ dependencies = [
  "lazy_static",
  "log",
  "mockall",
+ "parking_lot",
  "prost",
  "rmp-serde",
  "rocksdb",
