@@ -32,7 +32,8 @@ docker build --target release \
 # todo
 - [ ] Feature: Transaction API
     - [x] Add getWithLock operation
-    - [ ] Check: Transactions are using reentrant mutex
+    - [x] Check: Transactions are using reentrant mutex
+    - [ ] Check: Transaction stream is using transactions
     - [ ] Check: Meta operations exclude all other operations (RWLock)
     - [ ] Transactions should not have query iterators
     - [ ] Startup: Start Queue Manager
