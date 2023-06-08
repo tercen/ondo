@@ -17,4 +17,4 @@ pub(crate) mod ondo_key;
 pub(crate) mod source_sink;
 pub(crate) mod value;
 
-pub(crate) mod remote_server;
+pub mod remote_server;
