@@ -1,21 +1,18 @@
 //transaction_or_db_holder.rs
-use super::db_read_lock_guard_wrapper::DbReadLockGuardWrapper;
-use super::db_write_lock_guard_wrapper::DbWriteLockGuardWrapper;
-use super::mutex_guard_wrapper::MutexGuardWrapper;
+use super::reentrant_mutex_guard_wrapper::ReentrantMutexGuardWrapper;
 use super::transaction_or_db_guard::TransactionOrDbReadGuard;
 use super::transaction_or_db_guard::TransactionOrDbWriteGuard;
-use super::LOCKABLE_DB;
 use super::version::Version;
+use super::LockableDb;
+use super::LOCKABLE_DB;
 use crate::db::db_error::DbError;
+use parking_lot::ReentrantMutex;
 use rocksdb::{Transaction, TransactionDB};
 use std::sync::Arc;
-use std::sync::RwLock;
-use std::sync::Mutex;
-use super::LockableDb;
 
 #[derive(Clone)]
 pub(crate) struct TransactionMaker<'a> {
-    transaction: Option<Arc<Mutex<Transaction<'a, TransactionDB>>>>,
+    transaction: Option<Arc<ReentrantMutex<Transaction<'a, TransactionDB>>>>,
     lockable_db: LockableDb,
 }
 
@@ -34,7 +31,7 @@ impl<'a> TransactionMaker<'a> {
         if self.transaction.is_none() {
             let lockable_db = self.lockable_db.read();
             let transaction = lockable_db.transaction();
-            self.transaction = Some(Arc::new(Mutex::new(transaction)));
+            self.transaction = Some(Arc::new(ReentrantMutex::new(transaction)));
         }
     }
 
@@ -42,7 +39,6 @@ impl<'a> TransactionMaker<'a> {
         if let Some(transaction) = self.transaction.take() {
             transaction
                 .lock()
-                .unwrap()
                 .commit()
                 .map_err(DbError::TransactionError)?;
         }
@@ -53,7 +49,6 @@ impl<'a> TransactionMaker<'a> {
         if let Some(transaction) = self.transaction.take() {
             transaction
                 .lock()
-                .unwrap()
                 .rollback()
                 .map_err(DbError::TransactionError)?;
         }
@@ -62,9 +57,9 @@ impl<'a> TransactionMaker<'a> {
 
     pub fn read(&self) -> TransactionOrDbReadGuard<'a> {
         if let Some(transaction) = &self.transaction {
-            let guard = transaction.lock().unwrap();
+            let guard = transaction.lock();
             let db_path = self.lockable_db.db_path();
-            TransactionOrDbReadGuard::TransactionRead(MutexGuardWrapper::new(guard, db_path))
+            TransactionOrDbReadGuard::TransactionRead(ReentrantMutexGuardWrapper::new(guard, db_path))
         } else {
             let guard_wrapper = LOCKABLE_DB.read();
             TransactionOrDbReadGuard::DbRead(guard_wrapper)
@@ -73,10 +68,11 @@ impl<'a> TransactionMaker<'a> {
 
     pub fn write(&self) -> TransactionOrDbWriteGuard<'a> {
         if let Some(transaction) = &self.transaction {
-            let guard = transaction.lock().unwrap();
+            let guard = transaction.lock();
             let db_path = self.lockable_db.db_path();
-            TransactionOrDbWriteGuard::TransactionWrite(MutexGuardWrapper::new(
-                guard, &db_path.to_owned(),
+            TransactionOrDbWriteGuard::TransactionWrite(ReentrantMutexGuardWrapper::new(
+                guard,
+                &db_path.to_owned(),
             ))
         } else {
             let guard_wrapper = self.lockable_db.write();
@@ -134,4 +130,3 @@ mod tests {
         }
     }
 }
-

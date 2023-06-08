@@ -4,15 +4,15 @@ use rocksdb::{Transaction, TransactionDB};
 use std::ops::Deref;
 use std::ops::DerefMut;
 
-use super::mutex_guard_wrapper::MutexGuardWrapper;
 use super::{
     db_read_lock_guard_wrapper::DbReadLockGuardWrapper,
     db_write_lock_guard_wrapper::DbWriteLockGuardWrapper, transaction_or_db::TransactionOrDb,
-};
+    reentrant_mutex_guard_wrapper::ReentrantMutexGuardWrapper,
+}; 
 
 // #[derive(Debug)]
 pub(crate) enum TransactionOrDbReadGuard<'a> {
-    TransactionRead(MutexGuardWrapper<'a, Transaction<'a, TransactionDB>>),
+    TransactionRead(ReentrantMutexGuardWrapper<'a, Transaction<'a, TransactionDB>>),
     DbRead(DbReadLockGuardWrapper<'a, TransactionDB>),
 }
 
@@ -31,7 +31,7 @@ impl<'a> Deref for TransactionOrDbReadGuard<'a> {
 
 // #[derive(Debug)]
 pub(crate) enum TransactionOrDbWriteGuard<'a> {
-    TransactionWrite(MutexGuardWrapper<'a, Transaction<'a, TransactionDB>>),
+    TransactionWrite(ReentrantMutexGuardWrapper<'a, Transaction<'a, TransactionDB>>),
     DbWrite(DbWriteLockGuardWrapper<'a, TransactionDB>),
 }
 

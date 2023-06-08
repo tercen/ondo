@@ -2,11 +2,12 @@
 pub(crate) mod db_arc;
 pub(crate) mod db_read_lock_guard_wrapper;
 pub(crate) mod db_write_lock_guard_wrapper;
+pub(crate) mod mutex_guard_wrapper;
+pub(crate) mod reentrant_mutex_guard_wrapper;
 pub(crate) mod rocks_db_accessor;
 pub(crate) mod transaction_maker;
 pub(crate) mod transaction_or_db;
 pub(crate) mod transaction_or_db_guard;
-pub(crate) mod mutex_guard_wrapper;
 pub mod version;
 
 use db_arc::DbArc;
@@ -22,7 +23,8 @@ lazy_static! {
 }
 
 #[derive(Clone)]
-pub struct LockableDb { //FIXME: Should not be public
+pub struct LockableDb {
+    //FIXME: Should not be public
     db_arc: DbArc,
 }
 
@@ -62,4 +64,4 @@ impl LockableDb {
     }
 }
 
-//TODO:XXX: Replace other read()/write() subjects with transaction_maker 
+//TODO:XXX: Replace other read()/write() subjects with transaction_maker
