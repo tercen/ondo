@@ -35,6 +35,7 @@ docker build --target release \
     - [x] Check: Transactions are using reentrant mutex
     - [ ] Check: Transaction stream is using transactions
     - [ ] Check: Meta operations exclude all other operations (RWLock)
+    - [ ] Make meta ops atomic
     - [ ] Transactions should not have query iterators
     - [ ] Startup: Start Queue Manager
     - [ ] UMUR departs here...
