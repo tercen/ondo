@@ -1118,6 +1118,7 @@ dependencies = [
  "mockall",
  "parking_lot",
  "prost",
+ "prost-types",
  "rmp-serde",
  "rocksdb",
  "semver",
