@@ -4,7 +4,6 @@ use super::transaction_or_db_guard::TransactionOrDbReadGuard;
 use super::transaction_or_db_guard::TransactionOrDbWriteGuard;
 use super::version::Version;
 use super::LockableDb;
-use super::LOCKABLE_DB;
 use crate::db::db_error::DbError;
 use parking_lot::ReentrantMutex;
 use rocksdb::{Transaction, TransactionDB};
@@ -56,26 +55,29 @@ impl<'a> TransactionMaker<'a> {
     }
 
     pub fn read(&self) -> TransactionOrDbReadGuard<'a> {
+        let guard_wrapper = self.lockable_db.read();
         if let Some(transaction) = &self.transaction {
             let guard = transaction.lock();
             let db_path = self.lockable_db.db_path();
-            TransactionOrDbReadGuard::TransactionRead(ReentrantMutexGuardWrapper::new(guard, db_path))
+            TransactionOrDbReadGuard::TransactionRead(
+                ReentrantMutexGuardWrapper::new(guard, db_path),
+                guard_wrapper,
+            )
         } else {
-            let guard_wrapper = LOCKABLE_DB.read();
             TransactionOrDbReadGuard::DbRead(guard_wrapper)
         }
     }
 
     pub fn write(&self) -> TransactionOrDbWriteGuard<'a> {
+        let guard_wrapper = self.lockable_db.write();
         if let Some(transaction) = &self.transaction {
             let guard = transaction.lock();
             let db_path = self.lockable_db.db_path();
-            TransactionOrDbWriteGuard::TransactionWrite(ReentrantMutexGuardWrapper::new(
-                guard,
-                &db_path.to_owned(),
-            ))
+            TransactionOrDbWriteGuard::TransactionWrite(
+                ReentrantMutexGuardWrapper::new(guard, &db_path.to_owned()),
+                guard_wrapper,
+            )
         } else {
-            let guard_wrapper = self.lockable_db.write();
             TransactionOrDbWriteGuard::DbWrite(guard_wrapper)
         }
     }
@@ -89,7 +91,7 @@ impl<'a> TransactionMaker<'a> {
 mod tests {
     use super::super::transaction_or_db::TransactionOrDb;
     use super::*;
-    use crate::db::server::lockable_db::LockableDb;
+    use crate::db::server::lockable_db::{LockableDb, LOCKABLE_DB};
 
     // Replace LOCKABLE_DB with LockableDb::in_memory() in the setup of tests
     fn setup() {
@@ -108,7 +110,7 @@ mod tests {
         // Assert
         match *guard {
             TransactionOrDb::Db(_) => assert!(true),
-            TransactionOrDb::Transaction(_) => assert!(false, "Expected Db, got Transaction"),
+            TransactionOrDb::Transaction(_, _) => assert!(false, "Expected Db, got Transaction"),
         }
     }
 
@@ -125,7 +127,7 @@ mod tests {
         // Assert
         match &mut *guard {
             //We are using a write lock to obtain a mutable reference to the guard
-            TransactionOrDb::Transaction(_) => assert!(true),
+            TransactionOrDb::Transaction(_, _) => assert!(true),
             TransactionOrDb::Db(_) => assert!(false, "Expected Transaction, got Db"),
         }
     }
