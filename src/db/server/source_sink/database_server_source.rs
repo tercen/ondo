@@ -12,7 +12,8 @@ impl<'a> DatabaseServerStoredRequests for TransactionMaker<'a> {
         cf_name: &str,
         key: &DatabaseServerName,
     ) -> DbResult<Option<DatabaseServerStored>> {
-        let db = self.read();
+        let db_guard = self.read();
+        let db = db_guard.inner();
         let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
         let ondo_key = DatabaseServerName::ondo_serialize(key)?;
         let answer = db

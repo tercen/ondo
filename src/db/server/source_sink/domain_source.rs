@@ -8,7 +8,8 @@ use crate::db::DbError::CfNotFound;
 
 impl<'a> DomainStoredRequests for TransactionMaker<'a> {
     fn get_domain_stored(&self, cf_name: &str, key: &DomainName) -> DbResult<Option<DomainStored>> {
-        let db = self.read();
+        let db_guard = self.read();
+        let db = db_guard.inner();
         let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
         let ondo_key = DomainName::ondo_serialize(key)?;
         let answer = db

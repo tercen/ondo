@@ -15,7 +15,11 @@ impl<'a> IndexIteratorRequests<'a> for TransactionOrDbReadGuard<'a> {
         key_prefix: OndoKey,
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<IndexValue>> + 'a>> {
         let serialized_key_prefix = key_prefix.ondo_serialize()?;
-        let guarded = **self;
+
+        let db_guard = self;
+        let db = db_guard.inner();
+    
+        let guarded = db;
         let raw_iterator = guarded
             // .guard
             .get_records_in_cf_with_key_prefix_old(value_cf_name, serialized_key_prefix)?;
@@ -36,8 +40,10 @@ impl<'a> IndexIteratorRequests<'a> for TransactionOrDbReadGuard<'a> {
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<IndexValue>> + 'a>> {
         let serialized_start_key_prefix = start_key_prefix.ondo_serialize()?;
         let serialized_end_key_prefix = end_key_prefix.ondo_serialize()?;
-        let guarded = **self;
-        let raw_iterator = self.get_records_in_cf_with_key_range_old(
+        let db_guard = self;
+        let db = db_guard.inner();
+        let guarded = db;
+        let raw_iterator = guarded.get_records_in_cf_with_key_range_old(
             value_cf_name,
             serialized_start_key_prefix,
             serialized_end_key_prefix,

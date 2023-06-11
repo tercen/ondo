@@ -8,7 +8,8 @@ pub(super) fn apply_effect(
     ra: &TransactionMaker,
     effect: &IndexValueEffect,
 ) -> Result<(), DbError> {
-    let db = ra.read();
+    let db_guard = ra.read();
+    let db = db_guard.inner();
     match effect {
         IndexValueEffect::Put(cf_name, key, index_value) => {
             let ondo_key = OndoKey::ondo_serialize(&key)?;

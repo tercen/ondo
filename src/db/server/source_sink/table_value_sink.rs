@@ -9,7 +9,8 @@ pub(super) fn apply_effect(
     ra: &TransactionMaker,
     effect: &TableValueEffect,
 ) -> Result<(), DbError> {
-    let db = ra.read();
+    let db_guard = ra.read();
+    let db = db_guard.inner();
     match effect {
         TableValueEffect::Put(cf_name, ondo_key, value) => {
             let serialized_ondo_key = OndoKey::ondo_serialize(&ondo_key)?;

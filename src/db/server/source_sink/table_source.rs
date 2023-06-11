@@ -15,7 +15,8 @@ use serde_json::Value;
 
 impl<'a> TableStoredRequests for TransactionMaker<'a> {
     fn get_table_stored(&self, cf_name: &str, key: &TableName) -> DbResult<Option<TableStored>> {
-        let db = self.read();
+        let db_guard = self.read();
+        let db = db_guard.inner();
         let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
         let ondo_key = TableName::ondo_serialize(key)?;
         let answer = db
@@ -32,7 +33,10 @@ impl<'a> TableStoredIteratorRequests<'a> for TransactionOrDbReadGuard<'a> {
         &'a self,
         value_cf_name: &str,
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
-        let guarded = *self;
+        let db_guard = self;
+        let db = db_guard.inner();
+        let guarded = db;
+
         let raw_all_iterator = guarded.get_records_in_cf(value_cf_name)?;
 
         let all_iterator = raw_all_iterator.map(|result| {
@@ -49,7 +53,11 @@ impl<'a> TableStoredIteratorRequests<'a> for TransactionOrDbReadGuard<'a> {
         key_prefix: OndoKey,
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
         let serialized_key_prefix = key_prefix.ondo_serialize()?;
-        let guarded = **self;
+
+        let db_guard = self;
+        let db = db_guard.inner();
+        let guarded = db;
+
         let raw_iterator =
             guarded.get_records_in_cf_with_key_prefix_old(value_cf_name, serialized_key_prefix)?;
 
@@ -68,8 +76,12 @@ impl<'a> TableStoredIteratorRequests<'a> for TransactionOrDbReadGuard<'a> {
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
         let serialized_start_key = start_key.ondo_serialize()?;
         let serialized_end_key = end_key.ondo_serialize()?;
-        let guarded = **self;
-        let raw_iterator = self.get_records_in_cf_with_key_range_old(
+
+        let db_guard = self;
+        let db = db_guard.inner();
+        let guarded = db;
+
+        let raw_iterator = guarded.get_records_in_cf_with_key_range_old(
             value_cf_name,
             serialized_start_key,
             serialized_end_key,

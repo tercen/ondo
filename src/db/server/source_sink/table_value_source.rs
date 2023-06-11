@@ -14,7 +14,8 @@ impl<'a> TableValueRequests for TransactionMaker<'a> {
         cf_name: &str,
         key: &TableValueReference,
     ) -> DbResult<Option<TableValue>> {
-        let db = self.read();
+        let db_guard = self.read();
+        let db = db_guard.inner();
         let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
         let ondo_key = OndoKey::ondo_serialize(&key.id)?;
         // println!("DEBUG: Fetching table value with key: {:?}", ondo_key);
@@ -30,7 +31,8 @@ impl<'a> TableValueRequests for TransactionMaker<'a> {
         cf_name: &str,
         key: &TableValueReference,
     ) -> DbResult<Option<TableValue>> {
-        let db = self.read();
+        let db_guard = self.read();
+        let db = db_guard.inner();
         let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
         let ondo_key = OndoKey::ondo_serialize(&key.id)?;
         // println!("DEBUG: Fetching table value with key: {:?}", ondo_key);

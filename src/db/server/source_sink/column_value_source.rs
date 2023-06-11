@@ -9,8 +9,9 @@ use serde_json::Value;
 
 impl<'a> ColumnValueRequests for TransactionMaker<'a> {
     fn get_column_value(&self, cf_name: &str, key: &OndoKey) -> DbResult<Option<ColumnValue>> {
-        let db = self.read();
-        let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
+        let db_guard = self.read();
+        let db = db_guard.inner();
+            let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
         let ondo_key = OndoKey::ondo_serialize(key)?;
         let answer = db
             .get_cf(cf, &ondo_key)

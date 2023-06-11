@@ -9,7 +9,8 @@ pub(super) fn apply_effect(
     ra: &TransactionMaker,
     effect: &DatabaseServerStoredEffect,
 ) -> Result<(), DbError> {
-    let db = ra.read();
+    let db_guard = ra.read();
+    let db = db_guard.inner();
     match effect {
         DatabaseServerStoredEffect::Put(cf_name, key, database_server_stored) => {
             let ondo_key = DatabaseServerName::ondo_serialize(&key)?;

@@ -9,7 +9,8 @@ pub(super) fn apply_effect(
     ra: &TransactionMaker,
     effect: &DomainStoredEffect,
 ) -> Result<(), DbError> {
-    let db = ra.read();
+    let db_guard = ra.read();
+    let db = db_guard.inner();
     match effect {
         DomainStoredEffect::Put(cf_name, key, domain_stored) => {
             let ondo_key = DomainName::ondo_serialize(&key)?;
