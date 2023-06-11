@@ -14,13 +14,15 @@ pub(crate) fn apply_effects(
         println!("Effect: {:?}", effect);
         match effect {
             Effect::CreateCf(cf_name) => {
-                let mut db = ra.write();
+                let mut db_guard = ra.write();
+                let mut db = db_guard.inner_mut();
                 db.create_cf(cf_name, &cf_opts)
                     .map_err(|err| DbError::RocksDbError(err))
                     .map_db_err_to_status()?;
             }
             Effect::DeleteCf(cf_name) => {
-                let mut db = ra.write();
+                let mut db_guard = ra.write();
+                let mut db = db_guard.inner_mut();
                 db.drop_cf(cf_name)
                     .map_err(|err| DbError::RocksDbError(err))
                     .map_db_err_to_status()?;

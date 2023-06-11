@@ -7,7 +7,8 @@ use std::ops::DerefMut;
 use super::{
     db_read_lock_guard_wrapper::DbReadLockGuardWrapper,
     db_write_lock_guard_wrapper::DbWriteLockGuardWrapper,
-    reentrant_mutex_guard_wrapper::ReentrantMutexGuardWrapper, transaction_or_db::TransactionOrDb,
+    reentrant_mutex_guard_wrapper::ReentrantMutexGuardWrapper,
+    transaction_or_db::MutTransactionOrDb, transaction_or_db::TransactionOrDb,
 };
 
 type PreferredTransactionReadLockGuardWrapper<'a> =
@@ -23,15 +24,13 @@ pub(crate) enum TransactionOrDbReadGuard<'a> {
     DbRead(PreferredDbReadLockGuardWrapper<'a>),
 }
 
-impl<'a> Deref for TransactionOrDbReadGuard<'a> {
-    type Target = TransactionOrDb<'a>;
-
-    fn deref(&self) -> &Self::Target {
+impl<'a> TransactionOrDbReadGuard<'a> {
+    pub(crate) fn inner(&'a self) -> TransactionOrDb<'a> {
         match self {
             TransactionOrDbReadGuard::TransactionRead(guard, db_guard) => {
-                &TransactionOrDb::Transaction(guard.deref(), db_guard.deref())
+                TransactionOrDb::Transaction(guard.deref(), db_guard.deref())
             }
-            TransactionOrDbReadGuard::DbRead(guard) => &TransactionOrDb::Db(guard.deref()),
+            TransactionOrDbReadGuard::DbRead(guard) => TransactionOrDb::Db(guard.deref()),
         }
     }
 }
@@ -49,29 +48,22 @@ pub(crate) enum TransactionOrDbWriteGuard<'a> {
     DbWrite(PreferredDbWriteLockGuardWrapper<'a>),
 }
 
-impl<'a> Deref for TransactionOrDbWriteGuard<'a> {
-    type Target = TransactionOrDb<'a>;
-
-    fn deref(&self) -> &Self::Target {
+impl<'a> TransactionOrDbWriteGuard<'a> {
+    pub(crate) fn inner(&'a self) -> TransactionOrDb<'a> {
         match self {
             TransactionOrDbWriteGuard::TransactionWrite(guard, db_guard) => {
-                &TransactionOrDb::Transaction(guard.deref(), db_guard.deref())
+                TransactionOrDb::Transaction(guard.deref(), db_guard.deref())
             }
-            TransactionOrDbWriteGuard::DbWrite(guard) => &TransactionOrDb::Db(guard.deref()),
+            TransactionOrDbWriteGuard::DbWrite(guard) => TransactionOrDb::Db(guard.deref()),
+        }
+    }
+    pub(crate) fn inner_mut(&'a mut self) -> MutTransactionOrDb<'a> {
+        match self {
+            TransactionOrDbWriteGuard::TransactionWrite(guard, db_guard) => {
+                MutTransactionOrDb::Transaction
+            }
+
+            TransactionOrDbWriteGuard::DbWrite(guard) => MutTransactionOrDb::Db(guard.deref_mut()),
         }
     }
 }
-
-impl<'a> DerefMut for TransactionOrDbWriteGuard<'a> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        match self {
-            TransactionOrDbWriteGuard::TransactionWrite(guard, db_guard) => {
-                &mut TransactionOrDb::Transaction(guard.deref_mut(), db_guard.deref_mut())
-            }
-            TransactionOrDbWriteGuard::DbWrite(guard) => {
-                &mut TransactionOrDb::Db(guard.deref_mut())
-            }
-        }
-    }
-}
-//FIXME: Implement get_for_update

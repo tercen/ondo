@@ -5,6 +5,11 @@ pub(crate) enum TransactionOrDb<'a> {
     Db(&'a TransactionDB),
 }
 
+pub(crate) enum MutTransactionOrDb<'a> {
+    Transaction,
+    Db(&'a mut TransactionDB),
+}
+
 pub(crate) type TransactionDBIterator<'a> = rocksdb::DBIteratorWithThreadMode<'a, TransactionDB>;
 
 /*
@@ -96,25 +101,28 @@ impl<'a> TransactionOrDb<'a> {
         };
         db.iterator_cf_opt(cf, read_options, iterator_mode)
     }
-    /*
-    Not supported by transactions
-    */
+}
 
+/*
+Not supported by transactions
+*/
+
+impl<'a> MutTransactionOrDb<'a> {
     pub(crate) fn create_cf(
-        &self,
+        &mut self,
         cf_name: &String,
         cf_opts: &rocksdb::Options,
     ) -> Result<(), rocksdb::Error> {
         match self {
-            TransactionOrDb::Transaction(transaction, _) => unimplemented!(),
-            TransactionOrDb::Db(db) => db.create_cf(cf_name, cf_opts),
+            MutTransactionOrDb::Transaction => unimplemented!(),
+            MutTransactionOrDb::Db(db) => db.create_cf(cf_name, cf_opts),
         }
     }
 
-    pub(crate) fn drop_cf(&self, cf_name: &String) -> Result<(), rocksdb::Error> {
+    pub(crate) fn drop_cf(&mut self, cf_name: &String) -> Result<(), rocksdb::Error> {
         match self {
-            TransactionOrDb::Transaction(transaction, _) => unimplemented!(),
-            TransactionOrDb::Db(db) => db.drop_cf(cf_name), //https://test.ocom.vn/?url=github.com/rust-rocksdb/rust-rocksdb/pull/721/commits/ffa6be142dbf092dad8c8dfc5be7be1c30cfb3dd
+            MutTransactionOrDb::Transaction => unimplemented!(),
+            MutTransactionOrDb::Db(db) => db.drop_cf(cf_name),
         }
     }
 }

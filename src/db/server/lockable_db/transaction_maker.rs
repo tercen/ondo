@@ -91,7 +91,9 @@ impl<'a> TransactionMaker<'a> {
 mod tests {
     use super::super::transaction_or_db::TransactionOrDb;
     use super::*;
-    use crate::db::server::lockable_db::{LockableDb, LOCKABLE_DB};
+    use crate::db::server::lockable_db::{
+        transaction_or_db::MutTransactionOrDb, LockableDb, LOCKABLE_DB,
+    };
 
     // Replace LOCKABLE_DB with LockableDb::in_memory() in the setup of tests
     fn setup() {
@@ -108,7 +110,7 @@ mod tests {
         let guard = transaction_maker.read();
 
         // Assert
-        match *guard {
+        match guard.inner() {
             TransactionOrDb::Db(_) => assert!(true),
             TransactionOrDb::Transaction(_, _) => assert!(false, "Expected Db, got Transaction"),
         }
@@ -125,10 +127,10 @@ mod tests {
         let mut guard = transaction_maker.write();
 
         // Assert
-        match &mut *guard {
+        match &mut guard.inner_mut() {
             //We are using a write lock to obtain a mutable reference to the guard
-            TransactionOrDb::Transaction(_, _) => assert!(true),
-            TransactionOrDb::Db(_) => assert!(false, "Expected Transaction, got Db"),
+            MutTransactionOrDb::Transaction => assert!(true),
+            MutTransactionOrDb::Db(_) => assert!(false, "Expected Transaction, got Db"),
         }
     }
 }

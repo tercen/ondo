@@ -1,5 +1,5 @@
 use parking_lot::ReentrantMutexGuard;
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 
 pub struct ReentrantMutexGuardWrapper<'a, T> {
     guard: ReentrantMutexGuard<'a, T>,
@@ -17,11 +17,5 @@ impl<'a, T> Deref for ReentrantMutexGuardWrapper<'a, T> {
 
     fn deref(&self) -> &Self::Target {
         &self.guard
-    }
-}
-
-impl<'a, T> DerefMut for ReentrantMutexGuardWrapper<'a, T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.guard
     }
 }
