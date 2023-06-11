@@ -100,12 +100,13 @@ impl<'a> TableValueOpsSubServer<'a> {
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         get_request: TableValueReferenceMessage,
     ) {
-        let result = self.lockable_db.get_value_for_update(tonic::Request::new(get_request));
+        let result = self
+            .lockable_db
+            .get_value_for_update(tonic::Request::new(get_request));
         let response_type = match result {
             Ok(response) => ResponseType::JsonMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status),
         };
         send_response(tx, response_type).await;
     }
-
 }

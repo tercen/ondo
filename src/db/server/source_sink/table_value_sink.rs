@@ -5,7 +5,10 @@ use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 use crate::db::DbError;
 use serde_json::Value;
 
-pub(super) fn apply_effect(ra: &TransactionMaker, effect: &TableValueEffect) -> Result<(), DbError> {
+pub(super) fn apply_effect(
+    ra: &TransactionMaker,
+    effect: &TableValueEffect,
+) -> Result<(), DbError> {
     let db = ra.read();
     match effect {
         TableValueEffect::Put(cf_name, ondo_key, value) => {

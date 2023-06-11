@@ -1,6 +1,6 @@
+use super::database_server_trait::DatabaseServerTrait;
 use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
-use super::database_server_trait::DatabaseServerTrait;
 use super::lockable_db::transaction_maker::TransactionMaker;
 use super::source_sink::effects_sink::EffectsSink;
 use crate::db::{

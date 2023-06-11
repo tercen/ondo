@@ -1,6 +1,6 @@
 use super::send_response::send_response;
-use crate::db::server::lockable_db::version::Version;
 use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::version::Version;
 use crate::ondo_remote::{
     transaction_response::ResponseType, EmptyMessage, TransactionResponse, VersionResponse,
 };

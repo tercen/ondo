@@ -117,7 +117,6 @@ impl<'a> TableValueServerTrait for TransactionMaker<'a> {
             .map_db_err_option_to_status()
             .map(|entity| Response::new(entity.into()))
     }
-
 }
 
 #[cfg(test)]

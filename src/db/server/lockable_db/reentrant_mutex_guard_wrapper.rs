@@ -1,5 +1,5 @@
-use std::ops::{Deref, DerefMut};
 use parking_lot::ReentrantMutexGuard;
+use std::ops::{Deref, DerefMut};
 
 pub struct ReentrantMutexGuardWrapper<'a, T> {
     guard: ReentrantMutexGuard<'a, T>,

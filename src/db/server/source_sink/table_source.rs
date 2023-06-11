@@ -7,8 +7,8 @@ use crate::db::entity::TableValue;
 use crate::db::reference::requests::TableStoredIteratorRequests;
 use crate::db::reference::requests::TableStoredRequests;
 use crate::db::reference::TableName;
-use crate::db::server::lockable_db::transaction_or_db_guard::TransactionOrDbReadGuard;
 use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_or_db_guard::TransactionOrDbReadGuard;
 use crate::db::server::source_sink::ondo_serializer::OndoSerializer;
 use crate::db::DbError::CfNotFound;
 use serde_json::Value;
@@ -50,8 +50,8 @@ impl<'a> TableStoredIteratorRequests<'a> for TransactionOrDbReadGuard<'a> {
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>> + 'a>> {
         let serialized_key_prefix = key_prefix.ondo_serialize()?;
         let guarded = **self;
-        let raw_iterator = guarded
-            .get_records_in_cf_with_key_prefix_old(value_cf_name, serialized_key_prefix)?;
+        let raw_iterator =
+            guarded.get_records_in_cf_with_key_prefix_old(value_cf_name, serialized_key_prefix)?;
 
         let all_iterator = raw_iterator.map(|result| {
             result.and_then(|(_, v)| Value::ondo_deserialize(&v)) // Flatten the nested Result

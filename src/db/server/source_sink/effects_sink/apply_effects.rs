@@ -26,7 +26,8 @@ pub(crate) fn apply_effects(
                     .map_db_err_to_status()?;
             }
             Effect::DatabaseServerStoredEffect(effect) => {
-                super::super::database_server_sink::apply_effect(&ra, effect).map_db_err_to_status()?;
+                super::super::database_server_sink::apply_effect(&ra, effect)
+                    .map_db_err_to_status()?;
             }
             Effect::DomainStoredEffect(effect) => {
                 super::super::domain_sink::apply_effect(&ra, effect).map_db_err_to_status()?;
@@ -41,7 +42,8 @@ pub(crate) fn apply_effects(
                 super::super::index_value_sink::apply_effect(&ra, effect).map_db_err_to_status()?;
             }
             Effect::ColumnValueEffect(effect) => {
-                super::super::column_value_sink::apply_effect(&ra, effect).map_db_err_to_status()?;
+                super::super::column_value_sink::apply_effect(&ra, effect)
+                    .map_db_err_to_status()?;
             }
         }
     }

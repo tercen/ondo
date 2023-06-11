@@ -4,7 +4,10 @@ use crate::db::reference::IndexValueEffect;
 use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 use crate::db::DbError;
 
-pub(super) fn apply_effect(ra: &TransactionMaker, effect: &IndexValueEffect) -> Result<(), DbError> {
+pub(super) fn apply_effect(
+    ra: &TransactionMaker,
+    effect: &IndexValueEffect,
+) -> Result<(), DbError> {
     let db = ra.read();
     match effect {
         IndexValueEffect::Put(cf_name, key, index_value) => {
