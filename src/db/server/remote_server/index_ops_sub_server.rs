@@ -43,7 +43,7 @@ impl<'a> IndexOpsSubServer<'a> {
             .create_index(tonic::Request::new(create_request));
         let response_type = match result {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type).await;
     }
@@ -58,7 +58,7 @@ impl<'a> IndexOpsSubServer<'a> {
             .delete_index(tonic::Request::new(delete_request));
         let response_type = match result {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type).await;
     }
@@ -71,7 +71,7 @@ impl<'a> IndexOpsSubServer<'a> {
         let result = self.lockable_db.get_index(tonic::Request::new(get_request));
         let response_type = match result {
             Ok(response) => ResponseType::IndexMessage(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type).await;
     }
@@ -86,7 +86,7 @@ impl<'a> IndexOpsSubServer<'a> {
             .update_index(tonic::Request::new(update_request));
         let response_type = match result {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type).await;
     }

@@ -46,7 +46,7 @@ impl<'a> TableOpsSubServer<'a> {
             .create_table(tonic::Request::new(create_request));
         let response_type = match result {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type).await;
     }
@@ -61,7 +61,7 @@ impl<'a> TableOpsSubServer<'a> {
             .delete_table(tonic::Request::new(delete_request));
         let response_type = match result {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type).await;
     }
@@ -74,7 +74,7 @@ impl<'a> TableOpsSubServer<'a> {
         let result = self.lockable_db.get_table(tonic::Request::new(get_request));
         let response_type = match result {
             Ok(response) => ResponseType::TableMessage(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type).await;
     }
@@ -89,7 +89,7 @@ impl<'a> TableOpsSubServer<'a> {
             .update_table(tonic::Request::new(update_request));
         let response_type = match result {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type).await;
     }
@@ -104,7 +104,7 @@ impl<'a> TableOpsSubServer<'a> {
             .list_indexes(tonic::Request::new(list_indexes_request));
         let response_type = match result {
             Ok(response) => ResponseType::ArrayOfStringResponse(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type).await;
     }

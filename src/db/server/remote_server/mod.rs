@@ -1,6 +1,7 @@
 pub mod my_server;
 pub mod ondo_remote_impl;
 
+mod command_status;
 mod send_response;
 
 mod database_server_ops_sub_server;

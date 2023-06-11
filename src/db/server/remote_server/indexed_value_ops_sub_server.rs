@@ -37,7 +37,7 @@ impl<'a> IndexedValueOpsSubServer<'a> {
             .find_values(tonic::Request::new(get_request));
         let response_type = match result {
             Ok(response) => ResponseType::JsonMessage(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type);
     }
@@ -52,7 +52,7 @@ impl<'a> IndexedValueOpsSubServer<'a> {
             .find_values_by_range(tonic::Request::new(list_request));
         let response_type = match result {
             Ok(response) => ResponseType::JsonMessage(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type);
     }

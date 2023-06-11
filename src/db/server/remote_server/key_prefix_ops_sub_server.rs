@@ -47,7 +47,7 @@ impl<'a> KeyPrefixOpsSubServer<'a> {
             .list_values(tonic::Request::new(list_values_request));
         let response_type = match result {
             Ok(response) => ResponseType::JsonMessage(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type).await;
     }
@@ -62,7 +62,7 @@ impl<'a> KeyPrefixOpsSubServer<'a> {
             .list_values_by_key_prefix(tonic::Request::new(list_values_request));
         let response_type = match result {
             Ok(response) => ResponseType::JsonMessage(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type).await;
     }
@@ -77,7 +77,7 @@ impl<'a> KeyPrefixOpsSubServer<'a> {
             .list_values_by_id_range(tonic::Request::new(list_values_request));
         let response_type = match result {
             Ok(response) => ResponseType::JsonMessage(response.into_inner()),
-            Err(status) => ResponseType::ErrorResponse(status),
+            Err(status) => ResponseType::ErrorResponse(status.into()),
         };
         send_response(tx, response_type).await;
     }
