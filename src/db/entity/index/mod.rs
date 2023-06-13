@@ -1,12 +1,11 @@
 //index.rs
-use crate::db::enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum;
 use crate::db::{
     entity::{table_value::get_key_from_table_value, OndoKey, TableValue},
     reference::{
         index_reference::IndexReferenceTrait, Effect, Effects, IndexReference, IndexValueReference,
-        IndexValueReferenceTrait, TableReferenceTrait,
+        IndexValueReferenceTrait, TableReferenceTrait, requests::TableStoredIteratorRequests,
     },
-    DbResult,
+    DbResult, server::lockable_db::transaction_maker::TransactionMaker,
 };
 use serde::{Deserialize, Serialize};
 
@@ -79,11 +78,11 @@ impl Index {
 
     pub(crate) fn index_related_table_values(
         &self,
-        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
+        table_stored_iterator_requests_factory: &TransactionMaker,
     ) -> DbResult<Effects> {
-        let table_stored_iterator_requests_enum =
-            table_stored_iterator_requests_factory.create_read_locked_requests()?;
-        let table_stored_iterator_requests = table_stored_iterator_requests_enum.as_trait();
+        let guard = table_stored_iterator_requests_factory.read(); 
+        let db = guard.inner();
+        let table_stored_iterator_requests: &dyn TableStoredIteratorRequests = &db;
         {
             let table_reference = self.reference.to_table_reference();
             let all_values = table_reference.all_values(table_stored_iterator_requests);

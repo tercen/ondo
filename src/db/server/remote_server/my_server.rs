@@ -14,11 +14,11 @@ use crate::db::server::lockable_db::LOCKABLE_DB;
 // FIXME: Meta RWLock is required to prevent meta operations during transactions
 
 #[derive(Clone)]
-pub struct MyServer<'a> {
-    lockable_db: TransactionMaker<'a>,
+pub struct MyServer {
+    lockable_db: TransactionMaker<'static>,
 }
 
-impl<'a> Default for MyServer<'a> {
+impl Default for MyServer {
     fn default() -> Self {
         MyServer {
             lockable_db: TransactionMaker::new(LOCKABLE_DB.clone()),
@@ -26,7 +26,7 @@ impl<'a> Default for MyServer<'a> {
     }
 }
 
-impl<'a> MyServer<'a> {
+impl MyServer {
     pub(crate) fn empty_message_sub_server(&self) -> EmptyMessageSubServer {
         EmptyMessageSubServer {}
     }

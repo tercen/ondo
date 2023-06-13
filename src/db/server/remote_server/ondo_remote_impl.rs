@@ -11,7 +11,7 @@ use ondo_remote::*;
 use super::my_server::MyServer; // request and response messages
 
 #[tonic::async_trait]
-impl ondo_remote_server::OndoRemote for MyServer<'static> {
+impl ondo_remote_server::OndoRemote for MyServer {
     type TransactionStreamStream = Pin<
         Box<dyn Stream<Item = Result<TransactionResponse, tonic::Status>> + Send + Sync + 'static>,
     >;

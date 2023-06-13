@@ -3,7 +3,7 @@ use super::db_error_to_status::DbErrorToStatus;
 use super::lockable_db::transaction_maker::TransactionMaker;
 use super::source_sink::effects_sink::EffectsSink;
 use super::table_server_trait::TableServerTrait;
-use crate::db::enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum;
+use crate::db::reference::requests::TableStoredIteratorRequests;
 use crate::db::{
     entity::{table::Table, OndoKey, TableValue},
     reference::{
@@ -139,11 +139,9 @@ impl<'a> TableServerTrait for TransactionMaker<'a> {
         &self,
         r: Request<TableReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let factory_enum_db_arc = TableStoredIteratorRequestsFactoryEnum::new_lockable_db(self);
-        let table_stored_iterator_requests_enum = factory_enum_db_arc
-            .create_read_locked_requests()
-            .map_db_err_to_status()?;
-        let table_stored_iterator_requests = table_stored_iterator_requests_enum.as_trait();
+        let guard = self.read();
+        let db = guard.inner();
+        let table_stored_iterator_requests: &dyn TableStoredIteratorRequests<'_> = &db;
         let reference: TableReference = r.get_ref().into();
         let iterator = reference
             .all_values(table_stored_iterator_requests)
@@ -159,12 +157,13 @@ impl<'a> TableServerTrait for TransactionMaker<'a> {
         &self,
         r: Request<TableValueReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let db_wrapper = self.read();
+        let guard = self.read();
+        let db = guard.inner();
         let value_reference: TableValueReference = r.get_ref().into();
         let reference = value_reference.table_reference;
         let key_prefix = value_reference.id; // Assuming 'id' is the key_prefix field in TableValueReference
         let iterator = reference
-            .all_values_with_key_prefix(key_prefix, &db_wrapper)
+            .all_values_with_key_prefix(key_prefix, &db)
             .map_db_err_to_status()?;
         let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
         let values = values_result.map_db_err_to_status()?;
@@ -177,13 +176,14 @@ impl<'a> TableServerTrait for TransactionMaker<'a> {
         &self,
         r: Request<TableIdRangeReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let db_wrapper = self.read();
+        let guard = self.read();
+        let db = guard.inner();
         let range_reference: TableIdRangeReference = r.get_ref().into();
         let reference = range_reference.table_reference;
         let start_key = range_reference.start_key;
         let end_key = range_reference.end_key;
         let iterator = reference
-            .all_values_with_key_range(start_key, end_key, &db_wrapper)
+            .all_values_with_key_range(start_key, end_key, &db) 
             .map_db_err_to_status()?;
         let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
         let values = values_result.map_db_err_to_status()?;

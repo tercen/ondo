@@ -1,9 +1,9 @@
 //index_reference.rs
 //TODO: validate index name
 use crate::db::enums::index_iterator_requests_factory::IndexIteratorRequestsFactoryEnum;
+use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 use crate::db::{
     entity::{Index, OndoKey, TableValue},
-    enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum,
     reference::{
         requests::{IndexIteratorRequests, TableStoredRequests, TableValueRequests},
         table_reference::stored::TableStoredReferenceTrait,
@@ -22,13 +22,13 @@ pub(crate) trait IndexReferenceTrait {
         &self,
         index: &Index,
         parent_requests: &dyn TableStoredRequests,
-        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
+        table_stored_iterator_requests_factory: &TransactionMaker,
     ) -> DbResult<Effects>;
     fn post_index<'a>(
         &self,
         index: &Index,
         parent_requests: &dyn TableStoredRequests,
-        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
+        table_stored_iterator_requests_factory: &TransactionMaker,
     ) -> DbResult<Effects>;
     fn delete_index(&self, parent_requests: &dyn TableStoredRequests) -> DbResult<Effects>;
 
@@ -156,7 +156,7 @@ impl IndexReferenceTrait for IndexReference {
         &self,
         index: &Index,
         parent_requests: &dyn TableStoredRequests,
-        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
+        table_stored_iterator_requests_factory: &TransactionMaker,
     ) -> DbResult<Effects> {
         let table_stored_opt = self.table_reference.get_table_stored(parent_requests)?;
         let mut table_stored = table_stored_opt.ok_or(DbError::TableNotInitialized)?;
@@ -180,7 +180,7 @@ impl IndexReferenceTrait for IndexReference {
         &self,
         index: &Index,
         parent_requests: &dyn TableStoredRequests,
-        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
+        table_stored_iterator_requests_factory: &TransactionMaker,
     ) -> DbResult<Effects> {
         let table_stored_opt = self.table_reference.get_table_stored(parent_requests)?;
         let mut table_stored = table_stored_opt.ok_or(DbError::TableNotInitialized)?;
@@ -397,6 +397,8 @@ mod tests {
     }
 
     mod index_reference_trait_tests {
+        use crate::db::server::lockable_db::LockableDb;
+
         use super::*;
         #[test]
         fn test_get_index() {
@@ -431,7 +433,7 @@ mod tests {
         #[test]
         fn test_put_index() {
             let mut parent_mock = MockTableStoredTestRequests::new();
-            let iterator_mock_factory = TableStoredIteratorRequestsFactoryEnum::new_mock();
+            let iterator_mock_factory = TransactionMaker::new(LockableDb::in_memory());
             let index_reference =
                 IndexReference::build("sample_domain", "sample_table", "sample_index");
             let index = create_index();
@@ -479,7 +481,7 @@ mod tests {
         #[test]
         fn test_put_index_failure() {
             let mut parent_mock = MockTableStoredTestRequests::new();
-            let iterator_mock_factory = TableStoredIteratorRequestsFactoryEnum::new_mock();
+            let iterator_mock_factory = TransactionMaker::new(LockableDb::in_memory());
             let index_reference =
                 IndexReference::build("sample_domain", "sample_table", "sample_index");
             let index = create_index();
@@ -496,7 +498,7 @@ mod tests {
         #[test]
         fn test_post_index() {
             let mut parent_mock = MockTableStoredTestRequests::new();
-            let iterator_mock_factory = TableStoredIteratorRequestsFactoryEnum::new_mock();
+            let iterator_mock_factory = TransactionMaker::new(LockableDb::in_memory());
 
             let index_reference =
                 IndexReference::build("sample_domain", "sample_table", "sample_index");
@@ -554,7 +556,7 @@ mod tests {
         #[test]
         fn test_post_index_failure() {
             let mut parent_mock = MockTableStoredTestRequests::new();
-            let iterator_mock_factory = TableStoredIteratorRequestsFactoryEnum::new_mock();
+            let iterator_mock_factory = TransactionMaker::new(LockableDb::in_memory());
             let index_reference =
                 IndexReference::build("sample_domain", "sample_table", "sample_index");
             let index = create_index();

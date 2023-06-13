@@ -5,7 +5,6 @@ use super::{
     lockable_db::transaction_maker::TransactionMaker,
     source_sink::effects_sink::EffectsSink,
 };
-use crate::db::enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum;
 use crate::db::{
     entity::{index::Index, OndoKey, TableValue},
     reference::{IndexReference, IndexReferenceTrait},
@@ -85,11 +84,10 @@ impl<'a> Into<IndexedValueRangeReference> for &'a IndexedValueRangeReferenceMess
 // index_server_trait_impl.rs continued continued
 impl<'a> IndexServerTrait for TransactionMaker<'a> {
     fn create_index(&self, r: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status> {
-        let factory_enum_lockable_db = TableStoredIteratorRequestsFactoryEnum::new_lockable_db(self);
         let entity: Index = r.get_ref().into();
         entity
             .reference
-            .post_index(&entity, self, &factory_enum_lockable_db)
+            .post_index(&entity, self, self)
             .map_db_err_to_status()?
             .apply_effects(self)
     }
@@ -117,11 +115,10 @@ impl<'a> IndexServerTrait for TransactionMaker<'a> {
     }
 
     fn update_index(&self, r: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status> {
-        let factory_enum_lockable_db = TableStoredIteratorRequestsFactoryEnum::new_lockable_db(self);
         let entity: Index = r.get_ref().into();
         entity
             .reference
-            .put_index(&entity, self, &factory_enum_lockable_db)
+            .put_index(&entity, self, self)
             .map_db_err_to_status()?
             .apply_effects(self)
     }
@@ -174,7 +171,7 @@ impl<'a> IndexServerTrait for TransactionMaker<'a> {
 #[cfg(test)]
 mod tests {
     use crate::db::entity::{table::Table, table_value::TableValue, DatabaseServer, Domain, Index, ondo_key::OndoKey};
-    use crate::db::enums::{table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum, index_iterator_requests_factory::IndexIteratorRequestsFactoryEnum};
+    use crate::db::enums::{index_iterator_requests_factory::IndexIteratorRequestsFactoryEnum};
         use crate::db::reference::Effects;
     use crate::db::reference::{
         CreateTableValueReference, CreateTableValueReferenceTrait, DatabaseServerReference,
@@ -298,10 +295,9 @@ mod tests {
     
         let index = create_index_entity(&test_data.table_reference);
         let index_reference = &index.reference;
-        let factory_enum_lockable_db = TableStoredIteratorRequestsFactoryEnum::new_lockable_db(ra);
     
         let index_effects = index_reference
-            .post_index(&index, ra, &factory_enum_lockable_db)
+            .post_index(&index, ra, ra)
             .unwrap();
         index_effects.apply_effects(ra).unwrap();
     

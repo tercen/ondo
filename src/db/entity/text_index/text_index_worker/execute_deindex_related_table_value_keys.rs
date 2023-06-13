@@ -9,10 +9,11 @@ impl<'a> TextIndexWorker<'a> {
     pub(crate) fn execute_deindex_related_table_value_keys(&self) -> Result<(), String> {
         let table_reference = &self.text_index.reference.table_reference;
         let transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
-        let db_read_lock = transaction_maker.read();
+        let guard = transaction_maker.read();
+        let db = guard.inner();
 
         let all_values_iterator = table_reference
-            .all_values(&db_read_lock)
+            .all_values(&db) 
             .map_err(|e| e.to_string())?;
 
         let mut writer = self
