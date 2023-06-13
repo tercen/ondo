@@ -293,8 +293,9 @@ impl IndexReferenceTrait for IndexReference {
         index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
     ) -> DbResult<Vec<DbResult<TableValue>>> {
         let index_iterator_requests_enum =
-            index_iterator_requests_factory.create_read_locked_requests()?;
-        let index_iterator_requests = index_iterator_requests_enum.as_trait();
+            index_iterator_requests_factory.guard()?;
+        let transaction_or_db = index_iterator_requests_enum.get_transaction_or_db();
+        let index_iterator_requests: &dyn IndexIteratorRequests = &transaction_or_db;
 
         let iterator = self.all_values_with_key_prefix(
             key_prefix,
@@ -310,8 +311,9 @@ impl IndexReferenceTrait for IndexReference {
         index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
     ) -> DbResult<Vec<DbResult<OndoKey>>> {
         let index_iterator_requests_enum =
-            index_iterator_requests_factory.create_read_locked_requests()?;
-        let index_iterator_requests = index_iterator_requests_enum.as_trait();
+            index_iterator_requests_factory.guard()?;
+        let transaction_or_db = index_iterator_requests_enum.get_transaction_or_db();
+        let index_iterator_requests: &dyn IndexIteratorRequests = &transaction_or_db;
 
         let iterator =
             self.all_index_values_with_key_prefix(key_prefix, index_iterator_requests)?;
@@ -326,8 +328,9 @@ impl IndexReferenceTrait for IndexReference {
         index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
     ) -> DbResult<Vec<DbResult<TableValue>>> {
         let index_iterator_requests_enum =
-            index_iterator_requests_factory.create_read_locked_requests()?;
-        let index_iterator_requests = index_iterator_requests_enum.as_trait();
+            index_iterator_requests_factory.guard()?;
+        let transaction_or_db = index_iterator_requests_enum.get_transaction_or_db();
+        let index_iterator_requests: &dyn IndexIteratorRequests = &transaction_or_db;
 
         let iterator = self.all_values_with_key_range(
             start_key_prefix,
@@ -345,8 +348,9 @@ impl IndexReferenceTrait for IndexReference {
         index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
     ) -> DbResult<Vec<DbResult<OndoKey>>> {
         let index_iterator_requests_enum =
-            index_iterator_requests_factory.create_read_locked_requests()?;
-        let index_iterator_requests = index_iterator_requests_enum.as_trait();
+            index_iterator_requests_factory.guard()?;
+        let transaction_or_db = index_iterator_requests_enum.get_transaction_or_db();
+        let index_iterator_requests: &dyn IndexIteratorRequests = &transaction_or_db;
 
         let iterator = self.all_index_values_with_key_range(
             start_key_prefix,

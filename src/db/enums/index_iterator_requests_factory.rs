@@ -1,4 +1,5 @@
 use crate::db::reference::requests::IndexIteratorRequests;
+use crate::db::server::lockable_db::transaction_or_db::TransactionOrDb;
 use crate::db::server::lockable_db::transaction_or_db_guard::TransactionOrDbReadGuard;
 use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 use crate::db::DbResult;
@@ -14,15 +15,14 @@ impl<'a> IndexIteratorRequestsFactoryEnum<'a> {
         IndexIteratorRequestsFactoryEnum::LockableDb(the_clone)
     }
 
-    pub(crate) fn new_mock() -> Self {
-        IndexIteratorRequestsFactoryEnum::Mock
-    }
+    // pub(crate) fn new_mock() -> Self {
+    //     IndexIteratorRequestsFactoryEnum::Mock
+    // }
 
-    pub(crate) fn create_read_locked_requests(&'a self) -> DbResult<IndexIteratorRequestsEnum<'a>> {
+    pub(crate) fn guard<'b>(&'b self) -> DbResult<IndexIteratorRequestsGuard<'a>> {
         match self {
             IndexIteratorRequestsFactoryEnum::LockableDb(lockable_db) => {
-                let db_wrapper = lockable_db.read();
-                Ok(IndexIteratorRequestsEnum::DbWrapper(db_wrapper))
+                Ok(IndexIteratorRequestsGuard::DbWrapper(lockable_db.read()))
             }
             IndexIteratorRequestsFactoryEnum::Mock => {
                 todo!()
@@ -31,16 +31,19 @@ impl<'a> IndexIteratorRequestsFactoryEnum<'a> {
     }
 }
 
-pub(crate) enum IndexIteratorRequestsEnum<'a> {
+pub(crate) enum IndexIteratorRequestsGuard<'a> {
     DbWrapper(TransactionOrDbReadGuard<'a>),
     MockWrapper, // todo!: Replace with the actual mock type when it's available
 }
 
-impl<'a> IndexIteratorRequestsEnum<'a> {
-    pub(crate) fn as_trait(&'a self) -> &'a dyn IndexIteratorRequests<'a> {
+impl<'a> IndexIteratorRequestsGuard<'a> {
+    pub(crate) fn get_transaction_or_db<'b>(&'b self) -> TransactionOrDb<'b> {
         match self {
-            IndexIteratorRequestsEnum::DbWrapper(db_wrapper) => db_wrapper,
-            IndexIteratorRequestsEnum::MockWrapper => {
+            IndexIteratorRequestsGuard::DbWrapper(guard) => {
+                let db = guard.inner();
+                db
+            },
+            IndexIteratorRequestsGuard::MockWrapper => {
                 todo!()
             }
         }
