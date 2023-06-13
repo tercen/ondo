@@ -27,14 +27,13 @@ pub(crate) struct DbData {
     pub db_path: String,
 }
 
-//FIXME: Drop for DbArc should be Drop for DbData
-impl<'a> Drop for DbArc {
-    fn drop(&mut self) {
-        // Dropping `temp_dir` before `transaction_or_db`
-        if let Some(temp_dir) = self.db_lock.temp_dir.take() {
-            // Dropping `temp_dir`
-            drop(temp_dir);
-        }
-        // Dropping `transaction_or_db` implicitly
-    }
-}
+// impl<'a> Drop for DbData {
+//     fn drop(&mut self) {
+//         // Dropping `db` before `temp_dir`
+//         // if let Some(db) = self.db.take() {
+//             // Dropping `db`
+//             drop(self.db);
+//         // }
+//         // Dropping `temp_dir` implicitly
+//     }
+// }
