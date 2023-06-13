@@ -1,3 +1,4 @@
+use super::db_read_lock_guard_wrapper::DbReadLockGuardWrapper;
 //transaction_or_db_holder.rs
 use super::reentrant_mutex_guard_wrapper::ReentrantMutexGuardWrapper;
 use super::transaction_or_db_guard::TransactionOrDbReadGuard;
@@ -13,6 +14,7 @@ use std::sync::Arc;
 pub(crate) struct TransactionMaker<'a> {
     transaction: Option<Arc<ReentrantMutex<Transaction<'a, TransactionDB>>>>,
     lockable_db: LockableDb,
+    db_guard: Option<DbReadLockGuardWrapper<'a, TransactionDB>> //FIXME sometimes we have write lock
 }
 
 impl<'a> TransactionMaker<'a> {
@@ -23,13 +25,14 @@ impl<'a> TransactionMaker<'a> {
         TransactionMaker {
             transaction: None,
             lockable_db,
+            db_guard: None
         }
     }
 
     pub fn create_transaction(&mut self) {
         if self.transaction.is_none() {
-            let lockable_db = self.lockable_db.read();
-            let transaction = lockable_db.transaction();
+            self.db_guard = Some(self.lockable_db.read());
+            let transaction = self.guard.transaction();
             self.transaction = Some(Arc::new(ReentrantMutex::new(transaction)));
         }
     }
