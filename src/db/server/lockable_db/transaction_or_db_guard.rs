@@ -25,7 +25,7 @@ pub(crate) enum TransactionOrDbReadGuard<'a> {
 }
 
 impl<'a> TransactionOrDbReadGuard<'a> {
-    pub(crate) fn inner(&'a self) -> TransactionOrDb<'a> {
+    pub(crate) fn inner<'b>(&'b self) -> TransactionOrDb<'b> {
         match self {
             TransactionOrDbReadGuard::TransactionRead(guard, db_guard) => {
                 TransactionOrDb::Transaction(guard.deref(), db_guard.deref())
@@ -33,6 +33,15 @@ impl<'a> TransactionOrDbReadGuard<'a> {
             TransactionOrDbReadGuard::DbRead(guard) => TransactionOrDb::Db(guard.deref()),
         }
     }
+    pub(crate) fn inner_older(&'a self) -> TransactionOrDb<'a> {
+        match self {
+            TransactionOrDbReadGuard::TransactionRead(guard, db_guard) => {
+                TransactionOrDb::Transaction(guard.deref(), db_guard.deref())
+            }
+            TransactionOrDbReadGuard::DbRead(guard) => TransactionOrDb::Db(guard.deref()),
+        }
+    }
+
 }
 
 type PreferredTransactionWriteLockGuardWrapper<'a> =
@@ -57,7 +66,7 @@ impl<'a> TransactionOrDbWriteGuard<'a> {
             TransactionOrDbWriteGuard::DbWrite(guard) => TransactionOrDb::Db(guard.deref()),
         }
     }
-    pub(crate) fn inner_mut(&'a mut self) -> MutTransactionOrDb<'a> {
+    pub(crate) fn inner_mut<'b>(&'b mut self) -> MutTransactionOrDb<'b> {
         match self {
             TransactionOrDbWriteGuard::TransactionWrite(guard, db_guard) => {
                 MutTransactionOrDb::Transaction

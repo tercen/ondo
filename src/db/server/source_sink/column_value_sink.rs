@@ -6,7 +6,7 @@ use crate::db::DbError;
 use serde_json::Value;
 
 pub(super) fn apply_effect(
-    ra: &TransactionMaker,
+    ra: & TransactionMaker,
     effect: &ColumnValueEffect,
 ) -> Result<(), DbError> {
     let db_guard = ra.read();
