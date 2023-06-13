@@ -33,12 +33,13 @@ docker build --target release \
 - [ ] Feature: Transaction API
     - [x] Add getWithLock operation
     - [x] Check: Transactions are using reentrant mutex
-    - [ ] 
-    - [ ] Check: Transaction stream is using transactions 
-    - [ ] Check: Meta operations exclude all other operations (RWLock) 
+    - [ ] TransactionMaker has to be created within a client stream.
+      - [ ] Check: Meta operations exclude all other operations (RWLock) 
     - [ ] Make meta ops atomic 1
+    - [ ] Async server methods has to put a status on the client stream
+    - [ ] Check: Transaction stream is using transactions 
     - [ ] 
-    - [ ] Transactions should not have query iterators (No just use an iterator enum) 
+    - [x] Transactions should not have query iterators (No just use an iterator enum) 
     - [ ] 
     - [ ] Startup: Start Queue Manager
     - [ ] UMUR departs here...
