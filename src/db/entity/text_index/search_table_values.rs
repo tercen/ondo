@@ -13,11 +13,11 @@ use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 
 impl TextIndex {
     pub(crate) fn search_vec<'a>(
-        &self,
-        query_string: &str,
+        &'a self,
+        query_string: &'a str,
         page_size: Option<usize>,
         page_number: Option<usize>,
-        lockable_db: &TransactionMaker<'a>,
+        lockable_db: &'a TransactionMaker<'a>,
     ) -> Result<Vec<TableValue>, DbError> {
         self.search_iterator(query_string, page_size, page_number, lockable_db)
             .map(|results| results.collect())
