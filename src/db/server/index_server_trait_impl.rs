@@ -130,12 +130,15 @@ impl<'a> IndexServerTrait for TransactionMaker<'a> {
         &self,
         r: Request<IndexedValueReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let db_wrapper = self.read();
+        let guard = self.read();
         let indexed_value_reference: IndexedValueReference = r.get_ref().into();
         let reference = indexed_value_reference.index_reference;
         let key_prefix = indexed_value_reference.key;
+
+        let db = guard.inner();
+        
         let iterator = reference
-            .all_values_with_key_prefix(key_prefix, self, &db_wrapper)
+            .all_values_with_key_prefix(key_prefix, self, &db)
             .map_db_err_to_status()?;
         let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
         let values = values_result.map_db_err_to_status()?;
@@ -148,13 +151,16 @@ impl<'a> IndexServerTrait for TransactionMaker<'a> {
         &self,
         r: Request<IndexedValueRangeReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let db_wrapper =self.read();
+        let guard =self.read();
         let indexed_value_range_reference: IndexedValueRangeReference = r.get_ref().into();
         let reference = indexed_value_range_reference.index_reference;
         let start_key_prefix = indexed_value_range_reference.start_key;
         let end_key_prefix = indexed_value_range_reference.end_key;
+
+        let db = guard.inner();
+
         let iterator = reference
-            .all_values_with_key_range(start_key_prefix, end_key_prefix, self, &db_wrapper)
+            .all_values_with_key_range(start_key_prefix, end_key_prefix, self, &db)
             .map_db_err_to_status()?;
         let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
         let values = values_result.map_db_err_to_status()?;
