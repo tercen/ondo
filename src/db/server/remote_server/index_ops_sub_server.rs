@@ -1,4 +1,3 @@
-use super::send_response::send_response;
 use crate::db::server::index_server_trait::IndexServerTrait;
 use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::ondo_remote::{
@@ -12,32 +11,24 @@ pub(crate) struct IndexOpsSubServer<'a> {
 }
 
 impl<'a> IndexOpsSubServer<'a> {
-    pub async fn process_request(
+    pub fn process_request(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         request: RequestType,
-    ) {
+    ) -> ResponseType {
         match request {
-            RequestType::CreateRequest(create_request) => {
-                self.create_index(tx, create_request).await;
-            }
-            RequestType::DeleteRequest(delete_request) => {
-                self.delete_index(tx, delete_request).await;
-            }
-            RequestType::GetRequest(get_request) => {
-                self.get_index(tx, get_request).await;
-            }
-            RequestType::UpdateRequest(update_request) => {
-                self.update_index(tx, update_request).await;
-            }
+            RequestType::CreateRequest(create_request) => self.create_index(tx, create_request),
+            RequestType::DeleteRequest(delete_request) => self.delete_index(tx, delete_request),
+            RequestType::GetRequest(get_request) => self.get_index(tx, get_request),
+            RequestType::UpdateRequest(update_request) => self.update_index(tx, update_request),
         }
     }
 
-    async fn create_index(
+    fn create_index(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         create_request: IndexMessage,
-    ) {
+    ) -> ResponseType {
         let result = self
             .lockable_db
             .create_index(tonic::Request::new(create_request));
@@ -45,14 +36,14 @@ impl<'a> IndexOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type);
+        response_type
     }
 
-    async fn delete_index(
+    fn delete_index(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         delete_request: IndexReferenceMessage,
-    ) {
+    ) -> ResponseType {
         let result = self
             .lockable_db
             .delete_index(tonic::Request::new(delete_request));
@@ -60,27 +51,27 @@ impl<'a> IndexOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type);
+        response_type
     }
 
-    async fn get_index(
+    fn get_index(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         get_request: IndexReferenceMessage,
-    ) {
+    ) -> ResponseType {
         let result = self.lockable_db.get_index(tonic::Request::new(get_request));
         let response_type = match result {
             Ok(response) => ResponseType::IndexMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type);
+        response_type
     }
 
-    async fn update_index(
+    fn update_index(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         update_request: IndexMessage,
-    ) {
+    ) -> ResponseType {
         let result = self
             .lockable_db
             .update_index(tonic::Request::new(update_request));
@@ -88,6 +79,6 @@ impl<'a> IndexOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type);
+        response_type
     }
 }

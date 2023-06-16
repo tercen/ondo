@@ -1,4 +1,3 @@
-use super::send_response::send_response;
 use crate::db::server::index_server_trait::IndexServerTrait;
 use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::ondo_remote::{
@@ -16,22 +15,20 @@ impl<'a> IndexedValueOpsSubServer<'a> {
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         request: RequestType,
-    ) {
+    ) -> ResponseType {
         match request {
-            RequestType::FindValues(get_request) => {
-                self.find_values(tx, get_request);
-            }
+            RequestType::FindValues(get_request) => self.find_values(tx, get_request),
             RequestType::FindValuesByRange(list_request) => {
-                self.find_values_by_range(tx, list_request);
+                self.find_values_by_range(tx, list_request)
             }
         }
     }
 
-    async fn find_values(
+    fn find_values(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         get_request: IndexedValueReferenceMessage,
-    ) {
+    ) -> ResponseType {
         let result = self
             .lockable_db
             .find_values(tonic::Request::new(get_request));
@@ -39,14 +36,14 @@ impl<'a> IndexedValueOpsSubServer<'a> {
             Ok(response) => ResponseType::JsonMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type);
+        response_type
     }
 
-     fn find_values_by_range(
+    fn find_values_by_range(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         list_request: IndexedValueRangeReferenceMessage,
-    ) {
+    ) -> ResponseType {
         let result = self
             .lockable_db
             .find_values_by_range(tonic::Request::new(list_request));
@@ -54,6 +51,6 @@ impl<'a> IndexedValueOpsSubServer<'a> {
             Ok(response) => ResponseType::JsonMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type);
+        response_type
     }
 }

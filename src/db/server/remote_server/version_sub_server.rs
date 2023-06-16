@@ -1,4 +1,3 @@
-use super::send_response::send_response;
 use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::server::lockable_db::version::Version;
 use crate::ondo_remote::{
@@ -15,10 +14,10 @@ impl<'a> VersionSubServer<'a> {
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         _request: EmptyMessage,
-    ) {
+    ) -> ResponseType {
         let version = self.lockable_db.get_version();
         let response_type = ResponseType::VersionResponse(version.into());
-        send_response(tx, response_type);
+        response_type
     }
 }
 

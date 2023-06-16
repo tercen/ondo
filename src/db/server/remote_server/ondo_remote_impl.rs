@@ -5,8 +5,9 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tokio_stream::StreamExt;
 
-use crate::db::server::lockable_db::LOCKABLE_DB;
+use super::send_response::send_response;
 use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::LOCKABLE_DB;
 use crate::ondo_remote;
 use ondo_remote::*;
 
@@ -44,35 +45,35 @@ impl ondo_remote_server::OndoRemote for MyServer {
                             Some(transaction_request::RequestType::TableValueOps(
                                 table_value_ops,
                             )) => {
-                                my_server_clone
+                                let response_type = my_server_clone
                                     .table_value_ops_sub_server(lockable_transaction.clone())
                                     .process_request(
                                         tx.clone(),
                                         table_value_ops.request_type.unwrap(),
-                                    )
-                                    ;
+                                    );
+                                send_response(tx.clone(), response_type);
                             }
                             Some(transaction_request::RequestType::IndexedValueOps(
                                 indexed_value_ops,
                             )) => {
-                                my_server_clone
+                                let response_type = my_server_clone
                                     .indexed_value_ops_sub_server(lockable_transaction.clone())
                                     .process_request(
                                         tx.clone(),
                                         indexed_value_ops.request_type.unwrap(),
-                                    )
-                                    ;
+                                    );
+                                send_response(tx.clone(), response_type);
                             }
                             Some(transaction_request::RequestType::KeyPrefixOps(
                                 key_prefix_ops,
                             )) => {
-                                my_server_clone
+                                let response_type = my_server_clone
                                     .key_prefix_ops_sub_server(lockable_transaction.clone())
                                     .process_request(
                                         tx.clone(),
                                         key_prefix_ops.request_type.unwrap(),
-                                    )
-                                    ;
+                                    );
+                                send_response(tx.clone(), response_type);
                             }
                             None => {
                                 // You could return an error here if you want
@@ -114,35 +115,35 @@ impl ondo_remote_server::OndoRemote for MyServer {
                             Some(transaction_request::RequestType::TableValueOps(
                                 table_value_ops,
                             )) => {
-                                my_server_clone
+                                let response_type = my_server_clone
                                     .table_value_ops_sub_server(lockable_db.clone())
                                     .process_request(
                                         tx.clone(),
                                         table_value_ops.request_type.unwrap(),
-                                    )
-                                    ;
+                                    );
+                                send_response(tx.clone(), response_type);
                             }
                             Some(transaction_request::RequestType::IndexedValueOps(
                                 indexed_value_ops,
                             )) => {
-                                my_server_clone
+                                let response_type = my_server_clone
                                     .indexed_value_ops_sub_server(lockable_db.clone())
                                     .process_request(
                                         tx.clone(),
                                         indexed_value_ops.request_type.unwrap(),
-                                    )
-                                    ;
+                                    );
+                                send_response(tx.clone(), response_type);
                             }
                             Some(transaction_request::RequestType::KeyPrefixOps(
                                 key_prefix_ops,
                             )) => {
-                                my_server_clone
+                                let response_type = my_server_clone
                                     .key_prefix_ops_sub_server(lockable_db.clone())
                                     .process_request(
                                         tx.clone(),
                                         key_prefix_ops.request_type.unwrap(),
-                                    )
-                                    ;
+                                    );
+                                send_response(tx.clone(), response_type);
                             }
                             None => {
                                 // You could return an error here if you want
@@ -183,48 +184,48 @@ impl ondo_remote_server::OndoRemote for MyServer {
                     Ok(meta_request) => {
                         match meta_request.request_type {
                             Some(meta_request::RequestType::VersionRequest(version_request)) => {
-                                my_server_clone
+                                let response_type = my_server_clone
                                     .version_sub_server(lockable_db.clone())
-                                    .process_request(tx.clone(), version_request)
-                                    ;
+                                    .process_request(tx.clone(), version_request);
+                                send_response(tx.clone(), response_type);
                             }
                             Some(meta_request::RequestType::DatabaseServerOps(
                                 database_server_ops,
                             )) => {
-                                my_server_clone
+                                let response_type = my_server_clone
                                     .database_server_ops_sub_server(lockable_db.clone())
                                     .process_request(
                                         tx.clone(),
                                         database_server_ops.request_type.unwrap(),
-                                    )
-                                    ;
+                                    );
+                                send_response(tx.clone(), response_type);
                             }
                             Some(meta_request::RequestType::DomainOps(domain_ops)) => {
-                                my_server_clone
+                                let response_type = my_server_clone
                                     .domain_ops_sub_server(lockable_db.clone())
-                                    .process_request(tx.clone(), domain_ops.request_type.unwrap())
-                                    ;
+                                    .process_request(tx.clone(), domain_ops.request_type.unwrap());
+                                send_response(tx.clone(), response_type);
                             }
                             Some(meta_request::RequestType::TableOps(table_ops)) => {
-                                my_server_clone
+                                let response_type = my_server_clone
                                     .table_ops_sub_server(lockable_db.clone())
-                                    .process_request(tx.clone(), table_ops.request_type.unwrap())
-                                    ;
+                                    .process_request(tx.clone(), table_ops.request_type.unwrap());
+                                send_response(tx.clone(), response_type);
                             }
                             Some(meta_request::RequestType::IndexOps(index_ops)) => {
-                                my_server_clone
+                                let response_type = my_server_clone
                                     .index_ops_sub_server(lockable_db.clone())
-                                    .process_request(tx.clone(), index_ops.request_type.unwrap())
-                                    ;
+                                    .process_request(tx.clone(), index_ops.request_type.unwrap());
+                                send_response(tx.clone(), response_type);
                             }
                             Some(meta_request::RequestType::TextIndexOps(text_index_ops)) => {
-                                my_server_clone
+                                let response_type = my_server_clone
                                     .text_index_ops_sub_server(lockable_db.clone())
                                     .process_request(
                                         tx.clone(),
                                         text_index_ops.request_type.unwrap(),
-                                    )
-                                    ;
+                                    );
+                                send_response(tx.clone(), response_type);
                             }
                             None => {
                                 // You could return an error here if you want
