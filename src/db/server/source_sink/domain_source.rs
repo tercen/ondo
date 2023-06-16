@@ -2,11 +2,11 @@ use crate::db::db_error::{DbError, DbResult};
 use crate::db::entity::DomainStored;
 use crate::db::reference::requests::DomainStoredRequests;
 use crate::db::reference::DomainName;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::server::source_sink::ondo_serializer::OndoSerializer;
 use crate::db::DbError::CfNotFound;
 
-impl<'a> DomainStoredRequests for TransactionMaker<'a> {
+impl<'a> DomainStoredRequests for LockableTransactionOrDb<'a> {
     fn get_domain_stored(&self, cf_name: &str, key: &DomainName) -> DbResult<Option<DomainStored>> {
         let db_guard = self.read();
         let db = db_guard.inner();

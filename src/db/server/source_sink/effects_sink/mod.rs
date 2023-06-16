@@ -2,7 +2,7 @@ mod apply_effects;
 mod queue_tasks;
 
 use crate::db::reference::effect::Effects;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::tasks::task::Tasks;
 use crate::ondo_remote::EmptyMessage;
 use tonic::{Response, Status};
@@ -10,18 +10,18 @@ use tonic::{Response, Status};
 pub(in crate::db::server) trait EffectsTasksSink {
     fn apply_effects_queue_tasks(
         &self,
-        ra: &TransactionMaker,
+        ra: &LockableTransactionOrDb,
     ) -> Result<Response<EmptyMessage>, Status>;
     fn apply_effects_apply_tasks(
         &self,
-        ra: &TransactionMaker,
+        ra: &LockableTransactionOrDb,
     ) -> Result<Response<EmptyMessage>, Status>;
 }
 
 impl EffectsTasksSink for (Effects, Tasks) {
     fn apply_effects_queue_tasks(
         &self,
-        ra: &TransactionMaker,
+        ra: &LockableTransactionOrDb,
     ) -> Result<Response<EmptyMessage>, Status> {
         let (effects, tasks) = self;
         apply_effects::apply_effects(ra, effects)?;
@@ -30,7 +30,7 @@ impl EffectsTasksSink for (Effects, Tasks) {
     }
     fn apply_effects_apply_tasks(
         &self,
-        ra: &TransactionMaker,
+        ra: &LockableTransactionOrDb,
     ) -> Result<Response<EmptyMessage>, Status> {
         let (effects, tasks) = self;
         apply_effects::apply_effects(ra, effects)?;
@@ -40,11 +40,11 @@ impl EffectsTasksSink for (Effects, Tasks) {
 }
 
 pub(in crate::db::server) trait EffectsSink {
-    fn apply_effects(&self, ra: &TransactionMaker) -> Result<Response<EmptyMessage>, Status>;
+    fn apply_effects(&self, ra: &LockableTransactionOrDb) -> Result<Response<EmptyMessage>, Status>;
 }
 
 impl EffectsSink for Effects {
-    fn apply_effects(&self, ra: &TransactionMaker) -> Result<Response<EmptyMessage>, Status> {
+    fn apply_effects(&self, ra: &LockableTransactionOrDb) -> Result<Response<EmptyMessage>, Status> {
         apply_effects::apply_effects(ra, self)
     }
 }

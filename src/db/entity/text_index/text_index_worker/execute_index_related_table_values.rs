@@ -1,18 +1,20 @@
 // text_index_worker/execute_index_related_table_values.rs
 use super::TextIndexWorker;
 use crate::db::reference::table_reference::TableReferenceTrait;
-use crate::db::server::lockable_db::{LOCKABLE_DB, transaction_maker::TransactionMaker};
+use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::{transaction_maker::LockableTransactionOrDb, LOCKABLE_DB};
 
 impl<'a> TextIndexWorker<'a> {
     pub(crate) fn execute_index_related_table_values(&self) -> Result<(), String> {
         let table_reference = &self.text_index.reference.table_reference;
-        let transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
-        let guard = transaction_maker.read();
+
+        let mut transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
+        let lockable_db = transaction_maker.lockable_db();
+
+        let guard = lockable_db.read();
         let db = guard.inner();
 
-        let all_values_iterator = table_reference
-            .all_values(&db)
-            .map_err(|e| e.to_string())?;
+        let all_values_iterator = table_reference.all_values(&db).map_err(|e| e.to_string())?;
 
         let mut writer = self
             .tantivy_index

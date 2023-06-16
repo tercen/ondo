@@ -7,13 +7,13 @@ use crate::db::entity::TableValue;
 use crate::db::reference::requests::TableStoredIteratorRequests;
 use crate::db::reference::requests::TableStoredRequests;
 use crate::db::reference::TableName;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::server::lockable_db::transaction_or_db::TransactionOrDb;
 use crate::db::server::source_sink::ondo_serializer::OndoSerializer;
 use crate::db::DbError::CfNotFound;
 use serde_json::Value;
 
-impl<'a> TableStoredRequests for TransactionMaker<'a> {
+impl<'a> TableStoredRequests for LockableTransactionOrDb<'a> {
     fn get_table_stored(&self, cf_name: &str, key: &TableName) -> DbResult<Option<TableStored>> {
         let db_guard = self.read();
         let db = db_guard.inner();

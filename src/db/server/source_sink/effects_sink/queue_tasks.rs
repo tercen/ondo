@@ -1,13 +1,13 @@
 use crate::db::tasks::task::Tasks;
 use log::warn;
 // use crate::db::server::db_error_to_status::DbErrorToStatus;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 // use crate::db::DbError;
 use crate::ondo_remote::EmptyMessage;
 use tonic::{Response, Status};
 
 pub(crate) fn queue_tasks(
-    ra: &TransactionMaker,
+    ra: &LockableTransactionOrDb,
     tasks: &Tasks,
 ) -> Result<Response<EmptyMessage>, Status> {
     warn!("Tasks are executed instead of queuing");
@@ -16,7 +16,7 @@ pub(crate) fn queue_tasks(
 
 pub(crate) fn apply_tasks(
     //For testing
-    _ra: &TransactionMaker,
+    _ra: &LockableTransactionOrDb,
     _tasks: &Tasks,
 ) -> Result<Response<EmptyMessage>, Status> {
     warn!("apply_tasks not implemented"); //FIXME implement apply_tasks

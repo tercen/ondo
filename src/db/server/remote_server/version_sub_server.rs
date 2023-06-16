@@ -1,5 +1,5 @@
 use super::send_response::send_response;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::server::lockable_db::version::Version;
 use crate::ondo_remote::{
     transaction_response::ResponseType, EmptyMessage, TransactionResponse, VersionResponse,
@@ -7,7 +7,7 @@ use crate::ondo_remote::{
 use tonic::Status;
 
 pub(crate) struct VersionSubServer<'a> {
-    pub lockable_db: TransactionMaker<'a>,
+    pub lockable_db: LockableTransactionOrDb<'a>,
 }
 
 impl<'a> VersionSubServer<'a> {

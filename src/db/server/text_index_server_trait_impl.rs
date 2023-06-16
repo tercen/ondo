@@ -1,7 +1,7 @@
 // text_index_server_trait_impl.rs
 use super::{
     db_error_to_status::{DbErrorOptionToStatus, DbErrorToStatus},
-    lockable_db::transaction_maker::TransactionMaker,
+    lockable_db::transaction_maker::LockableTransactionOrDb,
     source_sink::effects_sink::EffectsTasksSink,
 };
 use crate::db::{entity::TableValue, server::text_index_server_trait::TextIndexServerTrait};
@@ -65,7 +65,7 @@ impl<'a> Into<TantivyQuery> for &'a TantivyQueryMessage {
     }
 }
 
-impl<'a> TextIndexServerTrait for TransactionMaker<'a> {
+impl<'a> TextIndexServerTrait for LockableTransactionOrDb<'a> {
     fn create_text_index(
         &self,
         r: Request<TextIndexMessage>,

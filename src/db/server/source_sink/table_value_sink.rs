@@ -1,12 +1,12 @@
 use super::ondo_serializer::OndoSerializer;
 use crate::db::entity::OndoKey;
 use crate::db::reference::effect::TableValueEffect;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::DbError;
 use serde_json::Value;
 
 pub(super) fn apply_effect(
-    ra: &TransactionMaker,
+    ra: &LockableTransactionOrDb,
     effect: &TableValueEffect,
 ) -> Result<(), DbError> {
     let db_guard = ra.read();

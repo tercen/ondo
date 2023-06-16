@@ -3,13 +3,16 @@ use super::TextIndexWorker;
 use crate::db::entity::table_value::get_key_from_table_value;
 use crate::db::reference::table_reference::TableReferenceTrait;
 use crate::db::server::lockable_db::LOCKABLE_DB;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::{LockableTransactionOrDb, TransactionMaker};
 
 impl<'a> TextIndexWorker<'a> {
     pub(crate) fn execute_deindex_related_table_value_keys(&self) -> Result<(), String> {
         let table_reference = &self.text_index.reference.table_reference;
-        let transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
-        let guard = transaction_maker.read();
+
+        let mut transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
+        let lockable_db = transaction_maker.lockable_db();
+
+        let guard = lockable_db.read();
         let db = guard.inner();
 
         let all_values_iterator = table_reference

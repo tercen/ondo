@@ -1,6 +1,6 @@
 use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
-use super::lockable_db::transaction_maker::TransactionMaker;
+use super::lockable_db::transaction_maker::LockableTransactionOrDb;
 use super::source_sink::effects_sink::EffectsSink;
 use super::table_server_trait::TableServerTrait;
 use crate::db::reference::requests::TableStoredIteratorRequests;
@@ -84,7 +84,7 @@ impl<'a> Into<TableIdListReference> for &'a TableIdListReferenceMessage {
     }
 }
 
-impl<'a> TableServerTrait for TransactionMaker<'a> {
+impl<'a> TableServerTrait for LockableTransactionOrDb<'a> {
     fn create_table(&self, r: Request<TableMessage>) -> Result<Response<EmptyMessage>, Status> {
         let entity: Table = r.get_ref().into();
         entity

@@ -1,6 +1,6 @@
 use super::send_response::send_response;
 use crate::db::server::database_server_trait::DatabaseServerTrait;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::ondo_remote::{
     database_server_ops::RequestType, transaction_response::ResponseType, DatabaseServerMessage,
     DatabaseServerReferenceMessage, TransactionResponse,
@@ -8,7 +8,7 @@ use crate::ondo_remote::{
 use tonic::Status;
 
 pub(crate) struct DatabaseServerOpsSubServer<'a> {
-    pub lockable_db: TransactionMaker<'a>,
+    pub lockable_db: LockableTransactionOrDb<'a>,
 }
 
 impl<'a> DatabaseServerOpsSubServer<'a> {

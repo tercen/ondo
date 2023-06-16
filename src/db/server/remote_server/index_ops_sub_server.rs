@@ -1,6 +1,6 @@
 use super::send_response::send_response;
 use crate::db::server::index_server_trait::IndexServerTrait;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::ondo_remote::{
     index_ops::RequestType, transaction_response::ResponseType, IndexMessage,
     IndexReferenceMessage, TransactionResponse,
@@ -8,7 +8,7 @@ use crate::ondo_remote::{
 use tonic::Status;
 
 pub(crate) struct IndexOpsSubServer<'a> {
-    pub lockable_db: TransactionMaker<'a>,
+    pub lockable_db: LockableTransactionOrDb<'a>,
 }
 
 impl<'a> IndexOpsSubServer<'a> {

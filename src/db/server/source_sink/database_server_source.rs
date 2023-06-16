@@ -2,11 +2,11 @@ use crate::db::db_error::{DbError, DbResult};
 use crate::db::entity::DatabaseServerStored;
 use crate::db::reference::requests::DatabaseServerStoredRequests;
 use crate::db::reference::DatabaseServerName;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::server::source_sink::ondo_serializer::OndoSerializer;
 use crate::db::DbError::CfNotFound;
 
-impl<'a> DatabaseServerStoredRequests for TransactionMaker<'a> {
+impl<'a> DatabaseServerStoredRequests for LockableTransactionOrDb<'a> {
     fn get_database_server_stored(
         &self,
         cf_name: &str,

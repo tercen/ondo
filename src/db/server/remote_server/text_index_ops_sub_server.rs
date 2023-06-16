@@ -1,5 +1,5 @@
 use super::send_response::send_response;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::server::text_index_server_trait::TextIndexServerTrait;
 use crate::ondo_remote::{
     text_index_ops::RequestType, transaction_response::ResponseType, TantivyQueryMessage,
@@ -8,7 +8,7 @@ use crate::ondo_remote::{
 use tonic::Status;
 
 pub(crate) struct TextIndexOpsSubServer<'a> {
-    pub lockable_db: TransactionMaker<'a>,
+    pub lockable_db: LockableTransactionOrDb<'a>,
 }
 
 impl<'a> TextIndexOpsSubServer<'a> {

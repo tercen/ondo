@@ -3,11 +3,11 @@ use crate::db::db_error::{DbError, DbResult};
 use crate::db::entity::ondo_key::OndoKey;
 use crate::db::reference::requests::ColumnValueRequests;
 use crate::db::reference::ColumnValue;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::DbError::CfNotFound;
 use serde_json::Value;
 
-impl<'a> ColumnValueRequests for TransactionMaker<'a> {
+impl<'a> ColumnValueRequests for LockableTransactionOrDb<'a> {
     fn get_column_value(&self, cf_name: &str, key: &OndoKey) -> DbResult<Option<ColumnValue>> {
         let db_guard = self.read();
         let db = db_guard.inner();

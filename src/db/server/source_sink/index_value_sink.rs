@@ -1,11 +1,11 @@
 use super::ondo_serializer::OndoSerializer;
 use crate::db::entity::OndoKey;
 use crate::db::reference::IndexValueEffect;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::DbError;
 
 pub(super) fn apply_effect(
-    ra: &TransactionMaker,
+    ra: &LockableTransactionOrDb,
     effect: &IndexValueEffect,
 ) -> Result<(), DbError> {
     let db_guard = ra.read();

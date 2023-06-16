@@ -1,6 +1,6 @@
 //FIXME. Do not fetch the key from the record on Update. Just use the key from the request.
 use super::send_response::send_response;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::server::table_value_server_trait::TableValueServerTrait;
 use crate::ondo_remote::{
     table_value_ops::RequestType, transaction_response::ResponseType, CreateTableValueMessage,
@@ -9,7 +9,7 @@ use crate::ondo_remote::{
 use tonic::Status;
 
 pub(crate) struct TableValueOpsSubServer<'a> {
-    pub lockable_db: TransactionMaker<'a>,
+    pub lockable_db: LockableTransactionOrDb<'a>,
 }
 
 impl<'a> TableValueOpsSubServer<'a> {

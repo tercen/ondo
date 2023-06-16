@@ -1,5 +1,5 @@
 use super::send_response::send_response;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::server::table_server_trait::TableServerTrait;
 use crate::ondo_remote::{
     key_prefix_ops::RequestType, transaction_response::ResponseType, TableIdListReferenceMessage,
@@ -9,7 +9,7 @@ use crate::ondo_remote::{
 use tonic::Status;
 
 pub(crate) struct KeyPrefixOpsSubServer<'a> {
-    pub lockable_db: TransactionMaker<'a>,
+    pub lockable_db: LockableTransactionOrDb<'a>,
 }
 
 impl<'a> KeyPrefixOpsSubServer<'a> {

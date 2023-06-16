@@ -1,7 +1,7 @@
 //index_reference.rs
 //TODO: validate index name
 use crate::db::enums::index_iterator_requests_factory::IndexIteratorRequestsFactoryEnum;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::{
     entity::{Index, OndoKey, TableValue},
     reference::{
@@ -22,13 +22,13 @@ pub(crate) trait IndexReferenceTrait {
         &self,
         index: &Index,
         parent_requests: &dyn TableStoredRequests,
-        table_stored_iterator_requests_factory: &TransactionMaker,
+        table_stored_iterator_requests_factory: &LockableTransactionOrDb,
     ) -> DbResult<Effects>;
     fn post_index<'a>(
         &self,
         index: &Index,
         parent_requests: &dyn TableStoredRequests,
-        table_stored_iterator_requests_factory: &TransactionMaker,
+        table_stored_iterator_requests_factory: &LockableTransactionOrDb,
     ) -> DbResult<Effects>;
     fn delete_index(&self, parent_requests: &dyn TableStoredRequests) -> DbResult<Effects>;
 
@@ -156,7 +156,7 @@ impl IndexReferenceTrait for IndexReference {
         &self,
         index: &Index,
         parent_requests: &dyn TableStoredRequests,
-        table_stored_iterator_requests_factory: &TransactionMaker,
+        table_stored_iterator_requests_factory: &LockableTransactionOrDb,
     ) -> DbResult<Effects> {
         let table_stored_opt = self.table_reference.get_table_stored(parent_requests)?;
         let mut table_stored = table_stored_opt.ok_or(DbError::TableNotInitialized)?;
@@ -180,7 +180,7 @@ impl IndexReferenceTrait for IndexReference {
         &self,
         index: &Index,
         parent_requests: &dyn TableStoredRequests,
-        table_stored_iterator_requests_factory: &TransactionMaker,
+        table_stored_iterator_requests_factory: &LockableTransactionOrDb,
     ) -> DbResult<Effects> {
         let table_stored_opt = self.table_reference.get_table_stored(parent_requests)?;
         let mut table_stored = table_stored_opt.ok_or(DbError::TableNotInitialized)?;
@@ -292,8 +292,7 @@ impl IndexReferenceTrait for IndexReference {
         table_value_requests: &'a dyn TableValueRequests,
         index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
     ) -> DbResult<Vec<DbResult<TableValue>>> {
-        let index_iterator_requests_enum =
-            index_iterator_requests_factory.guard()?;
+        let index_iterator_requests_enum = index_iterator_requests_factory.guard()?;
         let transaction_or_db = index_iterator_requests_enum.get_transaction_or_db();
         let index_iterator_requests: &dyn IndexIteratorRequests = &transaction_or_db;
 
@@ -310,8 +309,7 @@ impl IndexReferenceTrait for IndexReference {
         key_prefix: OndoKey,
         index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
     ) -> DbResult<Vec<DbResult<OndoKey>>> {
-        let index_iterator_requests_enum =
-            index_iterator_requests_factory.guard()?;
+        let index_iterator_requests_enum = index_iterator_requests_factory.guard()?;
         let transaction_or_db = index_iterator_requests_enum.get_transaction_or_db();
         let index_iterator_requests: &dyn IndexIteratorRequests = &transaction_or_db;
 
@@ -327,8 +325,7 @@ impl IndexReferenceTrait for IndexReference {
         table_value_requests: &'a dyn TableValueRequests,
         index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
     ) -> DbResult<Vec<DbResult<TableValue>>> {
-        let index_iterator_requests_enum =
-            index_iterator_requests_factory.guard()?;
+        let index_iterator_requests_enum = index_iterator_requests_factory.guard()?;
         let transaction_or_db = index_iterator_requests_enum.get_transaction_or_db();
         let index_iterator_requests: &dyn IndexIteratorRequests = &transaction_or_db;
 
@@ -347,8 +344,7 @@ impl IndexReferenceTrait for IndexReference {
         end_key_prefix: OndoKey,
         index_iterator_requests_factory: &'a IndexIteratorRequestsFactoryEnum,
     ) -> DbResult<Vec<DbResult<OndoKey>>> {
-        let index_iterator_requests_enum =
-            index_iterator_requests_factory.guard()?;
+        let index_iterator_requests_enum = index_iterator_requests_factory.guard()?;
         let transaction_or_db = index_iterator_requests_enum.get_transaction_or_db();
         let index_iterator_requests: &dyn IndexIteratorRequests = &transaction_or_db;
 
@@ -397,7 +393,7 @@ mod tests {
     }
 
     mod index_reference_trait_tests {
-        use crate::db::server::lockable_db::LockableDb;
+        use crate::db::server::lockable_db::{transaction_maker::TransactionMaker, LockableDb};
 
         use super::*;
         #[test]
@@ -433,7 +429,13 @@ mod tests {
         #[test]
         fn test_put_index() {
             let mut parent_mock = MockTableStoredTestRequests::new();
-            let iterator_mock_factory = TransactionMaker::new(LockableDb::in_memory());
+
+            let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
+            let iterator_mock_factory = transaction_maker.lockable_db();
+
+            let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
+            let iterator_mock_factory = transaction_maker.lockable_db();
+
             let index_reference =
                 IndexReference::build("sample_domain", "sample_table", "sample_index");
             let index = create_index();
@@ -481,7 +483,10 @@ mod tests {
         #[test]
         fn test_put_index_failure() {
             let mut parent_mock = MockTableStoredTestRequests::new();
-            let iterator_mock_factory = TransactionMaker::new(LockableDb::in_memory());
+
+            let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
+            let iterator_mock_factory = transaction_maker.lockable_db();
+
             let index_reference =
                 IndexReference::build("sample_domain", "sample_table", "sample_index");
             let index = create_index();
@@ -498,7 +503,9 @@ mod tests {
         #[test]
         fn test_post_index() {
             let mut parent_mock = MockTableStoredTestRequests::new();
-            let iterator_mock_factory = TransactionMaker::new(LockableDb::in_memory());
+
+            let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
+            let iterator_mock_factory = transaction_maker.lockable_db();
 
             let index_reference =
                 IndexReference::build("sample_domain", "sample_table", "sample_index");
@@ -556,7 +563,10 @@ mod tests {
         #[test]
         fn test_post_index_failure() {
             let mut parent_mock = MockTableStoredTestRequests::new();
-            let iterator_mock_factory = TransactionMaker::new(LockableDb::in_memory());
+
+            let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
+            let iterator_mock_factory = transaction_maker.lockable_db();
+
             let index_reference =
                 IndexReference::build("sample_domain", "sample_table", "sample_index");
             let index = create_index();

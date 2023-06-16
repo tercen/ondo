@@ -1,15 +1,15 @@
 use crate::db::server::lockable_db::transaction_or_db::TransactionOrDb;
 use crate::db::server::lockable_db::transaction_or_db_guard::TransactionOrDbReadGuard;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::DbResult;
 
 pub(crate) enum IndexIteratorRequestsFactoryEnum<'a> {
-    LockableDb(TransactionMaker<'a>),
+    LockableDb(LockableTransactionOrDb<'a>),
     Mock, // todo!{}: Replace with the actual mock type when it's available
 }
 
 impl<'a> IndexIteratorRequestsFactoryEnum<'a> {
-    pub(crate) fn new_lockable_db(lockable_db: &TransactionMaker<'a>) -> Self {
+    pub(crate) fn new_lockable_db(lockable_db: &LockableTransactionOrDb<'a>) -> Self {
         let the_clone = lockable_db.clone();
         IndexIteratorRequestsFactoryEnum::LockableDb(the_clone)
     }

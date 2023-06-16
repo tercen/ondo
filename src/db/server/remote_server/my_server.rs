@@ -8,20 +8,20 @@ use super::table_ops_sub_server::TableOpsSubServer;
 use super::table_value_ops_sub_server::TableValueOpsSubServer;
 use super::text_index_ops_sub_server::TextIndexOpsSubServer;
 use super::version_sub_server::VersionSubServer;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::server::lockable_db::LOCKABLE_DB;
 
 // FIXME: Meta RWLock is required to prevent meta operations during transactions
 
 #[derive(Clone)]
 pub struct MyServer {
-    lockable_db: TransactionMaker<'static>,
+    lockable_db: LockableTransactionOrDb<'static>,
 }
 
 impl Default for MyServer {
     fn default() -> Self {
         MyServer {
-            lockable_db: TransactionMaker::new(LOCKABLE_DB.clone()),
+            lockable_db: LockableTransactionOrDb::new(LOCKABLE_DB.clone()),
         }
     }
 }

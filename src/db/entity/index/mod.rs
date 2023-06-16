@@ -5,7 +5,7 @@ use crate::db::{
         index_reference::IndexReferenceTrait, Effect, Effects, IndexReference, IndexValueReference,
         IndexValueReferenceTrait, TableReferenceTrait, requests::TableStoredIteratorRequests,
     },
-    DbResult, server::lockable_db::transaction_maker::TransactionMaker,
+    DbResult, server::lockable_db::transaction_maker::LockableTransactionOrDb,
 };
 use serde::{Deserialize, Serialize};
 
@@ -78,7 +78,7 @@ impl Index {
 
     pub(crate) fn index_related_table_values(
         &self,
-        table_stored_iterator_requests_factory: &TransactionMaker,
+        table_stored_iterator_requests_factory: &LockableTransactionOrDb,
     ) -> DbResult<Effects> {
         let guard = table_stored_iterator_requests_factory.read(); 
         let db = guard.inner();

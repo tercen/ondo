@@ -2,7 +2,7 @@
 use super::{
     db_error_to_status::{DbErrorOptionToStatus, DbErrorToStatus},
     index_server_trait::IndexServerTrait,
-    lockable_db::transaction_maker::TransactionMaker,
+    lockable_db::transaction_maker::LockableTransactionOrDb,
     source_sink::effects_sink::EffectsSink,
 };
 use crate::db::{
@@ -82,7 +82,7 @@ impl<'a> Into<IndexedValueRangeReference> for &'a IndexedValueRangeReferenceMess
 }
 
 // index_server_trait_impl.rs continued continued
-impl<'a> IndexServerTrait for TransactionMaker<'a> {
+impl<'a> IndexServerTrait for LockableTransactionOrDb<'a> {
     fn create_index(&self, r: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status> {
         let entity: Index = r.get_ref().into();
         entity
@@ -181,7 +181,7 @@ mod tests {
     use crate::db::server::{lockable_db::LockableDb, source_sink::effects_sink::EffectsTasksSink};
     use serde::{Deserialize, Serialize};
     use crate::db::server::source_sink::effects_sink::EffectsSink;
-    use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+    use crate::db::server::lockable_db::transaction_maker::{LockableTransactionOrDb, TransactionMaker};
 
     pub(crate) fn create_database_server_entity() -> DatabaseServer {
         DatabaseServer::default()
@@ -235,7 +235,7 @@ mod tests {
     }
 
     pub(crate) struct TestData {
-        lockable_db: TransactionMaker<'static>,
+        lockable_db: LockableTransactionOrDb<'static>,
         database_server_reference: DatabaseServerReference,
         domain_reference: DomainReference,
         table_reference: TableReference,
@@ -247,7 +247,10 @@ mod tests {
     }
 
     pub(crate) fn setup_test_data() -> TestData {
-        let ra = TransactionMaker::new(LockableDb::in_memory());
+        let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
+        let ra = transaction_maker.lockable_db();
+
+        // let ra = LockableTransactionOrDb::new(LockableDb::in_memory());
 
         let database_server = create_database_server_entity();
         let database_server_reference = database_server.reference.clone();

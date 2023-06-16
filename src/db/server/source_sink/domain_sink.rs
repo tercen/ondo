@@ -2,11 +2,11 @@ use super::ondo_serializer::OndoSerializer;
 use crate::db::entity::DomainStored;
 use crate::db::reference::effect::domain_stored_effect::DomainStoredEffect;
 use crate::db::reference::DomainName;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::DbError;
 
 pub(super) fn apply_effect(
-    ra: &TransactionMaker,
+    ra: &LockableTransactionOrDb,
     effect: &DomainStoredEffect,
 ) -> Result<(), DbError> {
     let db_guard = ra.read();

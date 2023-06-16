@@ -1,11 +1,11 @@
 // text_index/get_tantivy_index_path.rs
 use crate::db::reference::text_index_reference::TextIndexReference;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use std::path::PathBuf;
 
 pub(crate) fn get_tantivy_index_path(
     text_index_reference: &TextIndexReference,
-    lockable_db: &TransactionMaker,
+    lockable_db: &LockableTransactionOrDb,
 ) -> PathBuf {
     let domain_name = &text_index_reference
         .table_reference
@@ -27,14 +27,19 @@ pub(crate) fn get_tantivy_index_path(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::server::lockable_db::{LockableDb, transaction_maker::TransactionMaker};
+    use crate::db::server::lockable_db::{
+        transaction_maker::{LockableTransactionOrDb, TransactionMaker},
+        LockableDb,
+    };
 
     #[test]
     fn test_get_tantivy_index_path() {
         let text_index_reference =
             TextIndexReference::build("test_domain", "test_table", "test_index");
 
-        let lockable_db = TransactionMaker::new(LockableDb::in_memory());
+        let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
+        let lockable_db = transaction_maker.lockable_db();
+
         let db_path = lockable_db.db_path();
         let mut expected_path = PathBuf::from(db_path);
         expected_path.push("test_domain");

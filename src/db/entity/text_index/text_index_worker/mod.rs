@@ -4,19 +4,19 @@ mod execute_do_index_table_value;
 mod execute_index_related_table_values;
 
 use super::{load_or_create_tantivy_index::load_or_create_tantivy_index, TextIndex};
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use std::sync::Arc;
 
 pub(crate) struct TextIndexWorker<'a> {
     text_index: TextIndex,
     tantivy_index: Arc<tantivy::Index>,
-    lockable_db: TransactionMaker<'a>,
+    lockable_db: LockableTransactionOrDb<'a>,
 }
 
 impl<'a> TextIndexWorker<'a> {
     pub fn from_text_index(
         text_index: TextIndex,
-        lockable_db: TransactionMaker<'a>,
+        lockable_db: LockableTransactionOrDb<'a>,
     ) -> Result<Self, String> {
         let tantivy_index: tantivy::Index =
             load_or_create_tantivy_index(&text_index, &lockable_db).map_err(|e| e.to_string())?;
