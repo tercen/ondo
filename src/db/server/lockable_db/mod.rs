@@ -43,13 +43,13 @@ impl LockableDb {
         Self::new(accessor.db_arc.clone())
     }
 
-    pub(self) fn read(&self) -> DbReadLockGuardWrapper<'_, TransactionDB> {
+    pub(crate) fn read(&self) -> DbReadLockGuardWrapper<'_, TransactionDB> {
         let guard = self.db_arc.db_lock.db.read().unwrap();
         let db_path = &self.db_arc.db_lock.db_path;
         DbReadLockGuardWrapper::new(guard, db_path)
     }
 
-    pub(self) fn write(&self) -> DbWriteLockGuardWrapper<'_, TransactionDB> {
+    pub(crate) fn write(&self) -> DbWriteLockGuardWrapper<'_, TransactionDB> {
         let guard = self.db_arc.db_lock.db.write().unwrap();
         let db_path = &self.db_arc.db_lock.db_path;
         DbWriteLockGuardWrapper::new(guard, db_path)

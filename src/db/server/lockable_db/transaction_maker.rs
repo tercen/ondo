@@ -22,30 +22,30 @@ impl<'a> TransactionMaker<'a> {
         }
     }
 
-    pub fn lockable_transaction(&mut self) -> LockableTransactionOrDb<'a> {
-        match self.transaction {
-            None => {
-                let guard = self.lockable_db.read();
-                let transaction = guard.transaction();
-                self.transaction = Some(transaction);
-                LockableTransactionOrDb {
-                    transaction: Some(Arc::new(ReentrantMutex::new(transaction))),
-                    lockable_db: self.lockable_db,
-                }
-                }
-            Some(transaction) => 
-                LockableTransactionOrDb {
-                    transaction: Some(Arc::new(ReentrantMutex::new(transaction))),
-                    lockable_db: self.lockable_db,
-                }
+    // pub fn lockable_transaction(&mut self) -> LockableTransactionOrDb<'a> {
+    //     match self.transaction {
+    //         None => {
+    //             let guard = self.lockable_db.read();
+    //             let transaction = guard.transaction();
+    //             self.transaction = Some(transaction);
+    //             LockableTransactionOrDb {
+    //                 transaction: Some(Arc::new(ReentrantMutex::new(transaction))),
+    //                 lockable_db: self.lockable_db.clone(),
+    //             }
+    //             }
+    //         Some(transaction) => 
+    //             LockableTransactionOrDb {
+    //                 transaction: Some(Arc::new(ReentrantMutex::new(transaction))),
+    //                 lockable_db: self.lockable_db.clone(),
+    //             }
             
-        }
-    }
+    //     }
+    // }
 
     pub fn lockable_db(&self) -> LockableTransactionOrDb<'a> {
         LockableTransactionOrDb {
             transaction: None,
-            lockable_db: self.lockable_db,
+            lockable_db: self.lockable_db.clone(),
         }
 
     }
@@ -70,8 +70,8 @@ impl<'a> TransactionMaker<'a> {
 /// LockableTransactionOrDb can only be created by TransactionMaker
 #[derive(Clone)]
 pub(crate) struct LockableTransactionOrDb<'a> {
-    transaction: Option<Arc<ReentrantMutex<Transaction<'a, TransactionDB>>>>,
-    lockable_db: LockableDb,
+    pub(crate) transaction: Option<Arc<ReentrantMutex<Transaction<'a, TransactionDB>>>>,
+    pub(crate) lockable_db: LockableDb,
 }
 
 impl<'a> LockableTransactionOrDb<'a> {
@@ -143,31 +143,31 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_create_transaction_returns_transaction() {
-        // Arrange
-        setup();
-        let mut transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
+    // #[test]
+    // fn test_create_transaction_returns_transaction() {
+    //     // Arrange
+    //     setup();
+    //     let mut transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
 
-        // Act
-        let lockable_db_or_transaction = transaction_maker.lockable_transaction();
+    //     // Act
+    //     let lockable_db_or_transaction = transaction_maker.lockable_transaction();
 
-        let mut guard = lockable_db_or_transaction.write();
+    //     let mut guard = lockable_db_or_transaction.write();
 
-        // Assert
-        match &mut guard.inner_mut() {
-            //We are using a write lock to obtain a mutable reference to the guard
-            MutTransactionOrDb::Transaction => assert!(true),
-            MutTransactionOrDb::Db(_) => assert!(false, "Expected Transaction, got Db"),
-        }
-    }
+    //     // Assert
+    //     match &mut guard.inner_mut() {
+    //         //We are using a write lock to obtain a mutable reference to the guard
+    //         MutTransactionOrDb::Transaction => assert!(true),
+    //         MutTransactionOrDb::Db(_) => assert!(false, "Expected Transaction, got Db"),
+    //     }
+    // }
 
-    #[test]
-    fn test_transaction_lifecycle() {
-        setup();
-        let mut transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
-        let lockable_db_or_transaction = transaction_maker.lockable_transaction();
-        let result = transaction_maker.commit_transaction();
-        assert!(result.is_ok());
-    }
+    // #[test]
+    // fn test_transaction_lifecycle() {
+    //     setup();
+    //     let mut transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
+    //     let lockable_db_or_transaction = transaction_maker.lockable_transaction();
+    //     let result = transaction_maker.commit_transaction();
+    //     assert!(result.is_ok());
+    // }
 }

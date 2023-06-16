@@ -6,10 +6,14 @@ use tokio_stream::wrappers::ReceiverStream;
 use tokio_stream::StreamExt;
 
 use super::send_response::send_response;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::{
+    LockableTransactionOrDb, TransactionMaker,
+};
 use crate::db::server::lockable_db::LOCKABLE_DB;
 use crate::ondo_remote;
 use ondo_remote::*;
+use parking_lot::ReentrantMutex;
+use std::sync::Arc;
 
 use super::my_server::MyServer; // request and response messages
 
@@ -36,8 +40,15 @@ impl ondo_remote_server::OndoRemote for MyServer {
         //FIXME: Get local transaction here instead of db clone
         let my_server_clone = self.clone();
         tokio::spawn(async move {
-            let mut transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
-            let lockable_transaction = transaction_maker.lockable_transaction();
+            let lockable_db = LOCKABLE_DB.clone();
+            let db_guard = lockable_db.read();
+            let transaction = db_guard.transaction();
+
+            let lockable_transaction = LockableTransactionOrDb {
+                transaction: Some(Arc::new(ReentrantMutex::new(transaction))),
+                lockable_db: lockable_db.clone(),
+            };
+
             while let Some(request) = stream.next().await {
                 match request {
                     Ok(transaction_request) => {
