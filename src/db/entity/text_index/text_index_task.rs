@@ -1,10 +1,11 @@
 // text_index/text_index_task.rs
 use super::text_index_worker::TextIndexWorker;
 use super::TextIndex;
-use crate::db::{entity::ondo_key::OndoKey, server::lockable_db::transaction_maker::TransactionMaker};
 use crate::db::entity::table_value::TableValue;
 use crate::db::server::lockable_db::LOCKABLE_DB;
-use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
+use crate::db::{
+    entity::ondo_key::OndoKey, server::lockable_db::transaction_maker::TransactionMaker,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]

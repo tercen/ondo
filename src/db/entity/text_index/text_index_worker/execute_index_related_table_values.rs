@@ -2,7 +2,7 @@
 use super::TextIndexWorker;
 use crate::db::reference::table_reference::TableReferenceTrait;
 use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
-use crate::db::server::lockable_db::{transaction_maker::LockableTransactionOrDb, LOCKABLE_DB};
+use crate::db::server::lockable_db::LOCKABLE_DB;
 
 impl<'a> TextIndexWorker<'a> {
     pub(crate) fn execute_index_related_table_values(&self) -> Result<(), String> {

@@ -27,10 +27,7 @@ pub(crate) fn get_tantivy_index_path(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::server::lockable_db::{
-        transaction_maker::{LockableTransactionOrDb, TransactionMaker},
-        LockableDb,
-    };
+    use crate::db::server::lockable_db::{transaction_maker::TransactionMaker, LockableDb};
 
     #[test]
     fn test_get_tantivy_index_path() {
