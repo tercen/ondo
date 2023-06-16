@@ -5,6 +5,8 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tokio_stream::StreamExt;
 
+use crate::db::server::lockable_db::LOCKABLE_DB;
+use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
 use crate::ondo_remote;
 use ondo_remote::*;
 
@@ -33,6 +35,8 @@ impl ondo_remote_server::OndoRemote for MyServer {
         //FIXME: Get local transaction here instead of db clone
         let my_server_clone = self.clone();
         tokio::spawn(async move {
+            let mut transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
+            let lockable_transaction = transaction_maker.lockable_transaction();
             while let Some(request) = stream.next().await {
                 match request {
                     Ok(transaction_request) => {
@@ -41,34 +45,34 @@ impl ondo_remote_server::OndoRemote for MyServer {
                                 table_value_ops,
                             )) => {
                                 my_server_clone
-                                    .table_value_ops_sub_server()
+                                    .table_value_ops_sub_server(lockable_transaction.clone())
                                     .process_request(
                                         tx.clone(),
                                         table_value_ops.request_type.unwrap(),
                                     )
-                                    .await;
+                                    ;
                             }
                             Some(transaction_request::RequestType::IndexedValueOps(
                                 indexed_value_ops,
                             )) => {
                                 my_server_clone
-                                    .indexed_value_ops_sub_server()
+                                    .indexed_value_ops_sub_server(lockable_transaction.clone())
                                     .process_request(
                                         tx.clone(),
                                         indexed_value_ops.request_type.unwrap(),
                                     )
-                                    .await;
+                                    ;
                             }
                             Some(transaction_request::RequestType::KeyPrefixOps(
                                 key_prefix_ops,
                             )) => {
                                 my_server_clone
-                                    .key_prefix_ops_sub_server()
+                                    .key_prefix_ops_sub_server(lockable_transaction.clone())
                                     .process_request(
                                         tx.clone(),
                                         key_prefix_ops.request_type.unwrap(),
                                     )
-                                    .await;
+                                    ;
                             }
                             None => {
                                 // You could return an error here if you want
@@ -99,9 +103,10 @@ impl ondo_remote_server::OndoRemote for MyServer {
 
         let mut stream = request.into_inner();
 
-        //FIXME: Get local transaction here instead of clone
         let my_server_clone = self.clone();
         tokio::spawn(async move {
+            let transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
+            let lockable_db = transaction_maker.lockable_db();
             while let Some(request) = stream.next().await {
                 match request {
                     Ok(transaction_request) => {
@@ -110,34 +115,34 @@ impl ondo_remote_server::OndoRemote for MyServer {
                                 table_value_ops,
                             )) => {
                                 my_server_clone
-                                    .table_value_ops_sub_server()
+                                    .table_value_ops_sub_server(lockable_db.clone())
                                     .process_request(
                                         tx.clone(),
                                         table_value_ops.request_type.unwrap(),
                                     )
-                                    .await;
+                                    ;
                             }
                             Some(transaction_request::RequestType::IndexedValueOps(
                                 indexed_value_ops,
                             )) => {
                                 my_server_clone
-                                    .indexed_value_ops_sub_server()
+                                    .indexed_value_ops_sub_server(lockable_db.clone())
                                     .process_request(
                                         tx.clone(),
                                         indexed_value_ops.request_type.unwrap(),
                                     )
-                                    .await;
+                                    ;
                             }
                             Some(transaction_request::RequestType::KeyPrefixOps(
                                 key_prefix_ops,
                             )) => {
                                 my_server_clone
-                                    .key_prefix_ops_sub_server()
+                                    .key_prefix_ops_sub_server(lockable_db.clone())
                                     .process_request(
                                         tx.clone(),
                                         key_prefix_ops.request_type.unwrap(),
                                     )
-                                    .await;
+                                    ;
                             }
                             None => {
                                 // You could return an error here if you want
@@ -171,53 +176,55 @@ impl ondo_remote_server::OndoRemote for MyServer {
         //FIXME: Use database but do atomic writes
         let my_server_clone = self.clone();
         tokio::spawn(async move {
+            let transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
+            let lockable_db = transaction_maker.lockable_db();
             while let Some(request) = stream.next().await {
                 match request {
                     Ok(meta_request) => {
                         match meta_request.request_type {
                             Some(meta_request::RequestType::VersionRequest(version_request)) => {
                                 my_server_clone
-                                    .version_sub_server()
+                                    .version_sub_server(lockable_db.clone())
                                     .process_request(tx.clone(), version_request)
-                                    .await;
+                                    ;
                             }
                             Some(meta_request::RequestType::DatabaseServerOps(
                                 database_server_ops,
                             )) => {
                                 my_server_clone
-                                    .database_server_ops_sub_server()
+                                    .database_server_ops_sub_server(lockable_db.clone())
                                     .process_request(
                                         tx.clone(),
                                         database_server_ops.request_type.unwrap(),
                                     )
-                                    .await;
+                                    ;
                             }
                             Some(meta_request::RequestType::DomainOps(domain_ops)) => {
                                 my_server_clone
-                                    .domain_ops_sub_server()
+                                    .domain_ops_sub_server(lockable_db.clone())
                                     .process_request(tx.clone(), domain_ops.request_type.unwrap())
-                                    .await;
+                                    ;
                             }
                             Some(meta_request::RequestType::TableOps(table_ops)) => {
                                 my_server_clone
-                                    .table_ops_sub_server()
+                                    .table_ops_sub_server(lockable_db.clone())
                                     .process_request(tx.clone(), table_ops.request_type.unwrap())
-                                    .await;
+                                    ;
                             }
                             Some(meta_request::RequestType::IndexOps(index_ops)) => {
                                 my_server_clone
-                                    .index_ops_sub_server()
+                                    .index_ops_sub_server(lockable_db.clone())
                                     .process_request(tx.clone(), index_ops.request_type.unwrap())
-                                    .await;
+                                    ;
                             }
                             Some(meta_request::RequestType::TextIndexOps(text_index_ops)) => {
                                 my_server_clone
-                                    .text_index_ops_sub_server()
+                                    .text_index_ops_sub_server(lockable_db.clone())
                                     .process_request(
                                         tx.clone(),
                                         text_index_ops.request_type.unwrap(),
                                     )
-                                    .await;
+                                    ;
                             }
                             None => {
                                 // You could return an error here if you want

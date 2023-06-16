@@ -12,17 +12,17 @@ pub(crate) struct IndexedValueOpsSubServer<'a> {
 }
 
 impl<'a> IndexedValueOpsSubServer<'a> {
-    pub async fn process_request(
+    pub fn process_request(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         request: RequestType,
     ) {
         match request {
             RequestType::FindValues(get_request) => {
-                self.find_values(tx, get_request).await;
+                self.find_values(tx, get_request);
             }
             RequestType::FindValuesByRange(list_request) => {
-                self.find_values_by_range(tx, list_request).await;
+                self.find_values_by_range(tx, list_request);
             }
         }
     }
@@ -42,7 +42,7 @@ impl<'a> IndexedValueOpsSubServer<'a> {
         send_response(tx, response_type);
     }
 
-    async fn find_values_by_range(
+     fn find_values_by_range(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         list_request: IndexedValueRangeReferenceMessage,

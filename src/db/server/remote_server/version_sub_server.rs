@@ -11,7 +11,7 @@ pub(crate) struct VersionSubServer<'a> {
 }
 
 impl<'a> VersionSubServer<'a> {
-    pub async fn process_request(
+    pub fn process_request(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         _request: EmptyMessage,

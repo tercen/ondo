@@ -13,31 +13,31 @@ pub(crate) struct TableValueOpsSubServer<'a> {
 }
 
 impl<'a> TableValueOpsSubServer<'a> {
-    pub async fn process_request(
+    pub fn process_request(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         request: RequestType,
     ) {
         match request {
             RequestType::CreateRequest(create_request) => {
-                self.create_table_value(tx, create_request).await;
+                self.create_table_value(tx, create_request);
             }
             RequestType::DeleteRequest(delete_request) => {
-                self.delete_table_value(tx, delete_request).await;
+                self.delete_table_value(tx, delete_request);
             }
             RequestType::GetRequest(get_request) => {
-                self.get_table_value(tx, get_request).await;
+                self.get_table_value(tx, get_request);
             }
             RequestType::UpdateRequest(update_request) => {
-                self.update_table_value(tx, update_request).await;
+                self.update_table_value(tx, update_request);
             }
             RequestType::GetForUpdateRequest(get_request) => {
-                self.get_table_value_for_update(tx, get_request).await;
+                self.get_table_value_for_update(tx, get_request);
             }
         }
     }
 
-    async fn create_table_value(
+    fn create_table_value(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         create_request: CreateTableValueMessage,
@@ -49,7 +49,7 @@ impl<'a> TableValueOpsSubServer<'a> {
             Ok(response) => ResponseType::OndoKeyMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
     async fn delete_table_value(
@@ -64,7 +64,7 @@ impl<'a> TableValueOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
     async fn get_table_value(
@@ -77,10 +77,10 @@ impl<'a> TableValueOpsSubServer<'a> {
             Ok(response) => ResponseType::JsonMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
-    async fn update_table_value(
+    fn update_table_value(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         update_request: TableValueMessage,
@@ -92,10 +92,10 @@ impl<'a> TableValueOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
-    async fn get_table_value_for_update(
+    fn get_table_value_for_update(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         get_request: TableValueReferenceMessage,
@@ -107,6 +107,6 @@ impl<'a> TableValueOpsSubServer<'a> {
             Ok(response) => ResponseType::JsonMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 }

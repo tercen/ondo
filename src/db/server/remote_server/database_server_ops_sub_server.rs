@@ -12,26 +12,26 @@ pub(crate) struct DatabaseServerOpsSubServer<'a> {
 }
 
 impl<'a> DatabaseServerOpsSubServer<'a> {
-    pub async fn process_request(
+    pub fn process_request(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         request: RequestType,
     ) {
         match request {
             RequestType::CreateRequest(create_request) => {
-                self.create_database(tx, create_request).await;
+                self.create_database(tx, create_request);
             }
             RequestType::DeleteRequest(delete_request) => {
-                self.delete_database(tx, delete_request).await;
+                self.delete_database(tx, delete_request);
             }
             RequestType::GetRequest(get_request) => {
-                self.get_database(tx, get_request).await;
+                self.get_database(tx, get_request);
             }
             RequestType::UpdateRequest(update_request) => {
-                self.update_database(tx, update_request).await;
+                self.update_database(tx, update_request);
             }
             RequestType::ListDomainsRequest(list_domains_request) => {
-                self.list_domains(tx, list_domains_request).await;
+                self.list_domains(tx, list_domains_request);
             }
         }
     }
@@ -48,7 +48,7 @@ impl<'a> DatabaseServerOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await
+        send_response(tx, response_type)
     }
 
     async fn delete_database(
@@ -63,7 +63,7 @@ impl<'a> DatabaseServerOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await
+        send_response(tx, response_type)
     }
 
     async fn get_database(
@@ -78,7 +78,7 @@ impl<'a> DatabaseServerOpsSubServer<'a> {
             Ok(response) => ResponseType::DatabaseServerMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await
+        send_response(tx, response_type)
     }
 
     async fn update_database(
@@ -93,7 +93,7 @@ impl<'a> DatabaseServerOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await
+        send_response(tx, response_type)
     }
 
     async fn list_domains(
@@ -108,6 +108,6 @@ impl<'a> DatabaseServerOpsSubServer<'a> {
             Ok(response) => ResponseType::ArrayOfStringResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await
+        send_response(tx, response_type)
     }
 }

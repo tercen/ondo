@@ -45,7 +45,7 @@ impl<'a> IndexOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
     async fn delete_index(
@@ -60,7 +60,7 @@ impl<'a> IndexOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
     async fn get_index(
@@ -73,7 +73,7 @@ impl<'a> IndexOpsSubServer<'a> {
             Ok(response) => ResponseType::IndexMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
     async fn update_index(
@@ -88,6 +88,6 @@ impl<'a> IndexOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 }

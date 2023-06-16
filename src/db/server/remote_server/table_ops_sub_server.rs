@@ -48,7 +48,7 @@ impl<'a> TableOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
     async fn delete_table(
@@ -63,7 +63,7 @@ impl<'a> TableOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
     async fn get_table(
@@ -76,7 +76,7 @@ impl<'a> TableOpsSubServer<'a> {
             Ok(response) => ResponseType::TableMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
     async fn update_table(
@@ -91,7 +91,7 @@ impl<'a> TableOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
     async fn list_indexes(
@@ -106,6 +106,6 @@ impl<'a> TableOpsSubServer<'a> {
             Ok(response) => ResponseType::ArrayOfStringResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 }

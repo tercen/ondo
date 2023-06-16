@@ -1,7 +1,7 @@
 use crate::ondo_remote::{transaction_response::ResponseType, TransactionResponse};
 use tonic::Status;
 
-pub(super) async fn send_response(
+pub(super) fn send_response(
     tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
     response_type: ResponseType,
 ) {
@@ -14,7 +14,7 @@ pub(super) async fn send_response(
     }
 }
 
-pub(super) async fn send_status_response(
+pub(super) fn send_status_response(
     tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
     status: Status,
 ) {

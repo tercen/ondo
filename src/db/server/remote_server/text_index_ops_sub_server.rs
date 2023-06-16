@@ -12,31 +12,31 @@ pub(crate) struct TextIndexOpsSubServer<'a> {
 }
 
 impl<'a> TextIndexOpsSubServer<'a> {
-    pub async fn process_request(
+    pub fn process_request(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         request: RequestType,
     ) {
         match request {
             RequestType::CreateRequest(create_request) => {
-                self.create_text_index(tx, create_request).await;
+                self.create_text_index(tx, create_request);
             }
             RequestType::DeleteRequest(delete_request) => {
-                self.delete_text_index(tx, delete_request).await;
+                self.delete_text_index(tx, delete_request);
             }
             RequestType::GetRequest(get_request) => {
-                self.get_text_index(tx, get_request).await;
+                self.get_text_index(tx, get_request);
             }
             RequestType::UpdateRequest(update_request) => {
-                self.update_text_index(tx, update_request).await;
+                self.update_text_index(tx, update_request);
             }
             RequestType::SearchRequest(search_request) => {
-                self.search_text_index(tx, search_request).await;
+                self.search_text_index(tx, search_request);
             }
         }
     }
 
-    async fn create_text_index(
+    fn create_text_index(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         create_request: TextIndexMessage,
@@ -64,7 +64,7 @@ impl<'a> TextIndexOpsSubServer<'a> {
         };
     }
 
-    async fn get_text_index(
+    fn get_text_index(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         get_request: TextIndexReferenceMessage,
@@ -76,10 +76,10 @@ impl<'a> TextIndexOpsSubServer<'a> {
             Ok(response) => ResponseType::TextIndexMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
-    async fn update_text_index(
+    fn update_text_index(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         update_request: TextIndexMessage,
@@ -93,7 +93,7 @@ impl<'a> TextIndexOpsSubServer<'a> {
         };
     }
 
-    async fn search_text_index(
+    fn search_text_index(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         search_request: TantivyQueryMessage,
@@ -105,6 +105,6 @@ impl<'a> TextIndexOpsSubServer<'a> {
             Ok(response) => ResponseType::JsonMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 }

@@ -12,31 +12,31 @@ pub(crate) struct DomainOpsSubServer<'a> {
 }
 
 impl<'a> DomainOpsSubServer<'a> {
-    pub async fn process_request(
+    pub fn process_request(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         request: RequestType,
     ) {
         match request {
             RequestType::CreateRequest(create_request) => {
-                self.create_domain(tx, create_request).await;
+                self.create_domain(tx, create_request);
             }
             RequestType::DeleteRequest(delete_request) => {
-                self.delete_domain(tx, delete_request).await;
+                self.delete_domain(tx, delete_request);
             }
             RequestType::GetRequest(get_request) => {
-                self.get_domain(tx, get_request).await;
+                self.get_domain(tx, get_request);
             }
             RequestType::UpdateRequest(update_request) => {
-                self.update_domain(tx, update_request).await;
+                self.update_domain(tx, update_request);
             }
             RequestType::ListTablesRequest(list_tables_request) => {
-                self.list_tables(tx, list_tables_request).await;
+                self.list_tables(tx, list_tables_request);
             }
         }
     }
 
-    async fn create_domain(
+    fn create_domain(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         create_request: DomainMessage,
@@ -48,10 +48,10 @@ impl<'a> DomainOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
-    async fn delete_domain(
+    fn delete_domain(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         delete_request: DomainReferenceMessage,
@@ -63,10 +63,10 @@ impl<'a> DomainOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
-    async fn get_domain(
+    fn get_domain(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         get_request: DomainReferenceMessage,
@@ -78,10 +78,10 @@ impl<'a> DomainOpsSubServer<'a> {
             Ok(response) => ResponseType::DomainMessage(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
-    async fn update_domain(
+    fn update_domain(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         update_request: DomainMessage,
@@ -93,10 +93,10 @@ impl<'a> DomainOpsSubServer<'a> {
             Ok(response) => ResponseType::EmptyResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 
-    async fn list_tables(
+    fn list_tables(
         &self,
         tx: tokio::sync::mpsc::Sender<Result<TransactionResponse, Status>>,
         list_tables_request: DomainReferenceMessage,
@@ -108,6 +108,6 @@ impl<'a> DomainOpsSubServer<'a> {
             Ok(response) => ResponseType::ArrayOfStringResponse(response.into_inner()),
             Err(status) => ResponseType::ErrorResponse(status.into()),
         };
-        send_response(tx, response_type).await;
+        send_response(tx, response_type);
     }
 }
