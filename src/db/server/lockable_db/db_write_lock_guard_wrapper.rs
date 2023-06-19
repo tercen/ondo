@@ -3,11 +3,11 @@ use std::sync::RwLockWriteGuard;
 
 pub struct DbWriteLockGuardWrapper<'a, T> {
     guard: RwLockWriteGuard<'a, T>,
-    db_path: &'a String,
+    db_path: String,
 }
 
 impl<'a, T> DbWriteLockGuardWrapper<'a, T> {
-    pub(super) fn new(guard: RwLockWriteGuard<'a, T>, db_path: &'a String) -> Self {
+    pub(super) fn new(guard: RwLockWriteGuard<'a, T>, db_path: String) -> Self {
         Self { guard, db_path }
     }
 }

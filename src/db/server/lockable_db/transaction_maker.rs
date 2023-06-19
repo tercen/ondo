@@ -149,10 +149,8 @@ mod tests {
         let guard = {
             let ref this = lockable_transaction_or_db;
             let guard_wrapper = {
-                let ref this = lockable_transaction_or_db.lockable_db;
-                let guard = this.db_arc.db_lock.db.read().unwrap();
-                let db_path = &this.db_arc.db_lock.db_path;
-                DbReadLockGuardWrapper::new(guard, db_path)
+                let db_path = lockable_transaction_or_db.lockable_db.db_arc.db_lock.db_path.clone();
+                DbReadLockGuardWrapper::new(lockable_transaction_or_db.lockable_db.db_arc.db_lock.db.read().unwrap(), db_path)
             };
             if let Some(transaction) = &lockable_transaction_or_db.transaction {
                 let guard = transaction.lock();
