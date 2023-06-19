@@ -121,20 +121,17 @@ mod tests {
         transaction_or_db::MutTransactionOrDb, LockableDb, LOCKABLE_DB,
     };
 
-    // Replace LOCKABLE_DB with LockableDb::in_memory() in the setup of tests
-    fn setup() {
-        *LOCKABLE_DB = LockableDb::in_memory();
-    }
-
     #[test]
     fn test_read_returns_db() {
         // Arrange
-        setup();
-        let transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
-        let lockable_db_or_transaction = transaction_maker.lockable_db();
+
+        let lockable_transaction_or_db = LockableTransactionOrDb { 
+            transaction: None,
+            lockable_db: LOCKABLE_DB.clone(),
+        };
 
         // Act
-        let guard = lockable_db_or_transaction.read();
+        let guard = lockable_transaction_or_db.read();
 
         // Assert
         match guard.inner() {
@@ -143,11 +140,29 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_read_returns_db2() {
+        // Arrange
+        let lockable_transaction_or_db = LockableTransactionOrDb { 
+            transaction: None,
+            lockable_db: LockableDb::in_memory(),
+        };
+
+        // Act
+        let guard = lockable_transaction_or_db.read(); 
+
+        let closure = move || {// Assert
+        match guard.inner() {
+            TransactionOrDb::Db(_) => assert!(true),
+            TransactionOrDb::Transaction(_, _) => assert!(false, "Expected Db, got Transaction"),
+        }};
+        closure();
+    }
+
     // #[test]
     // fn test_create_transaction_returns_transaction() {
     //     // Arrange
-    //     setup();
-    //     let mut transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
+    //     let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
 
     //     // Act
     //     let lockable_db_or_transaction = transaction_maker.lockable_transaction();
@@ -164,8 +179,7 @@ mod tests {
 
     // #[test]
     // fn test_transaction_lifecycle() {
-    //     setup();
-    //     let mut transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
+    //     let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
     //     let lockable_db_or_transaction = transaction_maker.lockable_transaction();
     //     let result = transaction_maker.commit_transaction();
     //     assert!(result.is_ok());
