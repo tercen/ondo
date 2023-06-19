@@ -24,82 +24,82 @@ impl MyServer {
         EmptyMessageSubServer {}
     }
 
-    pub(crate) fn version_sub_server(
-        &self,
-        lockable_db: LockableTransactionOrDb,
-    ) -> VersionSubServer {
+    pub(crate) fn version_sub_server<'a, 'b>(
+        &'a self,
+        lockable_db: LockableTransactionOrDb<'b>,
+    ) -> VersionSubServer<'b> {
         VersionSubServer {
             lockable_db: lockable_db.clone(),
         }
     }
 
-    pub(crate) fn database_server_ops_sub_server(
-        &self,
-        lockable_db: LockableTransactionOrDb,
-    ) -> DatabaseServerOpsSubServer {
+    pub(crate) fn database_server_ops_sub_server<'a, 'b>(
+        &'a self,
+        lockable_db: LockableTransactionOrDb<'b>,
+    ) -> DatabaseServerOpsSubServer<'b> {
         DatabaseServerOpsSubServer {
             lockable_db: lockable_db.clone(),
         }
     }
 
-    pub(crate) fn domain_ops_sub_server(
-        &self,
-        lockable_db: LockableTransactionOrDb,
-    ) -> DomainOpsSubServer {
+    pub(crate) fn domain_ops_sub_server<'a, 'b>(
+        &'a self,
+        lockable_db: LockableTransactionOrDb<'b>,
+    ) -> DomainOpsSubServer<'b> {
         DomainOpsSubServer {
             lockable_db: lockable_db.clone(),
         }
     }
 
-    pub(crate) fn table_ops_sub_server(
-        &self,
-        lockable_db: LockableTransactionOrDb,
-    ) -> TableOpsSubServer {
+    pub(crate) fn table_ops_sub_server<'a, 'b>(
+        &'a self,
+        lockable_db: LockableTransactionOrDb<'b>,
+    ) -> TableOpsSubServer<'b> {
         TableOpsSubServer {
             lockable_db: lockable_db.clone(),
         }
     }
 
-    pub(crate) fn table_value_ops_sub_server(
-        &self,
-        lockable_db: LockableTransactionOrDb,
-    ) -> TableValueOpsSubServer {
+    pub(crate) fn table_value_ops_sub_server<'a, 'b>(
+        &'a self,
+        lockable_db: LockableTransactionOrDb<'b>,
+    ) -> TableValueOpsSubServer<'b> {
         TableValueOpsSubServer {
             lockable_db: lockable_db.clone(),
         }
     }
 
-    pub(crate) fn index_ops_sub_server(
-        &self,
-        lockable_db: LockableTransactionOrDb,
-    ) -> IndexOpsSubServer {
+    pub(crate) fn index_ops_sub_server<'a, 'b>(
+        &'a self,
+        lockable_db: LockableTransactionOrDb<'b>,
+    ) -> IndexOpsSubServer<'b> {
         IndexOpsSubServer {
             lockable_db: lockable_db.clone(),
         }
     }
 
-    pub(crate) fn indexed_value_ops_sub_server(
-        &self,
-        lockable_db: LockableTransactionOrDb,
-    ) -> IndexedValueOpsSubServer {
+    pub(crate) fn indexed_value_ops_sub_server<'a, 'b>(
+        &'a self,
+        lockable_db: LockableTransactionOrDb<'b>,
+    ) -> IndexedValueOpsSubServer<'b> {
         IndexedValueOpsSubServer {
             lockable_db: lockable_db.clone(),
         }
     }
 
-    pub(crate) fn key_prefix_ops_sub_server(
-        &self,
-        lockable_db: LockableTransactionOrDb,
-    ) -> KeyPrefixOpsSubServer {
+    pub(crate) fn key_prefix_ops_sub_server<'a, 'b>(
+        &'a self,
+        lockable_db: LockableTransactionOrDb<'b>,
+    ) -> KeyPrefixOpsSubServer<'b> {
         KeyPrefixOpsSubServer {
             lockable_db: lockable_db.clone(),
         }
     }
 
-    pub(crate) fn text_index_ops_sub_server(
-        &self,
-        lockable_db: LockableTransactionOrDb,
-    ) -> TextIndexOpsSubServer {
+    pub(crate) fn text_index_ops_sub_server<'a, 'b>(
+        &'a self,
+        lockable_db: LockableTransactionOrDb<'b>,
+    ) -> TextIndexOpsSubServer<'b> {
         TextIndexOpsSubServer {
             lockable_db: lockable_db.clone(),
         }
