@@ -33,12 +33,12 @@ impl<'a> TransactionMaker<'a> {
     //                 lockable_db: self.lockable_db.clone(),
     //             }
     //             }
-    //         Some(transaction) => 
+    //         Some(transaction) =>
     //             LockableTransactionOrDb {
     //                 transaction: Some(Arc::new(ReentrantMutex::new(transaction))),
     //                 lockable_db: self.lockable_db.clone(),
     //             }
-            
+
     //     }
     // }
 
@@ -47,7 +47,6 @@ impl<'a> TransactionMaker<'a> {
             transaction: None,
             lockable_db: self.lockable_db.clone(),
         }
-
     }
 
     pub fn commit_transaction(&mut self) -> Result<(), DbError> {
@@ -59,9 +58,7 @@ impl<'a> TransactionMaker<'a> {
 
     pub fn abort_transaction(&mut self) -> Result<(), DbError> {
         if let Some(transaction) = self.transaction.take() {
-            transaction
-                .rollback()
-                .map_err(DbError::TransactionError)?;
+            transaction.rollback().map_err(DbError::TransactionError)?;
         }
         Ok(())
     }
@@ -78,7 +75,6 @@ impl<'a> LockableTransactionOrDb<'a> {
     pub fn get_version(&self) -> Version {
         self.lockable_db.get_version()
     }
-   
 
     pub fn read(&'a self) -> TransactionOrDbReadGuard<'a> {
         let guard_wrapper = self.lockable_db.read();
@@ -118,14 +114,15 @@ mod tests {
     use super::super::transaction_or_db::TransactionOrDb;
     use super::*;
     use crate::db::server::lockable_db::{
-        transaction_or_db::MutTransactionOrDb, LockableDb, LOCKABLE_DB,
+        db_read_lock_guard_wrapper::DbReadLockGuardWrapper, transaction_or_db::MutTransactionOrDb,
+        LockableDb, LOCKABLE_DB,
     };
 
     #[test]
     fn test_read_returns_db() {
         // Arrange
 
-        let lockable_transaction_or_db = LockableTransactionOrDb { 
+        let lockable_transaction_or_db = LockableTransactionOrDb {
             transaction: None,
             lockable_db: LOCKABLE_DB.clone(),
         };
@@ -143,19 +140,41 @@ mod tests {
     #[test]
     fn test_read_returns_db2() {
         // Arrange
-        let lockable_transaction_or_db = LockableTransactionOrDb { 
+        let lockable_transaction_or_db = LockableTransactionOrDb {
             transaction: None,
             lockable_db: LockableDb::in_memory(),
         };
 
         // Act
-        let guard = lockable_transaction_or_db.read(); 
+        let guard = {
+            let ref this = lockable_transaction_or_db;
+            let guard_wrapper = {
+                let ref this = lockable_transaction_or_db.lockable_db;
+                let guard = this.db_arc.db_lock.db.read().unwrap();
+                let db_path = &this.db_arc.db_lock.db_path;
+                DbReadLockGuardWrapper::new(guard, db_path)
+            };
+            if let Some(transaction) = &lockable_transaction_or_db.transaction {
+                let guard = transaction.lock();
+                let db_path = this.lockable_db.db_path();
+                TransactionOrDbReadGuard::TransactionRead(
+                    ReentrantMutexGuardWrapper::new(guard, db_path.to_owned()),
+                    guard_wrapper,
+                )
+            } else {
+                TransactionOrDbReadGuard::DbRead(guard_wrapper)
+            }
+        };
 
-        let closure = move || {// Assert
-        match guard.inner() {
-            TransactionOrDb::Db(_) => assert!(true),
-            TransactionOrDb::Transaction(_, _) => assert!(false, "Expected Db, got Transaction"),
-        }};
+        let closure = move || {
+            // Assert
+            match guard.inner() {
+                TransactionOrDb::Db(_) => assert!(true),
+                TransactionOrDb::Transaction(_, _) => {
+                    assert!(false, "Expected Db, got Transaction")
+                }
+            }
+        };
         closure();
     }
 
