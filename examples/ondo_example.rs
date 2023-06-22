@@ -11,11 +11,11 @@ use serde::{Deserialize, Serialize};
 use tonic::Request;
 
 fn main() {
-    let rda = TransactionMaker::new(LOCKABLE_DB.clone());
+    let rda = LockableTransactionOrDb::with_db(LOCKABLE_DB.clone());
     database_server_example(&rda);
 }
 
-fn database_server_example(rda: &TransactionMaker) {
+fn database_server_example(rda: &LockableTransactionOrDb) {
     let database_server_reference_msg = DatabaseServerReferenceMessage {};
     let database_server_msg = DatabaseServerMessage {};
     let version = rda.version(Request::new(EmptyMessage {}));
@@ -33,7 +33,7 @@ fn database_server_example(rda: &TransactionMaker) {
     println!("Deleted Database: {:?}", answer);
 }
 
-fn domain_server_example(rda: &TransactionMaker) {
+fn domain_server_example(rda: &LockableTransactionOrDb) {
     let domain_name = "test_domain";
     let domain_reference_msg = DomainReferenceMessage {
         domain_name: domain_name.to_owned(),
@@ -54,7 +54,7 @@ fn domain_server_example(rda: &TransactionMaker) {
     println!("Deleted Domain: {:?}", answer);
 }
 
-fn table_server_example(rda: &TransactionMaker, domain_reference_msg: &DomainReferenceMessage) {
+fn table_server_example(rda: &LockableTransactionOrDb, domain_reference_msg: &DomainReferenceMessage) {
     let table_name = "test_table";
     let table_reference_msg = TableReferenceMessage {
         domain_reference: Some(domain_reference_msg.clone()),
@@ -78,7 +78,7 @@ fn table_server_example(rda: &TransactionMaker, domain_reference_msg: &DomainRef
 }
 
 fn table_value_server_example(
-    rda: &TransactionMaker,
+    rda: &LockableTransactionOrDb,
     table_reference_msg: &TableReferenceMessage,
 ) {
     println!("!!! Table Value Server Example !!!");
