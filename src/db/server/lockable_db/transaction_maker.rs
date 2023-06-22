@@ -111,6 +111,24 @@ mod tests {
         }
     }
 
+    fn test_read_returns_db2() {
+        // Arrange
+
+        let lockable_transaction_or_db = LockableTransactionOrDb {
+            transaction: None,
+            lockable_db: LOCKABLE_DB.clone(),
+        };
+
+        // Act
+        let guard = lockable_transaction_or_db.read();
+
+        // Assert
+        match guard.inner() {
+            TransactionOrDb::Db(_) => assert!(true),
+            TransactionOrDb::Transaction(_, _) => assert!(false, "Expected Db, got Transaction"),
+        }
+    }
+    
     // #[test]
     // fn test_create_transaction_returns_transaction() {
     //     // Arrange
