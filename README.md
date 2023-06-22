@@ -21,18 +21,10 @@ docker build --target release \
       -t tercen/ondo .
 ```
 
-# delayed todo
-- [ ] Feature: Transaction API
-    - [ ] Cancelled due to lack of time
-      - [ ] - [ ] Parametric types
-        - [ ] DbBasic
-        - [ ] DbTransaction
-        - [ ] DbTransactionFactory
-        - [ ] DbMeta
 # todo
 - [ ] Feature: Transaction API
-    - [ ] TransactionMaker has to be created within a client stream.
-      - [ ] Check: Meta operations exclude all other operations (RWLock) 
+    - [x] TransactionMaker has to be created within a client stream.
+      - [x] Check: Meta operations exclude all other operations (RWLock) 
     - [ ] Make meta ops atomic 1
     - [ ] Async server methods has to put a status on the client stream
     - [ ] Check: Transaction stream is using transactions 
