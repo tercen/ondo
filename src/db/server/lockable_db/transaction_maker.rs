@@ -10,69 +10,82 @@ use rocksdb::{Transaction, TransactionDB};
 use std::sync::Arc;
 
 
-pub(crate) struct TransactionMaker<'a> {
-    transaction: Option<Transaction<'a, TransactionDB>>,
-    lockable_db: LockableDb,
-}
+// pub(crate) struct TransactionMaker<'a> { 
+//     transaction: Option<Transaction<'a, TransactionDB>>,
+//     lockable_db: LockableDb,
+// }
 
-impl<'a> TransactionMaker<'a> {
-    pub fn new(lockable_db: LockableDb) -> Self {
-        TransactionMaker {
-            transaction: None,
-            lockable_db,
-        }
-    }
+// impl<'a> TransactionMaker<'a> {
+//     pub fn new(lockable_db: LockableDb) -> Self {
+//         TransactionMaker {
+//             transaction: None,
+//             lockable_db,
+//         }
+//     }
 
-    // pub fn lockable_transaction(&mut self) -> LockableTransactionOrDb<'a> {
-    //     match self.transaction {
-    //         None => {
-    //             let guard = self.lockable_db.read();
-    //             let transaction = guard.transaction();
-    //             self.transaction = Some(transaction);
-    //             LockableTransactionOrDb {
-    //                 transaction: Some(Arc::new(ReentrantMutex::new(transaction))),
-    //                 lockable_db: self.lockable_db.clone(),
-    //             }
-    //             }
-    //         Some(transaction) =>
-    //             LockableTransactionOrDb {
-    //                 transaction: Some(Arc::new(ReentrantMutex::new(transaction))),
-    //                 lockable_db: self.lockable_db.clone(),
-    //             }
+//     // pub fn lockable_transaction(&mut self) -> LockableTransactionOrDb<'a> {
+//     //     match self.transaction {
+//     //         None => {
+//     //             let guard = self.lockable_db.read();
+//     //             let transaction = guard.transaction();
+//     //             self.transaction = Some(transaction);
+//     //             LockableTransactionOrDb {
+//     //                 transaction: Some(Arc::new(ReentrantMutex::new(transaction))),
+//     //                 lockable_db: self.lockable_db.clone(),
+//     //             }
+//     //             }
+//     //         Some(transaction) =>
+//     //             LockableTransactionOrDb {
+//     //                 transaction: Some(Arc::new(ReentrantMutex::new(transaction))),
+//     //                 lockable_db: self.lockable_db.clone(),
+//     //             }
 
-    //     }
-    // }
+//     //     }
+//     // }
 
-    pub fn lockable_db(&self) -> LockableTransactionOrDb<'a> {
-        LockableTransactionOrDb {
-            transaction: None,
-            lockable_db: self.lockable_db.clone(),
-        }
-    }
+//     pub fn lockable_db(&self) -> LockableTransactionOrDb<'a> {
+//         LockableTransactionOrDb {
+//             transaction: None,
+//             lockable_db: self.lockable_db.clone(),
+//         }
+//     }
 
-    pub fn commit_transaction(&mut self) -> Result<(), DbError> {
-        if let Some(transaction) = self.transaction.take() {
-            transaction.commit().map_err(DbError::TransactionError)?;
-        }
-        Ok(())
-    }
+//     pub fn commit_transaction(&mut self) -> Result<(), DbError> {
+//         if let Some(transaction) = self.transaction.take() {
+//             transaction.commit().map_err(DbError::TransactionError)?;
+//         }
+//         Ok(())
+//     }
 
-    pub fn roll_back_transaction(&mut self) -> Result<(), DbError> {
-        if let Some(transaction) = self.transaction.take() {
-            transaction.rollback().map_err(DbError::TransactionError)?;
-        }
-        Ok(())
-    }
-}
+//     pub fn roll_back_transaction(&mut self) -> Result<(), DbError> {
+//         if let Some(transaction) = self.transaction.take() {
+//             transaction.rollback().map_err(DbError::TransactionError)?;
+//         }
+//         Ok(())
+//     }
+// }
 
-/// LockableTransactionOrDb can only be created by TransactionMaker
+
+type LockableTransaction<'a> = Arc<ReentrantMutex<Transaction<'a, TransactionDB>>>;
 #[derive(Clone)]
 pub(crate) struct LockableTransactionOrDb<'a> {
-    pub(crate) transaction: Option<Arc<ReentrantMutex<Transaction<'a, TransactionDB>>>>,
+    pub(crate) transaction: Option<LockableTransaction<'a>>,
     pub(crate) lockable_db: LockableDb,
 }
 
 impl<'a> LockableTransactionOrDb<'a> {
+    fn make_transaction_lockable<'b>(tr: Transaction<'b, TransactionDB>)->LockableTransaction {
+        Arc::new(ReentrantMutex::new(tr))
+    }
+
+    pub fn with_db(lockableDb: LockableDb) -> Self {
+        Self { transaction: None, lockableDb }
+    }
+
+    pub fn with_transaction(lockableDb: LockableDb, transaction) -> Self {
+        Self { transaction: Some(make_transaction_lockable(transaction)), lockableDb }
+    }
+
     pub fn get_version(&self) -> Version {
         self.lockable_db.get_version()
     }
