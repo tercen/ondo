@@ -77,30 +77,30 @@ impl<'a> LockableTransactionOrDb<'a> {
     }
 
     pub fn read(&'a self) -> TransactionOrDbReadGuard<'a> {
-        let guard_wrapper = self.lockable_db.read();
-        if let Some(transaction) = &self.transaction {
-            let guard = transaction.lock();
-            let db_path = self.lockable_db.db_path();
-            TransactionOrDbReadGuard::TransactionRead(
-                ReentrantMutexGuardWrapper::new(guard, db_path.to_owned()),
-                guard_wrapper,
-            )
-        } else {
-            TransactionOrDbReadGuard::DbRead(guard_wrapper)
+        let db_guard = self.lockable_db.read();
+        match &self.transaction {
+            None => TransactionOrDbReadGuard::new(db_guard, None),
+            Some(transaction) => {
+                let db_path = self.lockable_db.db_path();
+                let transaction_guard = transaction.lock();
+                let transaction_guard_wrapper =
+                    ReentrantMutexGuardWrapper::new(transaction_guard, db_path.to_owned());
+                TransactionOrDbReadGuard::new(db_guard, Some(transaction_guard_wrapper))
+            }
         }
     }
 
     pub fn write(&'a self) -> TransactionOrDbWriteGuard<'a> {
-        let guard_wrapper = self.lockable_db.write();
-        if let Some(transaction) = &self.transaction {
-            let guard = transaction.lock();
-            let db_path = self.lockable_db.db_path();
-            TransactionOrDbWriteGuard::TransactionWrite(
-                ReentrantMutexGuardWrapper::new(guard, db_path.to_owned()),
-                guard_wrapper,
-            )
-        } else {
-            TransactionOrDbWriteGuard::DbWrite(guard_wrapper)
+        let db_guard = self.lockable_db.write();
+        match &self.transaction {
+            None => TransactionOrDbWriteGuard::new(db_guard, None),
+            Some(transaction) => {
+                let db_path = self.lockable_db.db_path();
+                let transaction_guard = transaction.lock();
+                let transaction_guard_wrapper =
+                    ReentrantMutexGuardWrapper::new(transaction_guard, db_path.to_owned());
+                    TransactionOrDbWriteGuard::new(db_guard, Some(transaction_guard_wrapper))
+            }
         }
     }
 
@@ -146,23 +146,24 @@ mod tests {
         };
 
         // Act
-        let ref this = lockable_transaction_or_db; 
+        let ref this = lockable_transaction_or_db;
         let db_guard = this.lockable_db.read();
         let guard = match &this.transaction {
-            None => {
-                (db_guard, None)
-            },
+            None => TransactionOrDbReadGuard::new(db_guard, None),
             Some(transaction) => {
+                let db_path = this.lockable_db.db_path();
                 let transaction_guard = transaction.lock();
-                (db_guard, Some(transaction_guard))
+                let transaction_guard_wrapper =
+                    ReentrantMutexGuardWrapper::new(transaction_guard, db_path.to_owned());
+                    TransactionOrDbReadGuard::new(db_guard, Some(transaction_guard_wrapper))
             }
         };
-  
+
         let closure = move || {
             // Assert
-            match guard {
-                (db_guard, None) => assert!(true),
-                (db_guard, Some(transaction_guard))=> {
+            match guard.guard_pair { 
+                (db_guard, None) => assert!(true), 
+                (db_guard, Some(transaction_guard)) => { 
                     assert!(false, "Expected Db, got Transaction")
                 }
             }
