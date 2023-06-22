@@ -16,37 +16,40 @@ type PreferredTransactionReadLockGuardWrapper<'a> =
 type PreferredDbReadLockGuardWrapper<'a> = DbReadLockGuardWrapper<'a, TransactionDB>;
 
 // #[derive(Debug)]
-pub(crate) struct TransactionOrDbReadGuard<'a, 'b> {
-    pub guard_pair: (
+pub(crate) struct TransactionOrDbReadGuard<'a, 'b>
+(
         PreferredDbReadLockGuardWrapper<'a>,
         Option<PreferredTransactionReadLockGuardWrapper<'b>>,
-    ),
-}
+    );
+
 
 impl<'a, 'b> TransactionOrDbReadGuard<'a, 'b> {
-    pub(crate) fn new(
+    pub(crate) fn new
+    (
         db: PreferredDbReadLockGuardWrapper<'a>,
         tr: Option<PreferredTransactionReadLockGuardWrapper<'b>>,
-    ) -> Self {
-        Self {
-            guard_pair: (db, tr),
-        }
+    ) -> Self 
+    where 'a: 'b
+    {
+        Self 
+             (db, tr)
+        
     }
 
     pub(crate) fn inner<'c>(&'c self) -> TransactionOrDb<'c> {
-        match &self.guard_pair {
-            (db_guard, Some(transaction_guard)) => {
+        match &self {
+            Self(db_guard, Some(transaction_guard)) => {
                 TransactionOrDb::Transaction(transaction_guard.deref(), db_guard.deref())
             }
-            (db_guard, None) => TransactionOrDb::Db(db_guard.deref()),
+            Self(db_guard, None) => TransactionOrDb::Db(db_guard.deref()),
         }
     }
     pub(crate) fn inner_older(&'a self) -> TransactionOrDb<'a> {
-        match &self.guard_pair {
-            (db_guard, Some(transaction_guard)) => {
+        match &self {
+            Self(db_guard, Some(transaction_guard)) => {
                 TransactionOrDb::Transaction(transaction_guard.deref(), db_guard.deref())
             }
-            (db_guard, None) => TransactionOrDb::Db(db_guard.deref()),
+            Self(db_guard, None) => TransactionOrDb::Db(db_guard.deref()),
         }
     }
 }
@@ -56,35 +59,31 @@ type PreferredTransactionWriteLockGuardWrapper<'a> =
 type PreferredDbWriteLockGuardWrapper<'a> = DbWriteLockGuardWrapper<'a, TransactionDB>;
 
 // #[derive(Debug)]
-pub(crate) struct TransactionOrDbWriteGuard<'a, 'b> {
-    guard_pair: (
+pub(crate) struct TransactionOrDbWriteGuard<'a, 'b>(
         PreferredDbWriteLockGuardWrapper<'a>,
         Option<PreferredTransactionReadLockGuardWrapper<'b>>,
-    ),
-}
+    );
 
 impl<'a, 'b> TransactionOrDbWriteGuard<'a, 'b> {
     pub(crate) fn new(
         db: PreferredDbWriteLockGuardWrapper<'a>,
         tr: Option<PreferredTransactionReadLockGuardWrapper<'b>>,
     ) -> Self {
-        Self {
-            guard_pair: (db, tr),
-        }
+        Self(db, tr)
     }
 
     pub(crate) fn inner(&'a self) -> TransactionOrDb<'a> {
-        match &self.guard_pair {
-            (db_guard, Some(transaction_guard)) => {
+        match &self {
+            Self(db_guard, Some(transaction_guard)) => {
                 TransactionOrDb::Transaction(transaction_guard.deref(), db_guard.deref())
             }
-            (db_guard, None) => TransactionOrDb::Db(db_guard.deref()),
+            Self(db_guard, None) => TransactionOrDb::Db(db_guard.deref()),
         }
     }
     pub(crate) fn inner_mut<'c>(&'c mut self) -> MutTransactionOrDb<'c> {
-        match &self.guard_pair {
-            (db_guard, Some(transaction_guard)) => MutTransactionOrDb::Transaction,
-            (ref mut  db_guard, None) => MutTransactionOrDb::Db(db_guard.deref_mut()),
+        match self {
+            Self(db_guard, Some(transaction_guard)) => MutTransactionOrDb::Transaction,
+            Self(mut  db_guard, None) => MutTransactionOrDb::Db(db_guard.deref_mut()),
         }
     }
 }
