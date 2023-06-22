@@ -24,7 +24,7 @@ impl<'a> TransactionOrDb<'a> {
     //FIXME: transaction needs cf_handle
     pub(crate) fn cf_handle(&self, cf_name: &str) -> Option<&rocksdb::ColumnFamily> {
         match self {
-            TransactionOrDb::Transaction(transaction, _) => todo!(),
+            TransactionOrDb::Transaction(transaction, db) => db.cf_handle(cf_name),
             TransactionOrDb::Db(db) => db.cf_handle(cf_name),
         }
     }
