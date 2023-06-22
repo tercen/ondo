@@ -3,8 +3,9 @@ use super::text_index_worker::TextIndexWorker;
 use super::TextIndex;
 use crate::db::entity::table_value::TableValue;
 use crate::db::server::lockable_db::LOCKABLE_DB;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::{
-    entity::ondo_key::OndoKey, server::lockable_db::transaction_maker::TransactionMaker,
+    entity::ondo_key::OndoKey, 
 };
 use serde::{Deserialize, Serialize};
 
@@ -18,8 +19,8 @@ pub(crate) enum TextIndexTask {
 
 impl TextIndexTask {
     pub fn execute(&self) -> Result<(), String> {
-        let mut transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
-        let lockable_db = transaction_maker.lockable_db();
+        let lockable_db = LockableTransactionOrDb::with_db(LOCKABLE_DB.clone());
+
         match self {
             TextIndexTask::IndexRelatedTableValues(text_index) => {
                 let worker = TextIndexWorker::from_text_index(text_index.clone(), lockable_db)?;

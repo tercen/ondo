@@ -181,7 +181,7 @@ mod tests {
     use crate::db::server::{lockable_db::LockableDb, source_sink::effects_sink::EffectsTasksSink};
     use serde::{Deserialize, Serialize};
     use crate::db::server::source_sink::effects_sink::EffectsSink;
-    use crate::db::server::lockable_db::transaction_maker::{LockableTransactionOrDb, TransactionMaker};
+    use crate::db::server::lockable_db::transaction_maker::{LockableTransactionOrDb};
 
     pub(crate) fn create_database_server_entity() -> DatabaseServer {
         DatabaseServer::default()
@@ -247,8 +247,10 @@ mod tests {
     }
 
     pub(crate) fn setup_test_data() -> TestData {
-        let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
-        let ra = transaction_maker.lockable_db();
+        // let lockable_db = LockableTransactionOrDb::with_db(LOCKABLE_DB.clone());
+        let lockable_db = LockableTransactionOrDb::with_db(LockableDb::in_memory());
+        
+        let ra = lockable_db;
 
         // let ra = LockableTransactionOrDb::new(LockableDb::in_memory());
 

@@ -27,15 +27,14 @@ pub(crate) fn get_tantivy_index_path(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::server::lockable_db::{transaction_maker::TransactionMaker, LockableDb};
+    use crate::db::server::lockable_db::{ LockableDb};
 
     #[test]
     fn test_get_tantivy_index_path() {
         let text_index_reference =
             TextIndexReference::build("test_domain", "test_table", "test_index");
 
-        let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
-        let lockable_db = transaction_maker.lockable_db();
+        let lockable_db = LockableTransactionOrDb::with_db(LockableDb::in_memory());
 
         let db_path = lockable_db.db_path();
         let mut expected_path = PathBuf::from(db_path);

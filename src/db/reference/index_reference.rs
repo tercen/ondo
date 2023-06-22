@@ -393,7 +393,7 @@ mod tests {
     }
 
     mod index_reference_trait_tests {
-        use crate::db::server::lockable_db::{transaction_maker::TransactionMaker, LockableDb};
+        use crate::db::server::lockable_db::LockableDb;
 
         use super::*;
         #[test]
@@ -430,11 +430,10 @@ mod tests {
         fn test_put_index() {
             let mut parent_mock = MockTableStoredTestRequests::new();
 
-            let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
-            let iterator_mock_factory = transaction_maker.lockable_db();
+            // let lockable_db = LockableTransactionOrDb::with_db(LOCKABLE_DB.clone());
+            let lockable_db = LockableTransactionOrDb::with_db(LockableDb::in_memory());
 
-            let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
-            let iterator_mock_factory = transaction_maker.lockable_db();
+            let iterator_mock_factory = lockable_db;
 
             let index_reference =
                 IndexReference::build("sample_domain", "sample_table", "sample_index");
@@ -483,9 +482,9 @@ mod tests {
         #[test]
         fn test_put_index_failure() {
             let mut parent_mock = MockTableStoredTestRequests::new();
-
-            let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
-            let iterator_mock_factory = transaction_maker.lockable_db();
+            // let lockable_db = LockableTransactionOrDb::with_db(LOCKABLE_DB.clone());
+            let lockable_db = LockableTransactionOrDb::with_db(LockableDb::in_memory());
+            let iterator_mock_factory = lockable_db;
 
             let index_reference =
                 IndexReference::build("sample_domain", "sample_table", "sample_index");
@@ -503,9 +502,9 @@ mod tests {
         #[test]
         fn test_post_index() {
             let mut parent_mock = MockTableStoredTestRequests::new();
-
-            let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
-            let iterator_mock_factory = transaction_maker.lockable_db();
+            // let lockable_db = LockableTransactionOrDb::with_db(LOCKABLE_DB.clone());
+            let lockable_db = LockableTransactionOrDb::with_db(LockableDb::in_memory());
+            let iterator_mock_factory = lockable_db;
 
             let index_reference =
                 IndexReference::build("sample_domain", "sample_table", "sample_index");
@@ -564,8 +563,9 @@ mod tests {
         fn test_post_index_failure() {
             let mut parent_mock = MockTableStoredTestRequests::new();
 
-            let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
-            let iterator_mock_factory = transaction_maker.lockable_db();
+            // let lockable_db = LockableTransactionOrDb::with_db(LOCKABLE_DB.clone());
+            let lockable_db = LockableTransactionOrDb::with_db(LockableDb::in_memory());
+            let iterator_mock_factory = lockable_db;
 
             let index_reference =
                 IndexReference::build("sample_domain", "sample_table", "sample_index");

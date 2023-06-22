@@ -10,45 +10,6 @@ use rocksdb::{Transaction, TransactionDB};
 use std::sync::Arc;
 
 
-// pub(crate) struct TransactionMaker<'a> { 
-//     transaction: Option<Transaction<'a, TransactionDB>>,
-//     lockable_db: LockableDb,
-// }
-
-// impl<'a> TransactionMaker<'a> {
-//     pub fn new(lockable_db: LockableDb) -> Self {
-//         TransactionMaker {
-//             transaction: None,
-//             lockable_db,
-//         }
-//     }
-
-//     // pub fn lockable_transaction(&mut self) -> LockableTransactionOrDb<'a> {
-//     //     match self.transaction {
-//     //         None => {
-//     //             let guard = self.lockable_db.read();
-//     //             let transaction = guard.transaction();
-//     //             self.transaction = Some(transaction);
-//     //             LockableTransactionOrDb {
-//     //                 transaction: Some(Arc::new(ReentrantMutex::new(transaction))),
-//     //                 lockable_db: self.lockable_db.clone(),
-//     //             }
-//     //             }
-//     //         Some(transaction) =>
-//     //             LockableTransactionOrDb {
-//     //                 transaction: Some(Arc::new(ReentrantMutex::new(transaction))),
-//     //                 lockable_db: self.lockable_db.clone(),
-//     //             }
-
-//     //     }
-//     // }
-
-//     pub fn lockable_db(&self) -> LockableTransactionOrDb<'a> {
-//         LockableTransactionOrDb {
-//             transaction: None,
-//             lockable_db: self.lockable_db.clone(),
-//         }
-//     }
 
 //     pub fn commit_transaction(&mut self) -> Result<(), DbError> {
 //         if let Some(transaction) = self.transaction.take() {
@@ -63,7 +24,6 @@ use std::sync::Arc;
 //         }
 //         Ok(())
 //     }
-// }
 
 
 type LockableTransaction<'a> = Arc<ReentrantMutex<Transaction<'a, TransactionDB>>>;
@@ -78,12 +38,12 @@ impl<'a> LockableTransactionOrDb<'a> {
         Arc::new(ReentrantMutex::new(tr))
     }
 
-    pub fn with_db(lockableDb: LockableDb) -> Self {
-        Self { transaction: None, lockableDb }
+    pub fn with_db(lockable_db: LockableDb) -> Self {
+        Self { transaction: None, lockable_db }
     }
 
-    pub fn with_transaction(lockableDb: LockableDb, transaction) -> Self {
-        Self { transaction: Some(make_transaction_lockable(transaction)), lockableDb }
+    pub fn with_transaction<'b>(lockable_db: LockableDb, transaction: Transaction<'b, TransactionDB>) -> Self {
+        Self { transaction: Some(Self::make_transaction_lockable(transaction)), lockable_db }
     }
 
     pub fn get_version(&self) -> Version {
@@ -151,44 +111,11 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_read_returns_db2() {
-        // Arrange
-        let lockable_transaction_or_db = LockableTransactionOrDb {
-            transaction: None,
-            lockable_db: LockableDb::in_memory(),
-        };
-
-        // Act
-        let ref this = lockable_transaction_or_db;
-        let db_guard = this.lockable_db.read();
-        let guard = match &this.transaction {
-            None => TransactionOrDbReadGuard::new(db_guard, None),
-            Some(transaction) => {
-                let db_path = this.lockable_db.db_path();
-                let transaction_guard = transaction.lock();
-                let transaction_guard_wrapper =
-                    ReentrantMutexGuardWrapper::new(transaction_guard, db_path.to_owned());
-                    TransactionOrDbReadGuard::new(db_guard, Some(transaction_guard_wrapper))
-            }
-        };
-
-        let closure = move || {
-            // Assert
-            match guard.guard_pair { 
-                (db_guard, None) => assert!(true), 
-                (db_guard, Some(transaction_guard)) => { 
-                    assert!(false, "Expected Db, got Transaction")
-                }
-            }
-        };
-        closure();
-    }
-
     // #[test]
     // fn test_create_transaction_returns_transaction() {
     //     // Arrange
-    //     let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
+    //         // let lockable_db = LockableTransactionOrDb::with_db(LOCKABLE_DB.clone());
+    //         let lockable_db = LockableTransactionOrDb::with_transaction(LockableDb::in_memory());
 
     //     // Act
     //     let lockable_db_or_transaction = transaction_maker.lockable_transaction();
@@ -203,11 +130,5 @@ mod tests {
     //     }
     // }
 
-    // #[test]
-    // fn test_transaction_lifecycle() {
-    //     let mut transaction_maker = TransactionMaker::new(LockableDb::in_memory());
-    //     let lockable_db_or_transaction = transaction_maker.lockable_transaction();
-    //     let result = transaction_maker.commit_transaction();
-    //     assert!(result.is_ok());
-    // }
+
 }

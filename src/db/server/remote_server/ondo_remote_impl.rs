@@ -6,9 +6,8 @@ use tokio_stream::wrappers::ReceiverStream;
 use tokio_stream::StreamExt;
 
 use super::send_response::{blocking_send_response, send_response};
-use crate::db::server::lockable_db::transaction_maker::{
-    LockableTransactionOrDb, TransactionMaker,
-};
+
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::server::lockable_db::LOCKABLE_DB;
 use crate::ondo_remote;
 use ondo_remote::*;
@@ -66,8 +65,9 @@ impl ondo_remote_server::OndoRemote for MyServer {
 
         let my_server_clone = self.clone();
         tokio::spawn(async move {
-            let transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
-            let lockable_transaction_or_db = transaction_maker.lockable_db();
+            let lockable_db = LockableTransactionOrDb::with_db(LOCKABLE_DB.clone());
+            // let lockable_db = LockableTransactionOrDb::with_db(LockableDb::in_memory());
+            let lockable_transaction_or_db = lockable_db;
             while let Some(request) = stream.next().await {
                 match request {
                     Ok(transaction_request) => {
@@ -87,7 +87,9 @@ impl ondo_remote_server::OndoRemote for MyServer {
                                 indexed_value_ops,
                             )) => {
                                 let response_type = my_server_clone
-                                    .indexed_value_ops_sub_server(lockable_transaction_or_db.clone())
+                                    .indexed_value_ops_sub_server(
+                                        lockable_transaction_or_db.clone(),
+                                    )
                                     .process_request(
                                         tx.clone(),
                                         indexed_value_ops.request_type.unwrap(),
@@ -137,8 +139,9 @@ impl ondo_remote_server::OndoRemote for MyServer {
         //FIXME: Use database but do atomic writes
         let my_server_clone = self.clone();
         tokio::spawn(async move {
-            let transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
-            let lockable_transaction_or_db = transaction_maker.lockable_db();
+            let lockable_db = LockableTransactionOrDb::with_db(LOCKABLE_DB.clone());
+            // let lockable_db = LockableTransactionOrDb::with_db(LockableDb::in_memory());
+            let lockable_transaction_or_db = lockable_db;
             while let Some(request) = stream.next().await {
                 match request {
                     Ok(meta_request) => {
@@ -153,7 +156,9 @@ impl ondo_remote_server::OndoRemote for MyServer {
                                 database_server_ops,
                             )) => {
                                 let response_type = my_server_clone
-                                    .database_server_ops_sub_server(lockable_transaction_or_db.clone())
+                                    .database_server_ops_sub_server(
+                                        lockable_transaction_or_db.clone(),
+                                    )
                                     .process_request(
                                         tx.clone(),
                                         database_server_ops.request_type.unwrap(),

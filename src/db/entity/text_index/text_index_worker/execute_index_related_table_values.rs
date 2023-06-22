@@ -1,15 +1,14 @@
 // text_index_worker/execute_index_related_table_values.rs
 use super::TextIndexWorker;
 use crate::db::reference::table_reference::TableReferenceTrait;
-use crate::db::server::lockable_db::transaction_maker::TransactionMaker;
+use crate::db::server::lockable_db::transaction_maker::LockableTransactionOrDb;
 use crate::db::server::lockable_db::LOCKABLE_DB;
 
 impl<'a> TextIndexWorker<'a> {
     pub(crate) fn execute_index_related_table_values(&self) -> Result<(), String> {
         let table_reference = &self.text_index.reference.table_reference;
 
-        let mut transaction_maker = TransactionMaker::new(LOCKABLE_DB.clone());
-        let lockable_db = transaction_maker.lockable_db();
+        let lockable_db = LockableTransactionOrDb::with_db(LOCKABLE_DB.clone());
 
         let guard = lockable_db.read();
         let db = guard.inner();
