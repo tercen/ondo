@@ -9,6 +9,7 @@ use parking_lot::ReentrantMutex;
 use rocksdb::{Transaction, TransactionDB};
 use std::sync::Arc;
 
+
 pub(crate) struct TransactionMaker<'a> {
     transaction: Option<Transaction<'a, TransactionDB>>,
     lockable_db: LockableDb,
@@ -56,7 +57,7 @@ impl<'a> TransactionMaker<'a> {
         Ok(())
     }
 
-    pub fn abort_transaction(&mut self) -> Result<(), DbError> {
+    pub fn roll_back_transaction(&mut self) -> Result<(), DbError> {
         if let Some(transaction) = self.transaction.take() {
             transaction.rollback().map_err(DbError::TransactionError)?;
         }
@@ -76,7 +77,7 @@ impl<'a> LockableTransactionOrDb<'a> {
         self.lockable_db.get_version()
     }
 
-    pub fn read(&'a self) -> TransactionOrDbReadGuard<'a> {
+    pub fn read<'b>(&'a self) -> TransactionOrDbReadGuard<'a, 'b> {
         let db_guard = self.lockable_db.read();
         match &self.transaction {
             None => TransactionOrDbReadGuard::new(db_guard, None),
@@ -90,7 +91,7 @@ impl<'a> LockableTransactionOrDb<'a> {
         }
     }
 
-    pub fn write(&'a self) -> TransactionOrDbWriteGuard<'a> {
+    pub fn write<'b>(&'a self) -> TransactionOrDbWriteGuard<'a, 'b> { 
         let db_guard = self.lockable_db.write();
         match &self.transaction {
             None => TransactionOrDbWriteGuard::new(db_guard, None),
