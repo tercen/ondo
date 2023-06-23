@@ -76,9 +76,9 @@ impl Index {
         KeyValue::new(key, value)
     }
 
-    pub(crate) fn index_related_table_values(
+    pub(crate) fn index_related_table_values  (
         &self,
-        table_stored_iterator_requests_factory: &LockableTransactionOrDb,
+        table_stored_iterator_requests_factory: & LockableTransactionOrDb  ,
     ) -> DbResult<Effects> {
         let guard = table_stored_iterator_requests_factory.read(); 
         let db = guard.inner();

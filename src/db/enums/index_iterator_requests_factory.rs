@@ -18,7 +18,7 @@ impl<'a> IndexIteratorRequestsFactoryEnum<'a> {
     //     IndexIteratorRequestsFactoryEnum::Mock
     // }
 
-    pub(crate) fn guard<'b>(&'b self) -> DbResult<IndexIteratorRequestsGuard<'a>> {
+    pub(crate) fn guard(&self) -> DbResult<IndexIteratorRequestsGuard> {
         match self {
             IndexIteratorRequestsFactoryEnum::LockableDb(lockable_db) => {
                 Ok(IndexIteratorRequestsGuard::DbWrapper(lockable_db.read()))
@@ -31,7 +31,7 @@ impl<'a> IndexIteratorRequestsFactoryEnum<'a> {
 }
 
 pub(crate) enum IndexIteratorRequestsGuard<'a> {
-    DbWrapper(TransactionOrDbReadGuard<'a, 'a>),
+    DbWrapper(TransactionOrDbReadGuard<'a >),
     MockWrapper, // todo!: Replace with the actual mock type when it's available
 }
 

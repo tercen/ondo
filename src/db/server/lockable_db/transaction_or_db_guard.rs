@@ -16,20 +16,20 @@ type PreferredTransactionReadLockGuardWrapper<'a> =
 type PreferredDbReadLockGuardWrapper<'a> = DbReadLockGuardWrapper<'a, TransactionDB>;
 
 // #[derive(Debug)]
-pub(crate) struct TransactionOrDbReadGuard<'a, 'b>
+pub(crate) struct TransactionOrDbReadGuard<'a>
 (
         PreferredDbReadLockGuardWrapper<'a>,
-        Option<PreferredTransactionReadLockGuardWrapper<'b>>,
+        Option<PreferredTransactionReadLockGuardWrapper<'a>>,
     );
 
 
-impl<'a, 'b> TransactionOrDbReadGuard<'a, 'b> {
+impl<'a > TransactionOrDbReadGuard<'a> {
     pub(crate) fn new
     (
         db: PreferredDbReadLockGuardWrapper<'a>,
-        tr: Option<PreferredTransactionReadLockGuardWrapper<'b>>,
+        tr: Option<PreferredTransactionReadLockGuardWrapper<'a>>,
     ) -> Self 
-    where 'a: 'b
+
     {
         Self 
              (db, tr)
@@ -83,7 +83,7 @@ impl<'a, 'b> TransactionOrDbWriteGuard<'a, 'b> {
     pub(crate) fn inner_mut<'c>(&'c mut self) -> MutTransactionOrDb<'c> {
         match self {
             Self(db_guard, Some(transaction_guard)) => MutTransactionOrDb::Transaction,
-            Self(mut  db_guard, None) => MutTransactionOrDb::Db(db_guard.deref_mut()),
+            Self(ref mut  db_guard, None) => MutTransactionOrDb::Db(db_guard.deref_mut()),
         }
     }
 }

@@ -116,23 +116,24 @@ impl<'a> TextIndexServerTrait for LockableTransactionOrDb<'a> {
         &self,
         r: Request<TantivyQueryMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let tantivy_query: TantivyQuery = r.get_ref().into();
-        let reference = tantivy_query.reference;
-        let text_index = reference
-            .get_text_index(self)
-            .map_db_err_option_to_status()?;
-        let iterator = text_index
-            .search_iterator(
-                &tantivy_query.query,
-                tantivy_query.page_size,
-                tantivy_query.page_number,
-                self,
-            )
-            .map_db_err_to_status()?;
-
-        let values: Vec<TableValue> = iterator.collect();
-        let json = serde_json::to_string(&values).map_err(|e| Status::internal(e.to_string()))?;
-        let response = Response::new(JsonMessage { json });
-        Ok(response)
+        todo!()
+        // let tantivy_query: TantivyQuery = r.get_ref().into();
+        // let reference = tantivy_query.reference;
+        // let text_index = reference
+        //     .get_text_index(self)
+        //     .map_db_err_option_to_status()?;
+        // let iterator = text_index
+        //     .search_iterator(
+        //         &tantivy_query.query,
+        //         tantivy_query.page_size,
+        //         tantivy_query.page_number,
+        //         self,
+        //     )
+        //     .map_db_err_to_status()?;
+        //
+        // let values: Vec<TableValue> = iterator.collect();
+        // let json = serde_json::to_string(&values).map_err(|e| Status::internal(e.to_string()))?;
+        // let response = Response::new(JsonMessage { json });
+        // Ok(response)
     }
 }
