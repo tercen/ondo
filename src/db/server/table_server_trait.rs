@@ -3,20 +3,23 @@ use ondo_remote::*;
 use tonic::{Request, Response, Status};
 
 pub trait TableServerTrait {
-    fn create_table(&self, _: Request<TableMessage>) -> Result<Response<EmptyMessage>, Status>;
+    fn create_table(&mut self, _: Request<TableMessage>) -> Result<Response<EmptyMessage>, Status>;
     fn delete_table(
-        &self,
+        &mut self,
         r: Request<TableReferenceMessage>,
     ) -> Result<Response<EmptyMessage>, Status>;
     fn get_table(
         &self,
         r: Request<TableReferenceMessage>,
     ) -> Result<Response<TableMessage>, Status>;
-    fn update_table(&self, _: Request<TableMessage>) -> Result<Response<EmptyMessage>, Status>;
+    fn update_table(&mut self, _: Request<TableMessage>) -> Result<Response<EmptyMessage>, Status>;
     fn list_indexes(
         &self,
         r: Request<TableReferenceMessage>,
     ) -> Result<Response<ArrayOfStringResponse>, Status>;
+}
+
+pub trait TabledValueServerTrait {
     fn list_values(
         &self,
         r: Request<TableReferenceMessage>,

@@ -1,5 +1,6 @@
 // table_reference.rs
-use super::{CfNameMaker, DomainReference, Effect, Effects};
+use super::{CfNameMaker, DomainReference};
+use crate::db::reference::effect::Effects;
 use crate::db::reference::requests::{
     DomainStoredRequests, TableStoredIteratorRequests, TableStoredRequests,
 };

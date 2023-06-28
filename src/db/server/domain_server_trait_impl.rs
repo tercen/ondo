@@ -1,7 +1,7 @@
 use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
 use super::domain_server_trait::DomainServerTrait;
-use super::lockable_db::LockableDb;
+use super::lockable_db::transaction_or_db::TransactionOrDb;
 use super::source_sink::effects_sink::EffectsSink;
 use crate::{
     db::{
@@ -10,6 +10,7 @@ use crate::{
     },
     ondo_remote::*,
 };
+use rocksdb::TransactionDB;
 use tonic::{Request, Response, Status};
 
 impl<'a> Into<DomainReference> for &'a DomainReferenceMessage {
@@ -45,25 +46,30 @@ impl Into<DomainMessage> for Domain {
     }
 }
 
-impl DomainServerTrait for LockableDb {
-    fn create_domain(&self, r: Request<DomainMessage>) -> Result<Response<EmptyMessage>, Status> {
+impl DomainServerTrait for TransactionDB {
+    fn create_domain(
+        &mut self,
+        r: Request<DomainMessage>,
+    ) -> Result<Response<EmptyMessage>, Status> {
         let entity: Domain = r.get_ref().into();
+        let transaction_or_db = TransactionOrDb::Db(self);
         entity
             .reference
-            .post_domain(&entity, self, self)
+            .post_domain(&entity, &transaction_or_db, &transaction_or_db)
             .map_db_err_to_status()?
-            .apply_effects(self)
+            .apply_all_effects(self)
     }
 
     fn delete_domain(
-        &self,
+        &mut self,
         r: Request<DomainReferenceMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
         let reference: DomainReference = r.get_ref().into();
+        let transaction_or_db = TransactionOrDb::Db(self);
         reference
-            .delete_domain(self, self, self)
+            .delete_domain(&transaction_or_db, &transaction_or_db, &transaction_or_db)
             .map_db_err_to_status()?
-            .apply_effects(self)
+            .apply_all_effects(self)
     }
 
     fn get_domain(
@@ -71,19 +77,24 @@ impl DomainServerTrait for LockableDb {
         r: Request<DomainReferenceMessage>,
     ) -> Result<Response<DomainMessage>, Status> {
         let reference: DomainReference = r.get_ref().into();
+        let transaction_or_db = TransactionOrDb::Db(self);
         reference
-            .get_domain(self)
+            .get_domain(&transaction_or_db)
             .map_db_err_option_to_status()
             .map(|entity| Response::new(entity.into()))
     }
 
-    fn update_domain(&self, r: Request<DomainMessage>) -> Result<Response<EmptyMessage>, Status> {
+    fn update_domain(
+        &mut self,
+        r: Request<DomainMessage>,
+    ) -> Result<Response<EmptyMessage>, Status> {
         let entity: Domain = r.get_ref().into();
+        let transaction_or_db = TransactionOrDb::Db(self);
         entity
             .reference
-            .put_domain(&entity, self)
+            .put_domain(&entity, &transaction_or_db)
             .map_db_err_to_status()?
-            .apply_effects(self)
+            .apply_all_effects(self)
     }
 
     fn list_tables(
@@ -91,7 +102,10 @@ impl DomainServerTrait for LockableDb {
         r: Request<DomainReferenceMessage>,
     ) -> Result<Response<ArrayOfStringResponse>, Status> {
         let reference: DomainReference = r.get_ref().into();
-        let names = reference.list_table_names(self).map_db_err_to_status()?;
+        let transaction_or_db = TransactionOrDb::Db(self);
+        let names = reference
+            .list_table_names(&transaction_or_db)
+            .map_db_err_to_status()?;
         let response = ArrayOfStringResponse { values: names };
         Ok(Response::new(response))
     }

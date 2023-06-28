@@ -4,6 +4,7 @@
 
 use super::*;
 use crate::db::reference::effect::DomainStoredEffect;
+use crate::db::reference::effect::{AccessEffect, Effect, Effects, MetaEffect};
 use crate::db::reference::requests::{
     DatabaseServerStoredRequests, DomainStoredRequests, TableStoredRequests,
 };
@@ -55,11 +56,11 @@ impl DomainStoredReferenceTrait for DomainReference {
     }
 
     fn put_domain_stored(&self, domain_stored: &DomainStored) -> DbResult<Effects> {
-        let effect = Effect::DomainStoredEffect(DomainStoredEffect::Put(
+        let effect = Effect::Access(AccessEffect::DomainStoredEffect(DomainStoredEffect::Put(
             self.container_cf_name(),
             self.domain_name.clone(),
             (*domain_stored).clone(),
-        ));
+        )));
         Ok(vec![effect])
     }
 
@@ -78,7 +79,7 @@ impl DomainStoredReferenceTrait for DomainReference {
         let mut effects = self
             .required_cf_names()
             .into_iter()
-            .map(|cf_name| Effect::CreateCf(cf_name))
+            .map(|cf_name| Effect::Meta(MetaEffect::CreateCf(cf_name)))
             .collect::<Vec<_>>();
 
         database_server_stored
@@ -127,14 +128,13 @@ impl DomainStoredReferenceTrait for DomainReference {
         effects
             .extend(database_server_reference.put_database_server_stored(&database_server_stored)?);
 
-        effects.push(Effect::DomainStoredEffect(DomainStoredEffect::Delete(
-            self.container_cf_name(),
-            self.domain_name.clone(),
+        effects.push(Effect::Access(AccessEffect::DomainStoredEffect(
+            DomainStoredEffect::Delete(self.container_cf_name(), self.domain_name.clone()),
         )));
         effects.extend(
             self.required_cf_names()
                 .into_iter()
-                .map(|cf_name| Effect::DeleteCf(cf_name)),
+                .map(|cf_name| Effect::Meta(MetaEffect::DeleteCf(cf_name))),
         );
         Ok(effects)
     }
@@ -224,10 +224,12 @@ pub(crate) mod tests {
             let ref_trait = create_domain_ref();
             let domain_stored = create_domain_stored();
 
-            let expected_effects = vec![Effect::DomainStoredEffect(DomainStoredEffect::Put(
-                ref_trait.container_cf_name(),
-                ref_trait.domain_name.clone(),
-                domain_stored.clone(),
+            let expected_effects = vec![Effect::Access(AccessEffect::DomainStoredEffect(
+                DomainStoredEffect::Put(
+                    ref_trait.container_cf_name(),
+                    ref_trait.domain_name.clone(),
+                    domain_stored.clone(),
+                ),
             ))];
 
             let effects = ref_trait.put_domain_stored(&domain_stored).unwrap();
@@ -240,23 +242,29 @@ pub(crate) mod tests {
             let domain_stored = create_domain_stored();
 
             let expected_effects = vec![
-                Effect::CreateCf("/domains/sample_domain/tables".to_owned()),
-                Effect::CreateCf("/domains/sample_domain/counters".to_owned()),
-                Effect::DatabaseServerStoredEffect(DatabaseServerStoredEffect::Put(
-                    "/server".to_owned(),
-                    (),
-                    DatabaseServerStored {
-                        meta_revision: 0,
-                        database_server: DatabaseServer::default(),
-                        domains: {
-                            vec!["sample_domain".to_owned()]
-                                .into_iter()
-                                .map(|s| (s, ()))
-                                .collect()
-                        },
-                    },
+                Effect::Meta(MetaEffect::CreateCf(
+                    "/domains/sample_domain/tables".to_owned(),
                 )),
-                Effect::DomainStoredEffect(DomainStoredEffect::Put(
+                Effect::Meta(MetaEffect::CreateCf(
+                    "/domains/sample_domain/counters".to_owned(),
+                )),
+                Effect::Access(AccessEffect::DatabaseServerStoredEffect(
+                    DatabaseServerStoredEffect::Put(
+                        "/server".to_owned(),
+                        (),
+                        DatabaseServerStored {
+                            meta_revision: 0,
+                            database_server: DatabaseServer::default(),
+                            domains: {
+                                vec!["sample_domain".to_owned()]
+                                    .into_iter()
+                                    .map(|s| (s, ()))
+                                    .collect()
+                            },
+                        },
+                    ),
+                )),
+                Effect::Access(AccessEffect::DomainStoredEffect(DomainStoredEffect::Put(
                     "/domains".to_owned(),
                     "sample_domain".to_owned(),
                     DomainStored {
@@ -267,7 +275,7 @@ pub(crate) mod tests {
                         },
                         tables: Default::default(),
                     },
-                )),
+                ))),
             ];
 
             let mut parent_mock = MockDatabaseServerStoredTestRequests::new();
@@ -286,21 +294,26 @@ pub(crate) mod tests {
             let ref_trait = DomainReference::build("sample_domain");
 
             let expected_effects = vec![
-                Effect::DatabaseServerStoredEffect(DatabaseServerStoredEffect::Put(
-                    "/server".to_owned(),
-                    (),
-                    DatabaseServerStored {
-                        meta_revision: 0,
-                        database_server: DatabaseServer::default(),
-                        domains: Default::default(),
-                    },
+                Effect::Access(AccessEffect::DatabaseServerStoredEffect(
+                    DatabaseServerStoredEffect::Put(
+                        "/server".to_owned(),
+                        (),
+                        DatabaseServerStored {
+                            meta_revision: 0,
+                            database_server: DatabaseServer::default(),
+                            domains: Default::default(),
+                        },
+                    ),
                 )),
-                Effect::DomainStoredEffect(DomainStoredEffect::Delete(
-                    "/domains".to_owned(),
-                    "sample_domain".to_owned(),
+                Effect::Access(AccessEffect::DomainStoredEffect(
+                    DomainStoredEffect::Delete("/domains".to_owned(), "sample_domain".to_owned()),
                 )),
-                Effect::DeleteCf("/domains/sample_domain/tables".to_owned()),
-                Effect::DeleteCf("/domains/sample_domain/counters".to_owned()),
+                Effect::Meta(MetaEffect::DeleteCf(
+                    "/domains/sample_domain/tables".to_owned(),
+                )),
+                Effect::Meta(MetaEffect::DeleteCf(
+                    "/domains/sample_domain/counters".to_owned(),
+                )),
             ];
 
             let mut table_mock = MockTableStoredTestRequests::new();

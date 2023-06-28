@@ -1,6 +1,6 @@
 use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
-use super::lockable_db::LockableDb;
+use super::lockable_db::transaction_or_db::TransactionOrDb;
 use super::source_sink::effects_sink::EffectsTasksSink;
 use super::table_value_server_trait::TableValueServerTrait;
 use crate::db::reference::{
@@ -57,7 +57,7 @@ impl<'a> Into<CreateTableValuePayload> for &'a CreateTableValueMessage {
     }
 }
 
-impl TableValueServerTrait for LockableDb {
+impl<'a> TableValueServerTrait for TransactionOrDb<'a> {
     fn create_value(
         &self,
         r: Request<CreateTableValueMessage>,
@@ -105,6 +105,17 @@ impl TableValueServerTrait for LockableDb {
             .put_table_value(&entity, self, self)
             .map_db_err_to_status()?
             .apply_effects_queue_tasks(self)
+    }
+
+    fn get_value_for_update(
+        &self,
+        r: Request<TableValueReferenceMessage>,
+    ) -> Result<Response<JsonMessage>, Status> {
+        let reference: TableValueReference = r.get_ref().into();
+        reference
+            .get_table_value_for_update(self)
+            .map_db_err_option_to_status()
+            .map(|entity| Response::new(entity.into()))
     }
 }
 

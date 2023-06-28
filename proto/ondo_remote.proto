@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/wrappers.proto";
+import "status.proto";
 
 package OndoRemote;
 
@@ -10,112 +11,134 @@ package OndoRemote;
 /// a database server contains multiple domains, each domain contains multiple tables,
 /// each table contains values and indexes, and each index contains references to values.
 service OndoRemote {
-    /// Version returns the version information of the server, including major, minor, and patch versions,
-    /// commit hash, build date, and a list of enabled features.
-    rpc Version(EmptyMessage) returns (VersionResponse) {}
-
-    /// Database Server operations
-
-    /// CreateDatabaseServer creates a new database server with the given configuration.
-    rpc CreateDatabaseServer(DatabaseServerMessage) returns (EmptyMessage) {}
-    /// DeleteDatabaseServer removes an existing database server identified by the given reference.
-    rpc DeleteDatabaseServer(DatabaseServerReferenceMessage) returns (EmptyMessage) {}
-    /// GetDatabaseServer retrieves the configuration of an existing database server identified by the given reference.
-    rpc GetDatabaseServer(DatabaseServerReferenceMessage) returns (DatabaseServerMessage) {}
-    /// UpdateDatabaseServer updates the configuration of an existing database server with the given data.
-    rpc UpdateDatabaseServer(DatabaseServerMessage) returns (EmptyMessage) {}
-    /// ListDomains returns a list of domain names hosted on the specified database server.
-    rpc ListDomains(DatabaseServerReferenceMessage) returns (ArrayOfStringResponse) {}
-
-    /// Domain operations
-
-    /// CreateDomain creates a new domain with the given configuration.
-    rpc CreateDomain(DomainMessage) returns (EmptyMessage) {}
-    /// DeleteDomain removes an existing domain identified by the given reference.
-    rpc DeleteDomain(DomainReferenceMessage) returns (EmptyMessage) {}
-    /// GetDomain retrieves the configuration of an existing domain identified by the given reference.
-    rpc GetDomain(DomainReferenceMessage) returns (DomainMessage) {}
-    /// UpdateDomain updates the configuration of an existing domain with the given data.
-    rpc UpdateDomain(DomainMessage) returns (EmptyMessage) {}
-    /// ListTables returns a list of table names within the specified domain.
-    rpc ListTables(DomainReferenceMessage) returns (ArrayOfStringResponse) {}
-
-    /// Table operations
-
-    /// CreateTable creates a new table with the given configuration.
-    rpc CreateTable(TableMessage) returns (EmptyMessage) {}
-    /// DeleteTable removes an existing table identified by the given reference.
-    rpc DeleteTable(TableReferenceMessage) returns (EmptyMessage) {}
-    /// GetTable retrieves the configuration of an existing table identified by the given reference.
-    rpc GetTable(TableReferenceMessage) returns (TableMessage) {}
-    /// UpdateTable updates the configuration of an existing table with the given data.
-    rpc UpdateTable(TableMessage) returns (EmptyMessage) {}
-    /// ListIndexes returns a list of index names associated with the specified table.
-    rpc ListIndexes(TableReferenceMessage) returns (ArrayOfStringResponse) {}
-
-    /// Table Value operations
-
-    /// ListValues retrieves all values associated with the specified table reference.
-    /// Requires a full key for efficient lookups.
-    rpc ListValues(TableReferenceMessage) returns (JsonMessage) {}
-    /// ListValuesByKeyPrefix retrieves all values that share the specified key prefix within a table.
-    rpc ListValuesByKeyPrefix(TableValueReferenceMessage) returns (JsonMessage) {}
-    /// ListValuesByIdRange retrieves all values whose keys fall within the specified range (inclusive) within a table.
-    /// Also supports key prefix lookups.
-    rpc ListValuesByIdRange(TableIdRangeReferenceMessage) returns (JsonMessage) {}
-    /// ListValuesByIdList retrieves all values whose keys are listed in the provided list of keys within a table.
-    rpc ListValuesByIdList(TableIdListReferenceMessage) returns (JsonMessage) {}
-
-/// Index operations
-
-/// CreateIndex creates a new index with the given configuration.
-rpc CreateIndex(IndexMessage) returns (EmptyMessage) {}
-/// DeleteIndex removes an existing index identified by the given reference.
-rpc DeleteIndex(IndexReferenceMessage) returns (EmptyMessage) {}
-/// GetIndex retrieves the configuration of an existing index identified by the given reference.
-rpc GetIndex(IndexReferenceMessage) returns (IndexMessage) {}
-/// UpdateIndex updates the configuration of an existing index with the given data.
-rpc UpdateIndex(IndexMessage) returns (EmptyMessage) {}
-
-/// Indexed Value operations
-
-/// FindValues performs a key prefix search on the specified index and returns the matching values.
-rpc FindValues(IndexedValueReferenceMessage) returns (JsonMessage) {}
-/// FindValuesByRange retrieves all values whose indexed keys fall within the specified range (inclusive) in an index.
-/// Also supports key prefix lookups.
-rpc FindValuesByRange(IndexedValueRangeReferenceMessage) returns (JsonMessage) {}
-
-/// Table Value CRUD operations
-
-/// CreateValue creates a new value in the specified table.
-/// The CreateTableValueMessage can contain an optional key sequence for efficient key prefix search (ListValuesByKeyPrefix).
-rpc CreateValue(CreateTableValueMessage) returns (OndoKeyMessage) {}
-/// DeleteValue removes an existing value identified by the given table value reference.
-rpc DeleteValue(TableValueReferenceMessage) returns (EmptyMessage) {}
-/// GetValue retrieves the value associated with the given table value reference.
-rpc GetValue(TableValueReferenceMessage) returns (JsonMessage) {}
-/// UpdateValue updates the value identified by the given table value reference with the new data.
-rpc UpdateValue(TableValueMessage) returns (EmptyMessage) {}
-
-/// Note: When creating a table value, the CreateTableValueMessage can have an optional key.
-/// If the key is not provided, the database server will generate a key, which is a 64-bit integer.
-
-/// Text Index Operations
-
-/// CreateTextIndex creates a new text index with the given configuration.
-rpc CreateTextIndex(TextIndexMessage) returns (EmptyMessage) {}
-/// DeleteTextIndex removes an existing text index identified by the given reference.
-rpc DeleteTextIndex(TextIndexReferenceMessage) returns (EmptyMessage) {}
-/// GetTextIndex retrieves the configuration of an existing text index identified by the given reference.
-rpc GetTextIndex(TextIndexReferenceMessage) returns (TextIndexMessage) {}
-/// UpdateTextIndex updates the configuration of an existing text index with the given data.
-rpc UpdateTextIndex(TextIndexMessage) returns (EmptyMessage) {}
-
-/// Text Indexed Value operations
-
-/// SearchValues performs a key prefix search on the specified index and returns the matching values.
-rpc SearchTextIndex(TantivyQueryMessage) returns (JsonMessage) {}
+    /// TransactionStream is a streaming RPC method that accepts a stream of transaction requests
+    /// from the client and returns a stream of transaction responses. The client can send multiple
+    /// requests in a single stream session and receive multiple responses as well.
+    rpc TransactionStream(stream TransactionRequest) returns (stream TransactionResponse) {}
+    /// Access Database without a transaction
+    rpc DbStream(stream TransactionRequest) returns (stream TransactionResponse) {}
+    /// Change the schema of the database. 
+    rpc MetaStream(stream MetaRequest) returns (stream TransactionResponse) {}
 }
+
+message MetaRequest {
+    oneof request_type {
+        EmptyMessage version_request = 1;
+        DatabaseServerOps database_server_ops = 2;
+        DomainOps domain_ops = 3;
+        TableOps table_ops = 4;
+        IndexOps index_ops = 5;
+        TextIndexOps text_index_ops = 6;
+    }
+}
+
+message TransactionRequest {
+    oneof request_type {
+        TableValueOps table_value_ops = 1; 
+        IndexedValueOps indexed_value_ops = 2;
+        KeyPrefixOps key_prefix_ops = 3;
+    }
+}
+
+// Database Server Ops
+message DatabaseServerOps {
+    oneof request_type {
+        DatabaseServerMessage create_request = 1;
+        DatabaseServerReferenceMessage delete_request = 2;
+        DatabaseServerReferenceMessage get_request = 3;
+        DatabaseServerMessage update_request = 4; //FIXME Should be DatabaseServerReferenceMessage
+        DatabaseServerReferenceMessage list_domains_request = 5;
+    }
+}
+
+// Domain Ops
+message DomainOps {
+    oneof request_type {
+        DomainMessage create_request = 1;
+        DomainReferenceMessage delete_request = 2;
+        DomainReferenceMessage get_request = 3;
+        DomainMessage update_request = 4;
+        DomainReferenceMessage list_tables_request = 5;
+    }
+}
+
+// Table Ops
+message TableOps {
+    oneof request_type {
+        TableMessage create_request = 1;
+        TableReferenceMessage delete_request = 2;
+        TableReferenceMessage get_request = 3;
+        TableMessage update_request = 4;
+        TableReferenceMessage list_indexes_request = 5;
+    }
+}
+
+// Table Value Ops
+message TableValueOps {
+    oneof request_type {
+        CreateTableValueMessage create_request = 1;
+        TableValueReferenceMessage delete_request = 2;
+        TableValueReferenceMessage get_request = 3;
+        TableValueMessage update_request = 4;
+        TableValueReferenceMessage get_for_update_request = 5;
+    }
+}
+
+// Index Ops 
+message IndexOps {
+    oneof request_type {
+        IndexMessage create_request = 1;
+        IndexReferenceMessage delete_request = 2;
+        IndexReferenceMessage get_request = 3;
+        IndexMessage update_request = 4;
+    }
+}
+
+// Text Index Ops 
+message TextIndexOps { 
+    oneof request_type { 
+        TextIndexMessage create_request = 1; 
+        TextIndexReferenceMessage delete_request = 2; 
+        TextIndexReferenceMessage get_request = 3; 
+        TextIndexMessage update_request = 4; 
+        TantivyQueryMessage search_request = 5; 
+    } 
+}
+
+// Query: Key Prefix Ops
+message KeyPrefixOps {
+    oneof request_type {
+        TableReferenceMessage list_values_request = 1;
+        TableValueReferenceMessage list_values_by_key_prefix_request = 2;
+        TableIdRangeReferenceMessage list_values_by_id_range_request = 3;
+        TableIdListReferenceMessage list_values_by_id_list_request = 4;
+    }
+}
+
+// Query: Indexed Value Ops 
+message IndexedValueOps { 
+    oneof request_type { 
+        IndexedValueReferenceMessage find_values = 1; 
+        IndexedValueRangeReferenceMessage find_values_by_range = 2; 
+    } 
+}
+
+
+message TransactionResponse {
+    oneof response_type {
+      EmptyMessage empty_response = 1;
+      VersionResponse version_response = 2;
+      ArrayOfStringResponse array_of_string_response = 3;
+      DatabaseServerMessage database_server_message = 4;
+      DomainMessage domain_message = 5;
+      TableMessage table_message = 6;
+      IndexMessage index_message = 7;
+      TextIndexMessage text_index_message = 8;
+      JsonMessage json_message = 9;
+      OndoKeyMessage ondo_key_message = 10;
+      CommandStatus error_response = 11;
+    }
+  }
 
 message EmptyMessage {}
 
@@ -224,7 +247,6 @@ message OptionalOndoKeyMessage {
 }
 
 // Text Index
-
 message TextIndexReferenceMessage {
     TableReferenceMessage table_reference = 1;
     string index_name = 2;
@@ -240,4 +262,35 @@ message TantivyQueryMessage {
     string query = 2;
     google.protobuf.UInt64Value optional_page_size = 3;
     google.protobuf.UInt64Value optional_page_number = 4;
+}
+
+// Async Table Value
+message AsyncJsonMessage {
+    uint64 request_id = 1;
+    JsonMessage json_message = 2;
+}
+
+message AsyncTableValueReferenceMessage {
+    uint64 request_id = 1;
+    TableValueReferenceMessage table_value_reference = 2;
+}
+
+
+// Copy of google.rpc.status
+import "google/protobuf/any.proto";
+
+message CommandStatus {
+  // The status code, which should be an enum value of
+  // [google.rpc.Code][google.rpc.Code].
+  int32 code = 1;
+
+  // A developer-facing error message, which should be in English. Any
+  // user-facing error message should be localized and sent in the
+  // [google.rpc.Status.details][google.rpc.Status.details] field, or localized
+  // by the client.
+  string message = 2;
+
+  // A list of messages that carry the error details.  There is a common set of
+  // message types for APIs to use.
+  // repeated google.protobuf.Any details = 3;
 }

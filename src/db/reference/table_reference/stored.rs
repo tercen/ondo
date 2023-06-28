@@ -2,6 +2,7 @@
 //TODO: validate domain name
 //TEST: test cascade_delete
 use super::*;
+use crate::db::reference::effect::{AccessEffect, Effect, Effects, MetaEffect};
 use crate::db::{
     entity::{OndoKey, TableValue},
     reference::{
@@ -14,8 +15,7 @@ use crate::db::{
     DbResult,
 };
 
-pub(crate) struct MockTableStoredIteratorRequestsFactory {
-}
+pub(crate) struct MockTableStoredIteratorRequestsFactory {}
 
 pub(crate) struct MockTableStoredIteratorTestRequests {}
 impl<'a> TableStoredIteratorRequests<'a> for MockTableStoredIteratorTestRequests {
@@ -132,11 +132,11 @@ impl TableStoredReferenceTrait for TableReference {
     }
 
     fn put_table_stored(&self, table_stored: &TableStored) -> DbResult<Effects> {
-        let effect = Effect::TableStoredEffect(TableStoredEffect::Put(
+        let effect = Effect::Access(AccessEffect::TableStoredEffect(TableStoredEffect::Put(
             self.container_cf_name(),
             self.table_name.clone(),
             (*table_stored).clone(),
-        ));
+        )));
         Ok(vec![effect])
     }
 
@@ -155,7 +155,7 @@ impl TableStoredReferenceTrait for TableReference {
         effects.extend(
             self.required_cf_names()
                 .iter()
-                .map(|cf_name| Effect::CreateCf(cf_name.clone()))
+                .map(|cf_name| Effect::Meta(MetaEffect::CreateCf(cf_name.clone())))
                 .collect::<Vec<_>>(),
         );
         effects.extend(self.put_table_stored(table_stored)?);
@@ -192,15 +192,14 @@ impl TableStoredReferenceTrait for TableReference {
         domain_stored.tables.remove(&self.table_name);
         effects.extend(domain_reference.put_domain_stored(&domain_stored)?);
 
-        effects.push(Effect::TableStoredEffect(TableStoredEffect::Delete(
-            self.container_cf_name(),
-            self.table_name.clone(),
+        effects.push(Effect::Access(AccessEffect::TableStoredEffect(
+            TableStoredEffect::Delete(self.container_cf_name(), self.table_name.clone()),
         )));
 
         effects.extend(
             self.required_cf_names()
                 .iter()
-                .map(|cf_name| Effect::DeleteCf(cf_name.clone())),
+                .map(|cf_name| Effect::Meta(MetaEffect::DeleteCf(cf_name.clone()))),
         );
         Ok(effects)
     }
@@ -234,7 +233,6 @@ pub mod tests {
             // fn all_values<'a>(&'a self, value_cf_name: &str) -> DbResult<Box<dyn Iterator<Item = DbResult<TableValue>>>>;
         }
     }
-
 
     pub(crate) fn create_table_ref() -> TableReference {
         TableReference::build("sample_domain", "sample_table")
@@ -290,19 +288,21 @@ pub mod tests {
             let ref_trait = create_table_ref();
             let table_stored = create_table_stored();
 
-            let expected_effects = vec![Effect::TableStoredEffect(TableStoredEffect::Put(
-                "/domains/sample_domain/tables".to_owned(),
-                "sample_table".to_owned(),
-                TableStored {
-                    table: Table {
-                        reference: TableReference {
-                            domain_reference: DomainReference::build("sample_domain"),
-                            table_name: "sample_table".to_owned(),
+            let expected_effects = vec![Effect::Access(AccessEffect::TableStoredEffect(
+                TableStoredEffect::Put(
+                    "/domains/sample_domain/tables".to_owned(),
+                    "sample_table".to_owned(),
+                    TableStored {
+                        table: Table {
+                            reference: TableReference {
+                                domain_reference: DomainReference::build("sample_domain"),
+                                table_name: "sample_table".to_owned(),
+                            },
                         },
+                        indexes: Default::default(),
+                        text_indexes: Default::default(),
                     },
-                    indexes: Default::default(),
-                    text_indexes: Default::default(),
-                },
+                ),
             ))];
 
             let effects = ref_trait.put_table_stored(&table_stored).unwrap();
@@ -315,7 +315,7 @@ pub mod tests {
             let table_stored = create_table_stored();
 
             let expected_effects = vec![
-                Effect::DomainStoredEffect(DomainStoredEffect::Put(
+                Effect::Access(AccessEffect::DomainStoredEffect(DomainStoredEffect::Put(
                     "/domains".to_owned(),
                     "sample_domain".to_owned(),
                     DomainStored {
@@ -329,9 +329,11 @@ pub mod tests {
                             .map(|s| (s, ()))
                             .collect(),
                     },
+                ))),
+                Effect::Meta(MetaEffect::CreateCf(
+                    "sample_domain::/sample_table".to_owned(),
                 )),
-                Effect::CreateCf("sample_domain::/sample_table".to_owned()),
-                Effect::TableStoredEffect(TableStoredEffect::Put(
+                Effect::Access(AccessEffect::TableStoredEffect(TableStoredEffect::Put(
                     "/domains/sample_domain/tables".to_owned(),
                     "sample_table".to_owned(),
                     TableStored {
@@ -344,7 +346,7 @@ pub mod tests {
                         indexes: Default::default(),
                         text_indexes: Default::default(),
                     },
-                )),
+                ))),
             ];
 
             let mut parent_mock = MockDomainStoredTestRequests::new();
@@ -363,7 +365,7 @@ pub mod tests {
             let ref_trait = TableReference::build("sample_domain", "sample_table");
 
             let expected_effects = vec![
-                Effect::DomainStoredEffect(DomainStoredEffect::Put(
+                Effect::Access(AccessEffect::DomainStoredEffect(DomainStoredEffect::Put(
                     "/domains".to_owned(),
                     "sample_domain".to_owned(),
                     DomainStored {
@@ -374,12 +376,14 @@ pub mod tests {
                         },
                         tables: Default::default(),
                     },
-                )),
-                Effect::TableStoredEffect(TableStoredEffect::Delete(
+                ))),
+                Effect::Access(AccessEffect::TableStoredEffect(TableStoredEffect::Delete(
                     "/domains/sample_domain/tables".to_owned(),
                     "sample_table".to_owned(),
+                ))),
+                Effect::Meta(MetaEffect::DeleteCf(
+                    "sample_domain::/sample_table".to_owned(),
                 )),
-                Effect::DeleteCf("sample_domain::/sample_table".to_owned()),
             ];
 
             let mut mock = MockTableStoredTestRequests::new();

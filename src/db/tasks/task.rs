@@ -59,7 +59,7 @@ impl Task {
                 tokio::time::sleep(Duration::from_millis(200)).await;
                 Ok(())
             }
-            TaskType::TextIndex(text_index_task) => text_index_task.execute(),
+            TaskType::TextIndex(text_index_task) => text_index_task.execute().await,
         }
     }
 }

@@ -2,21 +2,25 @@
 use ondo::db::server::{
     database_server_trait::DatabaseServerTrait,
     domain_server_trait::DomainServerTrait,
-    lockable_db::LockableDb,
     lockable_db::LOCKABLE_DB,
+    lockable_db::transaction_or_db::TransactionOrDb,
     table_server_trait::TableServerTrait,
     table_value_server_trait::TableValueServerTrait,
 };
 use ondo::ondo_remote::*;
+use rocksdb::TransactionDB;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
 
-fn main() {
-    let rda = LOCKABLE_DB.clone();
-    database_server_example(&rda);
+#[tokio::main]
+async fn main() {
+    let lockable_db = LOCKABLE_DB.clone();
+    let mut db_guard = lockable_db.write().await;
+    let db = &mut *db_guard;
+    database_server_example(db);
 }
 
-fn database_server_example(rda: &LockableDb) {
+fn database_server_example(rda: &mut TransactionDB) {
     let database_server_reference_msg = DatabaseServerReferenceMessage {};
     let database_server_msg = DatabaseServerMessage {};
     let version = rda.version(Request::new(EmptyMessage {}));
@@ -34,7 +38,7 @@ fn database_server_example(rda: &LockableDb) {
     println!("Deleted Database: {:?}", answer);
 }
 
-fn domain_server_example(rda: &LockableDb) {
+fn domain_server_example(rda: &mut TransactionDB) {
     let domain_name = "test_domain";
     let domain_reference_msg = DomainReferenceMessage {
         domain_name: domain_name.to_owned(),
@@ -55,7 +59,7 @@ fn domain_server_example(rda: &LockableDb) {
     println!("Deleted Domain: {:?}", answer);
 }
 
-fn table_server_example(rda: &LockableDb, domain_reference_msg: &DomainReferenceMessage) {
+fn table_server_example(rda: &mut TransactionDB, domain_reference_msg: &DomainReferenceMessage) {
     let table_name = "test_table";
     let table_reference_msg = TableReferenceMessage {
         domain_reference: Some(domain_reference_msg.clone()),
@@ -72,14 +76,15 @@ fn table_server_example(rda: &LockableDb, domain_reference_msg: &DomainReference
     println!("Updated Table: {:?}", answer);
     let answer = rda.list_indexes(Request::new(table_reference_msg.clone()));
     println!("Listed Tables: {:?}", answer);
-    table_value_server_example(rda, &table_reference_msg);
+    let transaction_or_db = TransactionOrDb::Db(rda);
+    table_value_server_example(&transaction_or_db, &table_reference_msg);
     let answer = rda.delete_table(Request::new(table_reference_msg.clone()));
     println!("Deleted Table: {:?}", answer);
     println!("TODO list functions not yet implemented")
 }
 
 fn table_value_server_example(
-    rda: &LockableDb,
+    rda: &TransactionOrDb,
     table_reference_msg: &TableReferenceMessage,
 ) {
     println!("!!! Table Value Server Example !!!");

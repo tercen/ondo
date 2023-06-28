@@ -1,5 +1,6 @@
 //index_value_reference.rs
-use super::{CfNameMaker, Effect, Effects, IndexReference};
+use super::{CfNameMaker, IndexReference};
+use crate::db::reference::effect::{AccessEffect, Effect, Effects};
 use crate::db::{
     entity::{IndexKey, IndexValue},
     reference::{effect::IndexValueEffect, requests::IndexValueRequests},
@@ -47,18 +48,18 @@ impl IndexValueReferenceTrait for IndexValueReference {
         requests.get_index_value_stored(&self.container_cf_name(), &self)
     }
     fn put_index_value(&self, id: &IndexValue) -> DbResult<Effects> {
-        let effect = Effect::IndexValueEffect(IndexValueEffect::Put(
+        let effect = Effect::Access(AccessEffect::IndexValueEffect(IndexValueEffect::Put(
             self.container_cf_name(),
             self.key.clone(),
             id.clone(),
-        ));
+        )));
         Ok(vec![effect])
     }
     fn delete_index_value(&self) -> DbResult<Effects> {
-        let effect = Effect::IndexValueEffect(IndexValueEffect::Delete(
+        let effect = Effect::Access(AccessEffect::IndexValueEffect(IndexValueEffect::Delete(
             self.container_cf_name(),
             self.key.clone(),
-        ));
+        )));
         Ok(vec![effect])
     }
 }
@@ -133,11 +134,12 @@ mod tests {
             let index_value = create_index_value();
 
             let effects = index_value_ref.put_index_value(&index_value).unwrap();
-            let expected_effect = Effect::IndexValueEffect(IndexValueEffect::Put(
-                "sample_domain::/sample_table/indexes/sample_index".to_owned(),
-                index_value_ref.key.clone(),
-                index_value,
-            ));
+            let expected_effect =
+                Effect::Access(AccessEffect::IndexValueEffect(IndexValueEffect::Put(
+                    "sample_domain::/sample_table/indexes/sample_index".to_owned(),
+                    index_value_ref.key.clone(),
+                    index_value,
+                )));
 
             assert_eq!(effects.len(), 1);
             assert_eq!(effects[0], expected_effect);
@@ -152,10 +154,11 @@ mod tests {
             );
 
             let effects = index_value_ref.delete_index_value().unwrap();
-            let expected_effect = Effect::IndexValueEffect(IndexValueEffect::Delete(
-                "sample_domain::/sample_table/indexes/sample_index".to_owned(),
-                index_value_ref.key.clone(),
-            ));
+            let expected_effect =
+                Effect::Access(AccessEffect::IndexValueEffect(IndexValueEffect::Delete(
+                    "sample_domain::/sample_table/indexes/sample_index".to_owned(),
+                    index_value_ref.key.clone(),
+                )));
 
             assert_eq!(effects.len(), 1);
             assert_eq!(effects[0], expected_effect);

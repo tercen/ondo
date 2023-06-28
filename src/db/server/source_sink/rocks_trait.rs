@@ -1,5 +1,8 @@
-use crate::db::db_error::{DbError, DbResult};
-use rocksdb::{Direction, IteratorMode, ReadOptions, DB};
+use crate::db::{
+    db_error::{DbError, DbResult},
+    server::lockable_db::transaction_or_db::TransactionOrDb,
+};
+use rocksdb::{Direction, IteratorMode, ReadOptions};
 
 type ResultBinaryPair = DbResult<(Vec<u8>, Vec<u8>)>;
 type ResultBinaryPairIterator<'a> = DbResult<Box<dyn Iterator<Item = ResultBinaryPair> + 'a>>;
@@ -18,6 +21,7 @@ pub(super) trait RocksTrait<'a> {
         start_key: Option<Vec<u8>>,
         page_size: Option<usize>,
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<(Vec<u8>, Vec<u8>)>> + 'a>>;
+    //FIXME: Remove _old methods
     fn get_records_in_cf_with_key_range_old(
         &self,
         cf_name: &str,
@@ -33,7 +37,7 @@ pub(super) trait RocksTrait<'a> {
     ) -> DbResult<Box<dyn Iterator<Item = DbResult<(Vec<u8>, Vec<u8>)>> + '_>>;
 }
 
-impl<'a> RocksTrait<'a> for DB {
+impl<'a> RocksTrait<'a> for TransactionOrDb<'a> {
     fn get_records_in_cf(&'a self, cf_name: &str) -> ResultBinaryPairIterator<'a> {
         let cf_handle = self.cf_handle(cf_name).ok_or(DbError::CfNotFound)?;
 

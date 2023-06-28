@@ -2,14 +2,14 @@ use super::ondo_serializer::OndoSerializer;
 use crate::db::entity::DomainStored;
 use crate::db::reference::effect::domain_stored_effect::DomainStoredEffect;
 use crate::db::reference::DomainName;
-use crate::db::server::lockable_db::LockableDb;
-use crate::db::DbError;
 
-pub(super) fn apply_effect(
-    ra: &LockableDb,
+use crate::db::DbError;
+use crate::db::server::lockable_db::transaction_or_db::TransactionOrDb;
+
+pub(super) fn apply_effect<'a>(
+    db: &TransactionOrDb<'a>,
     effect: &DomainStoredEffect,
 ) -> Result<(), DbError> {
-    let db = ra.read();
     match effect {
         DomainStoredEffect::Put(cf_name, key, domain_stored) => {
             let ondo_key = DomainName::ondo_serialize(&key)?;

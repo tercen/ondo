@@ -1,15 +1,15 @@
 use super::ondo_serializer::OndoSerializer;
 use crate::db::entity::ondo_key::OndoKey;
 use crate::db::reference::effect::ColumnValueEffect;
-use crate::db::server::lockable_db::LockableDb;
+
 use crate::db::DbError;
+use crate::db::server::lockable_db::transaction_or_db::TransactionOrDb;
 use serde_json::Value;
 
-pub(super) fn apply_effect(
-    ra: &LockableDb,
+pub(super) fn apply_effect<'a>(
+    db: &TransactionOrDb<'a>,
     effect: &ColumnValueEffect,
 ) -> Result<(), DbError> {
-    let db = ra.read();
     match effect {
         ColumnValueEffect::Put(cf_name, key, value) => {
             let ondo_key = OndoKey::ondo_serialize(&key)?;

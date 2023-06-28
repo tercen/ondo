@@ -2,6 +2,7 @@ use crate::db::entity::get_key_from_table_value;
 //table_value_reference.rs
 
 use crate::db::entity::table_value::insert_key_into_table_value;
+use crate::db::reference::effect::{AccessEffect, Effect, Effects};
 use crate::db::tasks::task::Tasks;
 use crate::db::{
     entity::{ondo_key::OptionalOndoKey, OndoKey, TableValue},
@@ -9,8 +10,7 @@ use crate::db::{
         effect::TableValueEffect,
         requests::{ColumnValueRequests, TableStoredRequests, TableValueRequests},
         table_reference::stored::TableStoredReferenceTrait,
-        CfNameMaker, ColumnValueReference, ColumnValueReferenceTrait, Effect, Effects,
-        TableReference,
+        CfNameMaker, ColumnValueReference, ColumnValueReferenceTrait, TableReference,
     },
     DbResult,
 };
@@ -19,6 +19,10 @@ use serde::{Deserialize, Serialize};
 pub(crate) trait TableValueReferenceTrait {
     fn container_cf_name(&self) -> String;
     fn get_table_value(&self, request: &dyn TableValueRequests) -> DbResult<Option<TableValue>>;
+    fn get_table_value_for_update(
+        &self,
+        request: &dyn TableValueRequests,
+    ) -> DbResult<Option<TableValue>>;
     fn put_table_value(
         &self,
         value: &TableValue,
@@ -185,11 +189,11 @@ impl CreateTableValueReferenceTrait for CreateTableValueReference {
             table_reference: self.table_reference.clone(),
             id: id_used.clone(),
         };
-        let put_effect = Effect::TableValueEffect(TableValueEffect::Put(
+        let put_effect = Effect::Access(AccessEffect::TableValueEffect(TableValueEffect::Put(
             self.container_cf_name(),
             new_reference.id.clone(),
             value.clone(),
-        ));
+        )));
         effects.push(put_effect);
         let index_effects = do_indexing(&new_reference, value, table_stored_requests)?;
         let tasks = do_text_indexing(&new_reference, value, table_stored_requests)?;
@@ -207,6 +211,13 @@ impl TableValueReferenceTrait for TableValueReference {
         request.get_table_value(&self.container_cf_name(), &self)
     }
 
+    fn get_table_value_for_update(
+        &self,
+        request: &dyn TableValueRequests,
+    ) -> DbResult<Option<TableValue>> {
+        request.get_table_value_for_update(&self.container_cf_name(), &self)
+    }
+
     fn put_table_value(
         &self,
         value: &TableValue,
@@ -217,11 +228,11 @@ impl TableValueReferenceTrait for TableValueReference {
         let old_value = self
             .get_table_value(table_value_requests)?
             .ok_or(crate::db::DbError::NotFound)?;
-        let put_effect = Effect::TableValueEffect(TableValueEffect::Put(
+        let put_effect = Effect::Access(AccessEffect::TableValueEffect(TableValueEffect::Put(
             self.container_cf_name(),
             self.id.clone(),
             value.clone(),
-        ));
+        )));
         effects.push(put_effect);
         let deindex_effects = do_deindexing(self, &old_value, table_stored_requests)?;
         let index_effects = do_indexing(self, value, table_stored_requests)?;
@@ -238,10 +249,10 @@ impl TableValueReferenceTrait for TableValueReference {
         table_stored_requests: &dyn TableStoredRequests,
         table_value_requests: &dyn TableValueRequests,
     ) -> DbResult<(Effects, Tasks)> {
-        let effect = Effect::TableValueEffect(TableValueEffect::Delete(
+        let effect = Effect::Access(AccessEffect::TableValueEffect(TableValueEffect::Delete(
             self.container_cf_name(),
             self.id.clone(),
-        ));
+        )));
         let mut effects = vec![effect];
         let old_value = self
             .get_table_value(table_value_requests)?
@@ -267,6 +278,11 @@ mod tests {
         pub(crate) TableValueTestRequests {}
         impl TableValueRequests for TableValueTestRequests {
             fn get_table_value(
+                &self,
+                cf_name: &str,
+                key: &TableValueReference,
+            ) -> DbResult<Option<TableValue>>;
+            fn get_table_value_for_update(
                 &self,
                 cf_name: &str,
                 key: &TableValueReference,
@@ -331,11 +347,12 @@ mod tests {
             let (effects, _) = table_value_ref
                 .put_table_value(&table_value, &table_mock, &mock)
                 .unwrap();
-            let expected_effect = Effect::TableValueEffect(TableValueEffect::Put(
-                "sample_domain::/sample_table".to_owned(),
-                table_value_ref.id.clone(),
-                table_value,
-            ));
+            let expected_effect =
+                Effect::Access(AccessEffect::TableValueEffect(TableValueEffect::Put(
+                    "sample_domain::/sample_table".to_owned(),
+                    table_value_ref.id.clone(),
+                    table_value,
+                )));
 
             assert_eq!(effects.len(), 1);
             assert_eq!(effects[0], expected_effect);
@@ -353,10 +370,11 @@ mod tests {
 
             let table_value_ref =
                 create_table_value_ref("sample_domain", "sample_table", create_table_key());
-            let expected_effect = Effect::TableValueEffect(TableValueEffect::Delete(
-                table_value_ref.container_cf_name(),
-                table_value_ref.id.clone(),
-            ));
+            let expected_effect =
+                Effect::Access(AccessEffect::TableValueEffect(TableValueEffect::Delete(
+                    table_value_ref.container_cf_name(),
+                    table_value_ref.id.clone(),
+                )));
             let pair_result = table_value_ref.delete_table_value(&table_mock, &mock);
             let result = match pair_result {
                 Ok((effects, _)) => Ok(effects),

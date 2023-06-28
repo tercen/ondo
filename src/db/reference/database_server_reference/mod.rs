@@ -1,9 +1,10 @@
 //database_server_reference.rs
 use crate::db::entity::{DatabaseServer, DatabaseServerStored};
+use crate::db::reference::effect::Effects;
 use crate::db::reference::requests::{
     DatabaseServerStoredRequests, DomainStoredRequests, TableStoredRequests,
 };
-use crate::db::reference::{CfNameMaker, Effect, Effects};
+use crate::db::reference::CfNameMaker;
 use crate::db::{DbError, DbResult};
 use serde::{Deserialize, Serialize};
 
@@ -116,6 +117,7 @@ mod tests {
         create_database_server, create_database_server_ref, create_database_server_stored,
         MockDatabaseServerStoredTestRequests,
     };
+    use crate::db::reference::effect::{AccessEffect, Effect};
 
     mod database_server_reference_trait {
         use super::*;
@@ -157,13 +159,13 @@ mod tests {
             mock.expect_get_database_server_stored()
                 .returning(move |_, _| Ok(Some(create_database_server_stored())));
 
-            let expected_effects = vec![Effect::DatabaseServerStoredEffect(
+            let expected_effects = vec![Effect::Access(AccessEffect::DatabaseServerStoredEffect(
                 DatabaseServerStoredEffect::Put(
                     ref_trait.container_cf_name(),
                     (),
                     database_server_stored.clone(),
                 ),
-            )];
+            ))];
 
             let effects = ref_trait
                 .put_database_server(&database_server_stored.database_server, &mock)

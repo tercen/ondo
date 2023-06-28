@@ -1,7 +1,8 @@
 use super::database_server_trait::DatabaseServerTrait;
 use super::db_error_to_status::DbErrorOptionToStatus;
 use super::db_error_to_status::DbErrorToStatus;
-use super::lockable_db::LockableDb;
+use super::lockable_db::transaction_or_db::TransactionOrDb;
+use super::lockable_db::version::Version;
 use super::source_sink::effects_sink::EffectsSink;
 use crate::db::{
     entity::DatabaseServer,
@@ -11,6 +12,7 @@ use crate::ondo_remote::{
     ArrayOfStringResponse, DatabaseServerMessage, DatabaseServerReferenceMessage, EmptyMessage,
     VersionResponse,
 };
+use rocksdb::TransactionDB;
 use tonic::{Request, Response, Status};
 
 impl<'a> Into<DatabaseServerReference> for &'a DatabaseServerReferenceMessage {
@@ -31,9 +33,9 @@ impl Into<DatabaseServerMessage> for DatabaseServer {
     }
 }
 
-impl DatabaseServerTrait for LockableDb {
+impl DatabaseServerTrait for TransactionDB {
     fn version(&self, _: Request<EmptyMessage>) -> Result<Response<VersionResponse>, Status> {
-        let version = self.get_version();
+        let version = Version::new();
         let response = VersionResponse {
             major: version.major,
             minor: version.minor,
@@ -46,26 +48,28 @@ impl DatabaseServerTrait for LockableDb {
     }
 
     fn create_database_server(
-        &self,
+        &mut self,
         r: Request<DatabaseServerMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
         let entity: DatabaseServer = r.get_ref().into();
+        let transaction_or_db = TransactionOrDb::Db(self);
         entity
             .reference
-            .post_database_server(&r.get_ref().into(), self)
+            .post_database_server(&r.get_ref().into(), &transaction_or_db)
             .map_db_err_to_status()?
-            .apply_effects(self)
+            .apply_all_effects(self)
     }
 
     fn delete_database_server(
-        &self,
+        &mut self,
         r: Request<DatabaseServerReferenceMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
         let reference: DatabaseServerReference = r.get_ref().into();
+        let transaction_or_db = TransactionOrDb::Db(self);
         reference
-            .delete_database_server(self, self, self)
+            .delete_database_server(&transaction_or_db, &transaction_or_db, &transaction_or_db)
             .map_db_err_to_status()?
-            .apply_effects(self)
+            .apply_all_effects(self)
     }
 
     fn get_database_server(
@@ -73,22 +77,24 @@ impl DatabaseServerTrait for LockableDb {
         r: Request<DatabaseServerReferenceMessage>,
     ) -> Result<Response<DatabaseServerMessage>, Status> {
         let reference: DatabaseServerReference = r.get_ref().into();
+        let transaction_or_db = TransactionOrDb::Db(self);
         reference
-            .get_database_server(self)
+            .get_database_server(&transaction_or_db)
             .map_db_err_option_to_status()
             .map(|entity| Response::new(entity.into()))
     }
 
     fn update_database_server(
-        &self,
+        &mut self,
         r: Request<DatabaseServerMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
         let entity: DatabaseServer = r.get_ref().into();
+        let transaction_or_db = TransactionOrDb::Db(self);
         entity
             .reference
-            .put_database_server(&entity, self)
+            .put_database_server(&entity, &transaction_or_db)
             .map_db_err_to_status()?
-            .apply_effects(self)
+            .apply_all_effects(self)
     }
 
     fn list_domains(
@@ -96,7 +102,10 @@ impl DatabaseServerTrait for LockableDb {
         r: Request<DatabaseServerReferenceMessage>,
     ) -> Result<Response<ArrayOfStringResponse>, Status> {
         let reference: DatabaseServerReference = r.get_ref().into();
-        let names = reference.list_domain_names(self).map_db_err_to_status()?;
+        let transaction_or_db = TransactionOrDb::Db(self);
+        let names = reference
+            .list_domain_names(&transaction_or_db)
+            .map_db_err_to_status()?;
         let response = ArrayOfStringResponse { values: names };
         Ok(Response::new(response))
     }

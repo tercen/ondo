@@ -3,6 +3,7 @@
 
 use super::*;
 use crate::db::reference::effect::DatabaseServerStoredEffect;
+use crate::db::reference::effect::{AccessEffect, Effect, Effects, MetaEffect};
 use crate::db::reference::requests::{DatabaseServerStoredRequests, DomainStoredRequests};
 use crate::db::reference::{DomainReference, DomainReferenceTrait};
 
@@ -52,13 +53,13 @@ impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
         &self,
         database_server: &DatabaseServerStored,
     ) -> DbResult<Effects> {
-        let effects = vec![Effect::DatabaseServerStoredEffect(
+        let effects = vec![Effect::Access(AccessEffect::DatabaseServerStoredEffect(
             DatabaseServerStoredEffect::Put(
                 self.container_cf_name(),
                 (),
                 (*database_server).clone(),
             ),
-        )];
+        ))];
         Ok(effects)
     }
 
@@ -69,7 +70,7 @@ impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
         let mut effects = self
             .required_cf_names()
             .iter()
-            .map(|cf_name| Effect::CreateCf(cf_name.clone()))
+            .map(|cf_name| Effect::Meta(MetaEffect::CreateCf(cf_name.clone())))
             .collect::<Vec<_>>();
         effects.extend(self.put_database_server_stored(database_server)?);
         Ok(effects)
@@ -105,13 +106,16 @@ impl DatabaseServerStoredReferenceTrait for DatabaseServerReference {
         let mut effects =
             cascade_delete_database_server_stored(self, table_requests, domain_requests, requests)?;
 
-        effects.extend(vec![Effect::DatabaseServerStoredEffect(
-            DatabaseServerStoredEffect::Delete(self.container_cf_name(), ()),
+        effects.extend(vec![Effect::Access(
+            AccessEffect::DatabaseServerStoredEffect(DatabaseServerStoredEffect::Delete(
+                self.container_cf_name(),
+                (),
+            )),
         )]);
         effects.extend(
             self.required_cf_names()
                 .iter()
-                .map(|cf_name| Effect::DeleteCf(cf_name.clone())),
+                .map(|cf_name| Effect::Meta(MetaEffect::DeleteCf(cf_name.clone()))),
         );
 
         Ok(effects)
@@ -210,13 +214,13 @@ pub(crate) mod tests {
             let ref_trait = create_database_server_ref();
             let database_server_stored = create_database_server_stored();
 
-            let expected_effects = vec![Effect::DatabaseServerStoredEffect(
+            let expected_effects = vec![Effect::Access(AccessEffect::DatabaseServerStoredEffect(
                 DatabaseServerStoredEffect::Put(
                     ref_trait.container_cf_name(),
                     (),
                     database_server_stored.clone(),
                 ),
-            )];
+            ))];
 
             let effects = ref_trait
                 .put_database_server_stored(&database_server_stored)
@@ -230,12 +234,14 @@ pub(crate) mod tests {
             let database_server_stored = create_database_server_stored();
 
             let expected_effects = vec![
-                Effect::CreateCf(CfNameMaker::for_server_meta()),
-                Effect::CreateCf(CfNameMaker::for_domain_meta()),
-                Effect::DatabaseServerStoredEffect(DatabaseServerStoredEffect::Put(
-                    ref_trait.container_cf_name(),
-                    (),
-                    database_server_stored.clone(),
+                Effect::Meta(MetaEffect::CreateCf(CfNameMaker::for_server_meta())),
+                Effect::Meta(MetaEffect::CreateCf(CfNameMaker::for_domain_meta())),
+                Effect::Access(AccessEffect::DatabaseServerStoredEffect(
+                    DatabaseServerStoredEffect::Put(
+                        ref_trait.container_cf_name(),
+                        (),
+                        database_server_stored.clone(),
+                    ),
                 )),
             ];
 
@@ -263,14 +269,15 @@ pub(crate) mod tests {
 
             let ref_trait = DatabaseServerReference;
 
-            let mut expected_effects = vec![Effect::DatabaseServerStoredEffect(
-                DatabaseServerStoredEffect::Delete(ref_trait.container_cf_name(), ()),
-            )];
+            let mut expected_effects =
+                vec![Effect::Access(AccessEffect::DatabaseServerStoredEffect(
+                    DatabaseServerStoredEffect::Delete(ref_trait.container_cf_name(), ()),
+                ))];
             expected_effects.extend(
                 ref_trait
                     .required_cf_names()
                     .iter()
-                    .map(|cf_name| Effect::DeleteCf(cf_name.clone())),
+                    .map(|cf_name| Effect::Meta(MetaEffect::DeleteCf(cf_name.clone()))),
             );
 
             let effects = ref_trait

@@ -2,10 +2,10 @@
 use super::{
     db_error_to_status::{DbErrorOptionToStatus, DbErrorToStatus},
     index_server_trait::IndexServerTrait,
-    lockable_db::{LockableDb},
+    index_server_trait::IndexedValueServerTrait,
+    lockable_db::{transaction_or_db::TransactionOrDb},
     source_sink::effects_sink::EffectsSink,
 };
-use crate::db::enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum;
 use crate::db::{
     entity::{index::Index, OndoKey, TableValue},
     reference::{IndexReference, IndexReferenceTrait},
@@ -13,6 +13,7 @@ use crate::db::{
 };
 use crate::ondo_remote;
 use ondo_remote::*;
+use rocksdb::TransactionDB;
 use tonic::{Request, Response, Status};
 
 impl<'a> Into<IndexReference> for &'a IndexReferenceMessage {
@@ -83,26 +84,27 @@ impl<'a> Into<IndexedValueRangeReference> for &'a IndexedValueRangeReferenceMess
 }
 
 // index_server_trait_impl.rs continued continued
-impl IndexServerTrait for LockableDb {
-    fn create_index(&self, r: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status> {
-        let factory_enum_lockable_db = TableStoredIteratorRequestsFactoryEnum::new_lockable_db(self);
+impl IndexServerTrait for TransactionDB {
+    fn create_index(&mut self, r: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status> {
         let entity: Index = r.get_ref().into();
+        let transaction_or_db = TransactionOrDb::Db(self);
         entity
             .reference
-            .post_index(&entity, self, &factory_enum_lockable_db)
+            .post_index(&entity,& transaction_or_db,& transaction_or_db)
             .map_db_err_to_status()?
-            .apply_effects(self)
+            .apply_all_effects(self)
     }
 
     fn delete_index(
-        &self,
+        &mut self,
         r: Request<IndexReferenceMessage>,
     ) -> Result<Response<EmptyMessage>, Status> {
         let reference: IndexReference = r.get_ref().into();
+        let transaction_or_db = TransactionOrDb::Db(self);
         reference
-            .delete_index(self)
+            .delete_index(&transaction_or_db)
             .map_db_err_to_status()?
-            .apply_effects(self)
+            .apply_all_effects(self)
     }
 
     fn get_index(
@@ -110,32 +112,38 @@ impl IndexServerTrait for LockableDb {
         r: Request<IndexReferenceMessage>,
     ) -> Result<Response<IndexMessage>, Status> {
         let reference: IndexReference = r.get_ref().into();
+        let transaction_or_db = TransactionOrDb::Db(self);
         reference
-            .get_index(self)
+            .get_index(&transaction_or_db)
             .map_db_err_option_to_status()
             .map(|entity| Response::new(entity.into()))
     }
 
-    fn update_index(&self, r: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status> {
-        let factory_enum_lockable_db = TableStoredIteratorRequestsFactoryEnum::new_lockable_db(self);
+    fn update_index(&mut self, r: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status> {
         let entity: Index = r.get_ref().into();
+        let transaction_or_db = TransactionOrDb::Db(self);
         entity
             .reference
-            .put_index(&entity, self, &factory_enum_lockable_db)
+            .put_index(&entity, &transaction_or_db, &transaction_or_db)
             .map_db_err_to_status()?
-            .apply_effects(self)
+            .apply_all_effects(self)
     }
+}
 
+impl<'a> IndexedValueServerTrait for TransactionOrDb<'a> {
     fn find_values(
         &self,
         r: Request<IndexedValueReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let db_wrapper = self.read();
+        
         let indexed_value_reference: IndexedValueReference = r.get_ref().into();
         let reference = indexed_value_reference.index_reference;
         let key_prefix = indexed_value_reference.key;
+
+        let transaction_or_db = self;
+        
         let iterator = reference
-            .all_values_with_key_prefix(key_prefix, self, &db_wrapper)
+            .all_values_with_key_prefix(key_prefix, self, transaction_or_db)
             .map_db_err_to_status()?;
         let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
         let values = values_result.map_db_err_to_status()?;
@@ -148,13 +156,16 @@ impl IndexServerTrait for LockableDb {
         &self,
         r: Request<IndexedValueRangeReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status> {
-        let db_wrapper =self.read();
+
         let indexed_value_range_reference: IndexedValueRangeReference = r.get_ref().into();
         let reference = indexed_value_range_reference.index_reference;
         let start_key_prefix = indexed_value_range_reference.start_key;
         let end_key_prefix = indexed_value_range_reference.end_key;
+
+        let transaction_or_db = self;
+
         let iterator = reference
-            .all_values_with_key_range(start_key_prefix, end_key_prefix, self, &db_wrapper)
+            .all_values_with_key_range(start_key_prefix, end_key_prefix, self, transaction_or_db)
             .map_db_err_to_status()?;
         let values_result: Result<Vec<TableValue>, DbError> = iterator.collect();
         let values = values_result.map_db_err_to_status()?;
@@ -168,13 +179,14 @@ impl IndexServerTrait for LockableDb {
 #[cfg(test)]
 mod tests {
     use crate::db::entity::{table::Table, table_value::TableValue, DatabaseServer, Domain, Index, ondo_key::OndoKey};
-    use crate::db::enums::{table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum, index_iterator_requests_factory::IndexIteratorRequestsFactoryEnum};
+
         use crate::db::reference::Effects;
     use crate::db::reference::{
         CreateTableValueReference, CreateTableValueReferenceTrait, DatabaseServerReference,
         DatabaseServerReferenceTrait, DomainReference, DomainReferenceTrait, IndexReference,
         IndexReferenceTrait, TableReference, TableReferenceTrait, TableValueReference, TableValueReferenceTrait
     };
+    use crate::db::server::lockable_db::transaction_or_db::TransactionOrDb;
     use crate::db::server::{lockable_db::LockableDb, source_sink::effects_sink::EffectsTasksSink};
     use serde::{Deserialize, Serialize};
     use crate::db::server::source_sink::effects_sink::EffectsSink;
@@ -242,8 +254,12 @@ mod tests {
         // index: Index,
     }
 
-    pub(crate) fn setup_test_data() -> TestData {
-        let ra = LockableDb::in_memory();
+    pub(crate) async fn setup_test_data() -> TestData {
+
+        let lockable_db = LockableDb::in_memory(); 
+        let mut db_guard = lockable_db.write().await;
+        let db = &mut *db_guard;
+        // let ra = LockableTransactionOrDb::new(LockableDb::in_memory());
 
         let database_server = create_database_server_entity();
         let database_server_reference = database_server.reference.clone();
@@ -257,24 +273,35 @@ mod tests {
         // let index = create_index_entity(&table_reference);
         // let index_reference = index.reference.clone();
 
-        database_server_reference
-            .post_database_server(&database_server, &ra)
-            .unwrap()
-            .apply_effects(&ra)
-            .unwrap();
-        domain_reference
-            .post_domain(&domain, &ra, &ra)
-            .unwrap()
-            .apply_effects(&ra)
-            .unwrap();
-        table_reference
-            .post_table(&table, &ra, &ra)
-            .unwrap()
-            .apply_effects(&ra)
-            .unwrap();
-
-        TestData {
-            lockable_db: ra,
+        {        
+            let transaction_or_db =
+            TransactionOrDb::Db(db);  
+                    database_server_reference
+                    .post_database_server(&database_server, &transaction_or_db)
+                    .unwrap()
+                    .apply_all_effects(db) 
+                    .unwrap();
+        }
+        {        
+            let transaction_or_db =
+            TransactionOrDb::Db(db);
+            domain_reference
+                    .post_domain(&domain, &transaction_or_db, &transaction_or_db)
+                    .unwrap()
+                    .apply_all_effects(db)
+                    .unwrap();
+        }
+        {
+            let transaction_or_db =
+            TransactionOrDb::Db(db);
+            table_reference
+                .post_table(&table, &transaction_or_db,& transaction_or_db)
+                .unwrap()
+                .apply_all_effects(db)
+                .unwrap();
+        }
+        TestData { 
+            lockable_db: lockable_db.clone(),
             database_server_reference,
             domain_reference,
             table_reference,
@@ -286,23 +313,32 @@ mod tests {
         }
     }
 
-    fn create_and_apply_index(test_data: &TestData) -> (Index, Effects) {
-        let ra = &test_data.lockable_db;
-    
+    async fn create_and_apply_index(test_data: &TestData) -> (Index, Effects) {
+        let lockable_db = &test_data.lockable_db;
+        let mut db_guard = lockable_db.write().await;
+        let db = &mut *db_guard;
+
         let index = create_index_entity(&test_data.table_reference);
         let index_reference = &index.reference;
-        let factory_enum_lockable_db = TableStoredIteratorRequestsFactoryEnum::new_lockable_db(ra);
-    
-        let index_effects = index_reference
-            .post_index(&index, ra, &factory_enum_lockable_db)
-            .unwrap();
-        index_effects.apply_effects(ra).unwrap();
-    
+        let index_effects = {
+            let transaction_or_db =
+            TransactionOrDb::Db(db);
+            let index_effects = index_reference
+                .post_index(&index, &transaction_or_db, &transaction_or_db)
+                .unwrap();
+            index_effects.clone().apply_all_effects(db).unwrap();
+            index_effects
+        };
         (index, index_effects)
     }
     
-    fn create_and_apply_record(test_data: &TestData) -> (OndoKey, TableValue, Effects) {
-        let ra = &test_data.lockable_db;
+    async fn create_and_apply_record(test_data: &TestData) -> (OndoKey, TableValue, Effects) {
+        let lockable_db = &test_data.lockable_db;
+        let db_guard = lockable_db.read().await;
+        let db = &*db_guard;
+        let transaction_or_db =
+            TransactionOrDb::Db(db);
+        let ra = &transaction_or_db;
     
         let create_table_value_reference = create_table_value_reference(&test_data.table_reference);
         let record1 = create_test_record1();
@@ -315,14 +351,24 @@ mod tests {
         (value1_key, value1, value1_effects)
     }
     
-    #[test]
-    fn test_get() {
-        let test_data = setup_test_data();
+    #[tokio::test]
+    async fn test_get() { 
+        let test_data = setup_test_data().await;
 
-        let (value1_key, _value1, _value1_effects) = create_and_apply_record(&test_data);
+        let (value1_key, _value1, _value1_effects) = create_and_apply_record(&test_data).await;
 
         let table_reference = test_data.table_reference;
-        let ra = &test_data.lockable_db;
+        
+        let lockable_db = &test_data.lockable_db;
+
+        let db_guard = lockable_db.read().await;
+        let db = &*db_guard;
+        let transaction_or_db =
+            TransactionOrDb::Db(db);
+
+        let ra = &transaction_or_db;
+
+
         let table_value_reference = TableValueReference {
             table_reference: table_reference.clone(),
             id: value1_key,
@@ -340,42 +386,42 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_index_then_populate() {
-        let test_data = setup_test_data();
+    #[tokio::test]
+    async fn test_index_then_populate() {
+        let test_data = setup_test_data().await;
     
-        let (_index, _index_effects) = create_and_apply_index(&test_data);
-        let (_value1_key, _value1, value1_effects) = create_and_apply_record(&test_data);
+        let (_index, _index_effects) = create_and_apply_index(&test_data).await;
+        let (_value1_key, _value1, value1_effects) = create_and_apply_record(&test_data).await;
     
         let expected_value1_effects_str =
-            "[ColumnValueEffect(Put('/domains/test_domain/counters', \
-                OndoKey { values: [String('test_table')] }, Number(1))), \
-            TableValueEffect(Put('test_domain::/test_table', \
+            "[Access(ColumnValueEffect(Put('/domains/test_domain/counters', \
+                OndoKey { values: [String('test_table')] }, Number(1)))), \
+            Access(TableValueEffect(Put('test_domain::/test_table', \
             OndoKey { values: [Number(1)] }, \
             Object {'_id': Object {'values': Array [Number(1)]}, \
                     'age': Number(30), \
                     'city': String('New York'), \
-                    'name': String('John')})), \
-            IndexValueEffect(Put('test_domain::/test_table/indexes/test_index', \
+                    'name': String('John')}))), \
+            Access(IndexValueEffect(Put('test_domain::/test_table/indexes/test_index', \
                     OndoKey { values: [String('New York'), Number(1)] }, \
-                    OndoKey { values: [Number(1)] }))]"
+                    OndoKey { values: [Number(1)] })))]"
                 .to_owned()
                 .replace('\'', "\"");
         let value1_effects_str = format!("{:?}", value1_effects);
         assert_eq!(value1_effects_str, expected_value1_effects_str);
     }
     
-    #[test]
-    fn test_index_populated_table() {
-        let test_data = setup_test_data();
+    #[tokio::test]
+    async fn test_index_populated_table() {
+        let test_data = setup_test_data().await;
     
-        let (_value1_key, _value1, _value1_effects) = create_and_apply_record(&test_data);
-        let (_index, index_effects) = create_and_apply_index(&test_data);
+        let (_value1_key, _value1, _value1_effects) = create_and_apply_record(&test_data).await;
+        let (_index, index_effects) = create_and_apply_index(&test_data).await;
     
         let index_effects_str = format!("{:?}", index_effects);
         let expected_index_effects_str = 
-        "[CreateCf('test_domain::/test_table/indexes/test_index'), \
-          TableStoredEffect(Put('/domains/test_domain/tables', 'test_table', \
+        "[Meta(CreateCf('test_domain::/test_table/indexes/test_index')), \
+          Access(TableStoredEffect(Put('/domains/test_domain/tables', 'test_table', \
           TableStored { table: Table { reference: TableReference { \
                         domain_reference: DomainReference { domain_name: 'test_domain' }, \
                         table_name: 'test_table' } }, \
@@ -385,25 +431,30 @@ mod tests {
                                   table_name: 'test_table' }, \
                                   index_name: 'test_index' }, \
                                   fields: ['city'] }}, \
-                        text_indexes: {} })), \
-          IndexValueEffect(Put('test_domain::/test_table/indexes/test_index', \
+                        text_indexes: {} }))), \
+          Access(IndexValueEffect(Put('test_domain::/test_table/indexes/test_index', \
             OndoKey { values: [String('New York'), Number(1)] }, \
-            OndoKey { values: [Number(1)] }))]"
+            OndoKey { values: [Number(1)] })))]"
         .to_owned()
         .replace('\'', "\"");
         assert_eq!(index_effects_str, expected_index_effects_str);
     }
                               
-    #[test]
-    fn test_all_values_with_key_prefix_vec() {
-        let test_data = setup_test_data();
+    #[tokio::test]
+    async fn test_all_values_with_key_prefix_vec() {
+        let test_data = setup_test_data().await;
     
-        let (_value1_key, _value1, _value1_effects) = create_and_apply_record(&test_data);
-        let (index, _index_effects) = create_and_apply_index(&test_data);
+        let (_value1_key, _value1, _value1_effects) = create_and_apply_record(&test_data).await;
+        let (index, _index_effects) = create_and_apply_index(&test_data).await;
     
         let index_reference = index.reference;
-        let ra = &test_data.lockable_db;
-        let index_iterator_factory = IndexIteratorRequestsFactoryEnum::new_lockable_db(ra);
+        let lockable_db = &test_data.lockable_db;
+        let db_guard = lockable_db.read().await;
+        let db = &*db_guard;
+        let transaction_or_db =
+            TransactionOrDb::Db(db);
+        let index_iterator_factory = transaction_or_db.clone();
+        let ra = &transaction_or_db;
     
         let key_prefix: OndoKey = "New York".into();
         let retrieved_all_values = index_reference

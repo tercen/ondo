@@ -1,8 +1,8 @@
 // text_index/create_tantivy_index.rs
 use super::get_tantivy_index_path::get_tantivy_index_path;
 use super::TextIndex;
-use crate::db::entity::DEFAULT_ID_FIELD;
-use crate::db::server::lockable_db::LockableDb;
+use crate::db::{entity::DEFAULT_ID_FIELD, server::lockable_db::LockableDb};
+
 use std::path::Path;
 use tantivy::{schema::*, Result as TantivyResult};
 

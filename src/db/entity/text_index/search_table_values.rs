@@ -1,4 +1,3 @@
-//text_index/search_table_value
 use super::load_tantivy_index::load_tantivy_index;
 
 use tantivy::collector::TopDocs;
@@ -10,26 +9,35 @@ use crate::db::entity::index::DEFAULT_ID_FIELD;
 use crate::db::entity::ondo_key::OndoKey;
 use crate::db::entity::table_value::TableValue;
 use crate::db::reference::table_value_reference::{TableValueReference, TableValueReferenceTrait};
+use crate::db::server::lockable_db::transaction_or_db::TransactionOrDb;
 use crate::db::server::lockable_db::LockableDb;
 
 impl TextIndex {
-    pub(crate) fn search_vec(
-        &self,
-        query_string: &str,
+    pub(crate) fn search_vec<'a>(
+        &'a self,
+        query_string: &'a str,
         page_size: Option<usize>,
         page_number: Option<usize>,
+        transaction_or_db: &TransactionOrDb<'a>,
         lockable_db: &LockableDb,
     ) -> Result<Vec<TableValue>, DbError> {
-        self.search_iterator(query_string, page_size, page_number, lockable_db)
-            .map(|results| results.collect())
+        self.search_iterator(
+            query_string,
+            page_size,
+            page_number,
+            transaction_or_db,
+            lockable_db,
+        )
+        .map(|results| results.collect())
     }
 
     pub(crate) fn search_iterator<'a>(
         &'a self,
-        query_string: &str,
+        query_string: &'a str,
         page_size: Option<usize>,
         page_number: Option<usize>,
-        lockable_db: &'a LockableDb,
+        transaction_or_db: &'a TransactionOrDb<'a>,
+        lockable_db: &LockableDb,
     ) -> Result<impl Iterator<Item = TableValue> + 'a, DbError> {
         let index = load_tantivy_index(&self, lockable_db)
             .map_err(|e| DbError::TantivyError(e.to_string()))?;
@@ -65,7 +73,11 @@ impl TextIndex {
             let ondo_key: OndoKey = serde_json::from_str(id).ok()?;
             let table_value_ref =
                 TableValueReference::new(self.reference.table_reference.clone(), ondo_key.clone());
-            table_value_ref.get_table_value(lockable_db).ok().flatten()
+
+            table_value_ref
+                .get_table_value(transaction_or_db)
+                .ok()
+                .flatten()
         });
 
         Ok(iter)

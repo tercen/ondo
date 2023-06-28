@@ -1,6 +1,8 @@
 // text_index/get_tantivy_index_path.rs
-use crate::db::reference::text_index_reference::TextIndexReference;
-use crate::db::server::lockable_db::LockableDb;
+use crate::db::{
+    reference::text_index_reference::TextIndexReference, server::lockable_db::LockableDb,
+};
+
 use std::path::PathBuf;
 
 pub(crate) fn get_tantivy_index_path(
@@ -27,6 +29,7 @@ pub(crate) fn get_tantivy_index_path(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db::server::lockable_db::LockableDb;
 
     #[test]
     fn test_get_tantivy_index_path() {
@@ -34,6 +37,7 @@ mod tests {
             TextIndexReference::build("test_domain", "test_table", "test_index");
 
         let lockable_db = LockableDb::in_memory();
+
         let db_path = lockable_db.db_path();
         let mut expected_path = PathBuf::from(db_path);
         expected_path.push("test_domain");

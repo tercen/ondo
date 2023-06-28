@@ -15,8 +15,20 @@ pub(crate) use table_value_effect::TableValueEffect;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Effect {
+    Meta(MetaEffect),
+    Access(AccessEffect),
+}
+
+pub(crate) type Effects = Vec<Effect>;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum MetaEffect {
     CreateCf(String),
     DeleteCf(String),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum AccessEffect {
     DatabaseServerStoredEffect(DatabaseServerStoredEffect),
     DomainStoredEffect(DomainStoredEffect),
     TableStoredEffect(TableStoredEffect),
@@ -24,5 +36,3 @@ pub(crate) enum Effect {
     TableValueEffect(TableValueEffect),
     ColumnValueEffect(ColumnValueEffect),
 }
-
-pub(crate) type Effects = Vec<Effect>;

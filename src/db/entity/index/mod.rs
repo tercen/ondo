@@ -1,11 +1,12 @@
 //index.rs
-use crate::db::enums::table_stored_iterator_requests_factory::TableStoredIteratorRequestsFactoryEnum;
+use crate::db::reference::effect::{Effect, Effects, MetaEffect};
 use crate::db::{
     entity::{table_value::get_key_from_table_value, OndoKey, TableValue},
     reference::{
-        index_reference::IndexReferenceTrait, Effect, Effects, IndexReference, IndexValueReference,
+        index_reference::IndexReferenceTrait, IndexReference, IndexValueReference,
         IndexValueReferenceTrait, TableReferenceTrait,
     },
+    server::lockable_db::transaction_or_db::TransactionOrDb,
     DbResult,
 };
 use serde::{Deserialize, Serialize};
@@ -79,11 +80,8 @@ impl Index {
 
     pub(crate) fn index_related_table_values(
         &self,
-        table_stored_iterator_requests_factory: &TableStoredIteratorRequestsFactoryEnum,
+        table_stored_iterator_requests: &TransactionOrDb,
     ) -> DbResult<Effects> {
-        let table_stored_iterator_requests_enum =
-            table_stored_iterator_requests_factory.create_read_locked_requests()?;
-        let table_stored_iterator_requests = table_stored_iterator_requests_enum.as_trait();
         {
             let table_reference = self.reference.to_table_reference();
             let all_values = table_reference.all_values(table_stored_iterator_requests);
@@ -104,8 +102,8 @@ impl Index {
     }
 
     pub(crate) fn deindex_related_table_values(&self) -> Effects {
-        let delete_effect = Effect::DeleteCf(self.reference.value_cf_name());
-        let create_effect = Effect::CreateCf(self.reference.value_cf_name());
+        let delete_effect = Effect::Meta(MetaEffect::DeleteCf(self.reference.value_cf_name()));
+        let create_effect = Effect::Meta(MetaEffect::CreateCf(self.reference.value_cf_name()));
         vec![delete_effect, create_effect]
     }
 

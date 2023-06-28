@@ -8,4 +8,9 @@ pub(crate) trait TableValueRequests {
         cf_name: &str,
         key: &TableValueReference,
     ) -> DbResult<Option<TableValue>>;
+    fn get_table_value_for_update(
+        &self,
+        cf_name: &str,
+        key: &TableValueReference,
+    ) -> DbResult<Option<TableValue>>;
 }

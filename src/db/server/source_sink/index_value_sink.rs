@@ -1,11 +1,14 @@
 use super::ondo_serializer::OndoSerializer;
 use crate::db::entity::OndoKey;
 use crate::db::reference::IndexValueEffect;
-use crate::db::server::lockable_db::LockableDb;
-use crate::db::DbError;
 
-pub(super) fn apply_effect(ra: &LockableDb, effect: &IndexValueEffect) -> Result<(), DbError> {
-    let db = ra.read();
+use crate::db::DbError;
+use crate::db::server::lockable_db::transaction_or_db::TransactionOrDb;
+
+pub(super) fn apply_effect<'a>(
+    db: &TransactionOrDb<'a>,
+    effect: &IndexValueEffect,
+) -> Result<(), DbError> {
     match effect {
         IndexValueEffect::Put(cf_name, key, index_value) => {
             let ondo_key = OndoKey::ondo_serialize(&key)?;

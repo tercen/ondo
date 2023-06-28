@@ -3,13 +3,14 @@ use crate::db::db_error::{DbError, DbResult};
 use crate::db::entity::ondo_key::OndoKey;
 use crate::db::reference::requests::ColumnValueRequests;
 use crate::db::reference::ColumnValue;
-use crate::db::server::lockable_db::LockableDb;
+
 use crate::db::DbError::CfNotFound;
+use crate::db::server::lockable_db::transaction_or_db::TransactionOrDb;
 use serde_json::Value;
 
-impl ColumnValueRequests for LockableDb {
+impl<'a> ColumnValueRequests for TransactionOrDb<'a> {
     fn get_column_value(&self, cf_name: &str, key: &OndoKey) -> DbResult<Option<ColumnValue>> {
-        let db = self.read();
+        let db = self;
         let cf = db.cf_handle(cf_name).ok_or(CfNotFound)?;
         let ondo_key = OndoKey::ondo_serialize(key)?;
         let answer = db

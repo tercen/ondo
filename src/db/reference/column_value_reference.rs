@@ -1,7 +1,7 @@
 //column_value_reference.rs
 use crate::db::entity::index::IndexKey;
 use crate::db::entity::table_value::TableValue;
-use crate::db::reference::{Effect, Effects};
+use crate::db::reference::effect::{AccessEffect, Effect, Effects};
 use crate::db::{
     entity::IndexValue,
     reference::{effect::ColumnValueEffect, requests::ColumnValueRequests},
@@ -42,19 +42,19 @@ impl ColumnValueReferenceTrait for ColumnValueReference {
     }
 
     fn put_column_value(&self, value: &ColumnValue) -> DbResult<Effects> {
-        let effect = Effect::ColumnValueEffect(ColumnValueEffect::Put(
+        let effect = Effect::Access(AccessEffect::ColumnValueEffect(ColumnValueEffect::Put(
             self.column_reference.clone(),
             self.id.clone(),
             value.clone(),
-        ));
+        )));
         Ok(vec![effect])
     }
 
     fn delete_column_value(&self) -> DbResult<Effects> {
-        let effect = Effect::ColumnValueEffect(ColumnValueEffect::Delete(
+        let effect = Effect::Access(AccessEffect::ColumnValueEffect(ColumnValueEffect::Delete(
             self.column_reference.clone(),
             self.id.clone(),
-        ));
+        )));
         Ok(vec![effect])
     }
 
@@ -138,11 +138,12 @@ mod tests {
             let column_value = create_column_value();
 
             let effects = column_value_ref.put_column_value(&column_value).unwrap();
-            let expected_effect = Effect::ColumnValueEffect(ColumnValueEffect::Put(
-                column_value_ref.column_reference.clone(),
-                column_value_ref.id.clone(),
-                column_value,
-            ));
+            let expected_effect =
+                Effect::Access(AccessEffect::ColumnValueEffect(ColumnValueEffect::Put(
+                    column_value_ref.column_reference.clone(),
+                    column_value_ref.id.clone(),
+                    column_value,
+                )));
 
             assert_eq!(effects.len(), 1);
             assert_eq!(effects[0], expected_effect);
@@ -151,10 +152,11 @@ mod tests {
         #[test]
         fn test_delete_column_value() {
             let column_value_ref = create_column_value_ref("sample_column", create_column_key());
-            let expected_effect = Effect::ColumnValueEffect(ColumnValueEffect::Delete(
-                column_value_ref.column_reference.clone(),
-                column_value_ref.id.clone(),
-            ));
+            let expected_effect =
+                Effect::Access(AccessEffect::ColumnValueEffect(ColumnValueEffect::Delete(
+                    column_value_ref.column_reference.clone(),
+                    column_value_ref.id.clone(),
+                )));
             let result = column_value_ref.delete_column_value();
             assert_eq!(result, Ok(vec![expected_effect]));
         }
@@ -166,11 +168,12 @@ mod tests {
             let initial_column_value = json!(1u64);
             let expected_column_value = json!(2u64);
 
-            let expected_effect = Effect::ColumnValueEffect(ColumnValueEffect::Put(
-                column_value_ref.column_reference.clone(),
-                column_value_ref.id.clone(),
-                expected_column_value.clone(),
-            ));
+            let expected_effect =
+                Effect::Access(AccessEffect::ColumnValueEffect(ColumnValueEffect::Put(
+                    column_value_ref.column_reference.clone(),
+                    column_value_ref.id.clone(),
+                    expected_column_value.clone(),
+                )));
 
             mock.expect_get_column_value()
                 .returning(move |_, _| Ok(Some(initial_column_value.clone())));
@@ -185,11 +188,12 @@ mod tests {
             let column_value_ref = create_column_value_ref("sample_column", create_column_key());
             let expected_column_value = json!(1u64);
 
-            let expected_effect = Effect::ColumnValueEffect(ColumnValueEffect::Put(
-                column_value_ref.column_reference.clone(),
-                column_value_ref.id.clone(),
-                expected_column_value.clone(),
-            ));
+            let expected_effect =
+                Effect::Access(AccessEffect::ColumnValueEffect(ColumnValueEffect::Put(
+                    column_value_ref.column_reference.clone(),
+                    column_value_ref.id.clone(),
+                    expected_column_value.clone(),
+                )));
 
             mock.expect_get_column_value()
                 .returning(move |_, _| Ok(None));

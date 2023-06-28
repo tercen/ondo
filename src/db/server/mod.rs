@@ -12,7 +12,9 @@ pub mod table_value_server_trait_impl;
 pub mod text_index_server_trait;
 pub mod text_index_server_trait_impl;
 
-mod db_error_to_status;
-mod ondo_key;
-mod source_sink;
-mod value;
+pub(crate) mod db_error_to_status;
+pub(crate) mod ondo_key;
+pub(crate) mod source_sink;
+pub(crate) mod value;
+
+pub mod remote_server;

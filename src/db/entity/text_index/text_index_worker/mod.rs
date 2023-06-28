@@ -1,11 +1,12 @@
-// text_index_worker/mod.rs
 mod execute_deindex_related_table_value_keys;
 mod execute_do_deindex_table_value_key;
 mod execute_do_index_table_value;
 mod execute_index_related_table_values;
 
-use super::{load_or_create_tantivy_index::load_or_create_tantivy_index, TextIndex};
 use crate::db::server::lockable_db::LockableDb;
+
+use super::{load_or_create_tantivy_index::load_or_create_tantivy_index, TextIndex};
+
 use std::sync::Arc;
 
 pub(crate) struct TextIndexWorker {

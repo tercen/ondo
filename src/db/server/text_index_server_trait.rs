@@ -3,6 +3,8 @@ use crate::ondo_remote;
 use ondo_remote::*;
 use tonic::{Request, Response, Status};
 
+use super::lockable_db::LockableDb;
+
 pub trait TextIndexServerTrait {
     fn create_text_index(
         &self,
@@ -27,5 +29,6 @@ pub trait TextIndexServerTrait {
     fn search_text_index(
         &self,
         r: Request<TantivyQueryMessage>,
+        lockable_db: LockableDb,
     ) -> Result<Response<JsonMessage>, Status>;
 }

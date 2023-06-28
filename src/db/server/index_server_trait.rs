@@ -3,17 +3,19 @@ use ondo_remote::*;
 use tonic::{Request, Response, Status};
 
 pub trait IndexServerTrait {
-    fn create_index(&self, _: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status>;
+    fn create_index(&mut self, _: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status>;
     fn delete_index(
-        &self,
+        &mut self,
         r: Request<IndexReferenceMessage>,
     ) -> Result<Response<EmptyMessage>, Status>;
     fn get_index(
         &self,
         r: Request<IndexReferenceMessage>,
     ) -> Result<Response<IndexMessage>, Status>;
-    fn update_index(&self, _: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status>;
+    fn update_index(&mut self, _: Request<IndexMessage>) -> Result<Response<EmptyMessage>, Status>;
+}
 
+pub trait IndexedValueServerTrait {
     fn find_values(
         &self,
         r: Request<IndexedValueReferenceMessage>,

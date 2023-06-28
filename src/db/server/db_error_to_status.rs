@@ -1,7 +1,7 @@
 use crate::db::db_error::*;
 use tonic::Status;
 
-fn db_error_to_status(err: DbError) -> Status {
+pub(crate) fn db_error_to_status(err: DbError) -> Status {
     let db_error_message = err.to_string();
     let db_error_code = u32::from(err);
     let status_message = format!("Database error {}: {}", db_error_code, db_error_message);

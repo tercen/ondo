@@ -15,6 +15,10 @@ pub trait TableValueServerTrait {
         &self,
         r: Request<TableValueReferenceMessage>,
     ) -> Result<Response<JsonMessage>, Status>;
+    fn get_value_for_update(
+        &self,
+        r: Request<TableValueReferenceMessage>,
+    ) -> Result<Response<JsonMessage>, Status>;
     fn update_value(&self, r: Request<TableValueMessage>)
         -> Result<Response<EmptyMessage>, Status>;
 }
