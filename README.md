@@ -1,5 +1,5 @@
 # ondo
-RockDB extensions
+A multi-user transactional key-value store implemented in Rust
 
 # dev env
 
@@ -22,14 +22,6 @@ docker build --target release \
 ```
 
 # todo
-- [ ] Feature: Transaction API
-    - [x] Check: Meta operations exclude all other operations (RWLock) 
-    - [ ] Make meta ops atomic 1
-    - [ ] Async server methods has to put a status on the client stream
-    - [ ] Check: Transaction stream is using transactions 
-    - [ ] 
-    - [ ] Startup: Start Queue Manager
-    - [ ] UMUR departs here...
 - [ ] Listing functions need to put into client stream directly instead of collecting a vector
 - [ ] Feature: TTL
 - [ ] Feature: Revision number
